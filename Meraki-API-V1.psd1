@@ -114,7 +114,11 @@ FunctionsToExport = @(`
     'Get-MerakiNetworkSwitchLAG', `
     'Get-MerakiNetworkSwitchStacks', `
     'Get-MerakiSwitchPorts', `
-    'Reset-MerakiSwitchPorts'
+    'Reset-MerakiSwitchPorts', `
+    'Set-MerakiAPI', `
+    'Get-MerakiSSIDs', `
+    'Get-MerakiSSID', `
+    'Get-MerakiWirelessStatus'
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
@@ -129,7 +133,7 @@ AliasesToExport = @(`
     'GMOrgCC','GMOrg3pVP','GMOrgInv','GMNet','GMNetDevs','GMNetEvents','GMNetET','GMNetAppCFCats', `
     'GMNetCFRules','UMNetAppCF','GMAppPorts', 'GMNetAppRoutes', 'GMNetAppVLANs','GMNetAppVLAN', `
     'GMNetAppSSVpn','GMAppUpStat', 'GMSWRoutInts','GMSWRoutInt','GMSWRoutIntDHCP','GMSWRoutStatic', `
-    'GMNetSWLag','GMNetSWStacks','GMDevSwPorts','RMSWPorts','Set-MerakiAPI'
+    'GMNetSWLag','GMNetSWStacks','GMDevSwPorts','RMSWPorts','GMSSIDs','GMSSID','GMWirelessStat'
     )
 
 # DSC resources to export from this module
