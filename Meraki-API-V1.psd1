@@ -129,7 +129,7 @@ AliasesToExport = @(`
     'GMOrgCC','GMOrg3pVP','GMOrgInv','GMNet','GMNetDevs','GMNetEvents','GMNetET','GMNetAppCFCats', `
     'GMNetCFRules','UMNetAppCF','GMAppPorts', 'GMNetAppRoutes', 'GMNetAppVLANs','GMNetAppVLAN', `
     'GMNetAppSSVpn','GMAppUpStat', 'GMSWRoutInts','GMSWRoutInt','GMSWRoutIntDHCP','GMSWRoutStatic', `
-    'GMNetSWLag','GMNetSWStacks','GMDevSwPorts','RMSWPorts'
+    'GMNetSWLag','GMNetSWStacks','GMDevSwPorts','RMSWPorts','Set-MerakiAPI'
     )
 
 # DSC resources to export from this module

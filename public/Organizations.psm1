@@ -2,6 +2,39 @@
 
 <#
 .Description
+Creates a file in the user profile folder un the .meraki folder named config.json.
+This file contains the users Meraki API Key and the default Organization ID
+#>
+function Set-MerakiAPI() {
+    Param(
+        [string]$APIKey,
+        [string]$OrgID
+    )
+
+    if (-not $APIKey) {
+        $APIKey = Read-Host -Prompt "API Key: "
+    }
+
+    if (-not $OrgID) {
+        $OrgID = Read-Host -Prompt  "Organization ID"
+    }
+
+    $objConfig = @{
+        APIKey = $APIKey
+        OrgID = $OrgID
+    }
+    
+    $configPath = "{0}/.meraki" -f $HOME
+
+    if (-not (Test-Path -Path $configPath)) {
+        New-Item -Path $configPath -ItemType:Directory
+    }
+
+    $objConfig | ConvertTo-Json | Out-File -FilePath "$configPath/config.json"
+}
+
+<#
+.Description
 Retrieves the Organization nformation thet the provided Meraki API Key has access to. This will retrieve the Organization ID.
 #>
 function Get-MerakiOrganizations() {
