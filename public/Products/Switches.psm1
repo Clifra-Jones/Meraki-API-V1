@@ -11,7 +11,7 @@ function Get-MerakiSwitchRoutingInterfaces() {
         [string]$serial
     )
 
-    $Uri - "{0}/devices/{1}/switch/routing/interfaces" -f $BaseUri, $serial
+    $Uri = "{0}/devices/{1}/switch/routing/interfaces" -f $BaseUri, $serial
     $Headers = Get-Headers
 
     $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
@@ -19,7 +19,7 @@ function Get-MerakiSwitchRoutingInterfaces() {
     return $response
 }
 
-Set-Alias -Name GMSWRoutInts -value Get-MerakiSwitchRoutingInterfaces -Options ReadOnly
+Set-Alias -Name GMSWRoutInts -value Get-MerakiSwitchRoutingInterfaces -Option ReadOnly
 
 function Get-MerakiSwitchRoutingInterface() {
     [CmdletBinding()]
@@ -42,7 +42,7 @@ function Get-MerakiSwitchRoutingInterface() {
     return $response
 }
 
-Set-Alias -Name GMSWRoutInt -Value = Get-MerakiSwitchRoutingInterface -Options ReadOnly
+Set-Alias -Name GMSWRoutInt -Value Get-MerakiSwitchRoutingInterface -Option ReadOnly
 
 function Get-MerakiSwitchRoutingInterfaceDHCP() {
     [CmdletBinding()]
@@ -57,15 +57,14 @@ function Get-MerakiSwitchRoutingInterfaceDHCP() {
         [String]$interfaceId
     )
 
-    $Uri = "{0}/devices/{1}/switch/routing/interface/{2}/dhcp" -f $BaseUri, $serial, $interfaceId
-    $Headers = Get-Headers
+        $Uri = "{0}/devices/{1}/switch/routing/interfaces/{2}/dhcp" -f $BaseUri, $serial, $interfaceId
+        $Headers = Get-Headers       
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
-
-    return $response
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+        return $response
 }
 
-Set-Alias GMSWRoutIntDHCP -value Get-MerakiSwitchRoutingInterfaceDHCP -options ReadOnly
+Set-Alias GMSWRoutIntDHCP -value Get-MerakiSwitchRoutingInterfaceDHCP -option ReadOnly
 
 function Get-MerakiSwitchRoutingStaticRoutes() {
     [CmdLetBinding()]
@@ -79,7 +78,7 @@ function Get-MerakiSwitchRoutingStaticRoutes() {
         [String]$serial        
     )
 
-    $Uri = "{0}/devices/{1}/switch/routing/statisRoutes" -f $BaseUri, $serial
+    $Uri = "{0}/devices/{1}/switch/routing/staticRoutes" -f $BaseUri, $serial
     $Headers = Get-Headers
 
     $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
@@ -87,7 +86,7 @@ function Get-MerakiSwitchRoutingStaticRoutes() {
     return $response
 }
 
-Set-Alias -Name GMSWRoutStatic -value Get-MerakiSwitchRoutingStaticRoutes -Options ReadOnly
+Set-Alias -Name GMSWRoutStatic -value Get-MerakiSwitchRoutingStaticRoutes -Option ReadOnly
 
 function Get-MerakiNetworkSwitchLAG() {
     [CmdLetBinding()]
@@ -100,7 +99,7 @@ function Get-MerakiNetworkSwitchLAG() {
         [string]$id
     )
 
-    $Uri = "{0}/networks/{1}/switch/linkAggregation" -f $BaseUri, $Id
+    $Uri = "{0}/networks/{1}/switch/linkAggregations" -f $BaseUri, $Id
     $Headers = Get-Headers
 
     $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
@@ -108,7 +107,7 @@ function Get-MerakiNetworkSwitchLAG() {
     return $response
 }
 
-Set-Alias -Name GMSWLag -value Get-MerakiSwitchLAG -Options ReadOnly
+Set-Alias -Name GMNetSWLag -value Get-MerakiNetworkSwitchLAG -Option ReadOnly
 
 function Get-MerakiNetworkSwitchStacks() {
     [CmdLetBinding()]
@@ -121,7 +120,7 @@ function Get-MerakiNetworkSwitchStacks() {
         [String]$id
     )
 
-    $Uri = "{0}/networks/{1}/switch/stacks"
+    $Uri = "{0}/networks/{1}/switch/stacks" -f $BaseURI, $id
     $Headers = Get-Headers
 
     $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
@@ -196,4 +195,4 @@ function Reset-MerakiSwitchPorts() {
     return $response
 }
 
-Set-Alias -Name RMSWPorts -Value Reset-MerakiSwitchPorts -Options ReadOnly  
+Set-Alias -Name RMSWPorts -Value Reset-MerakiSwitchPorts -Option ReadOnly  

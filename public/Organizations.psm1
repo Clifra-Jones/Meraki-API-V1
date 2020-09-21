@@ -39,7 +39,7 @@ function Get-MerakiOrganization() {
     return $response
 }
 
-Set-Alias -Name GMOrg -value Get-MerakiOrganization -Options ReadOnly
+Set-Alias -Name GMOrg -value Get-MerakiOrganization -Option ReadOnly
 
 
 <#

@@ -275,5 +275,5 @@ function Get-MerakiApplianceUplinkStatuses() {
     return $response | Where-Object {$_.networkID -like $networkID -and $_.serial -like $serial}
 }
 
-Set-Alias -Name GMAppUpStat -value Get-MerakiApplianceUplinkStatuses
+Set-Alias -Name GMAppUpStat -value Get-MerakiApplianceUplinkStatuses -Option ReadOnly
 

@@ -8,7 +8,7 @@ enum CategoryListSize {
 enum productTypes{
     wireless;
     appliance;
-    switch;
+    switches;
     systemManager;
     camera;
     cellularGateway

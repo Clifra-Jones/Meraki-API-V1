@@ -57,7 +57,7 @@ PowerShellVersion = '6.0'
 # RequiredAssemblies = @()
 
 # Script files (.ps1) that are run in the caller's environment prior to importing this module.
-ScriptsToProcess = @('./private/Private.ps1' './public/public.ps1')
+ScriptsToProcess = @('./public/public.ps1')
 
 # Type files (.ps1xml) to be loaded when importing this module
 # TypesToProcess = @()
@@ -67,8 +67,11 @@ ScriptsToProcess = @('./private/Private.ps1' './public/public.ps1')
 
 # Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
 NestedModules = @(`
-    './private/Private.psm1', `
-    './public/Organizations.psm1'
+    './public/Organizations.psm1', `
+    './public/Networks.psm1', `
+    './public/Devices.psm1', `
+    './public/Products/Appliances.psm1', `
+    './public/Products/Switches.psm1'
 )
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
@@ -126,7 +129,7 @@ AliasesToExport = @(`
     'GMOrgCC','GMOrg3pVP','GMOrgInv','GMNet','GMNetDevs','GMNetEvents','GMNetET','GMNetAppCFCats', `
     'GMNetCFRules','UMNetAppCF','GMAppPorts', 'GMNetAppRoutes', 'GMNetAppVLANs','GMNetAppVLAN', `
     'GMNetAppSSVpn','GMAppUpStat', 'GMSWRoutInts','GMSWRoutInt','GMSWRoutIntDHCP','GMSWRoutStatic', `
-    'GMSWLag','GMNetSWStacks','GMDevSwPorts','RMSWPorts'
+    'GMNetSWLag','GMNetSWStacks','GMDevSwPorts','RMSWPorts'
     )
 
 # DSC resources to export from this module

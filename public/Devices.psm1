@@ -68,7 +68,7 @@ function Start-MerakiDeviceBlink() {
 
     return $response
 }
-Set-Alias -Name StartMDevBlink -Value Start-MerakiDeviceBlink
+Set-Alias -Name StartMDevBlink -Value Start-MerakiDeviceBlink -Option ReadOnly
 
 function Restart-MerakiDevice() {
     [CmdLetBinding()]
