@@ -8,10 +8,10 @@ function Get-MerakiDevice() {
     [CmdletBinding()]
     Param(
         [Parameter(
-            Mandatory = $true)]
-        [string]$NetworkID,
-        [Parameter(
-            Mandatory = $true)]
+            Mandatory = $true,
+            ValueFromPipeline = $true,
+            ValueFromPipelineByPropertyName = $true
+        )]
         [string]$Serial
     )
 
@@ -23,7 +23,7 @@ function Get-MerakiDevice() {
     return $response
 }
 
-Set-Alias -Name GMDev -Value Get-MerakiDevice -Option ReadOnly
+Set-Alias -Name GMNetDev -Value Get-MerakiNetworkDevice -Option ReadOnly
 
 <#
 .Description
@@ -88,3 +88,6 @@ function Restart-MerakiDevice() {
 
     return $response
 }
+
+Set-Alias -Name RestartMD -Value Restart-MerakiDevice -Option ReadOnly
+

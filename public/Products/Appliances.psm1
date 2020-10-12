@@ -43,7 +43,7 @@ function Get-MerakiNetworkApplianceContentFiltering() {
     return $response    
 }
 
-Set-Alias GMNetCFRules -Value Get-MerakiNetworkContentFilteringRules -Option ReadOnly
+Set-Alias GMNetCF -Value Get-MerakiNetworkContentFilteringRules -Option ReadOnly
 
 <#
 .Description
@@ -265,9 +265,9 @@ function Get-MerakiApplianceUplinkStatuses() {
         )]
         [String]$serial="*"
     )
-    $config = Get-Config
+    $config = Read-Config
 
-    $Uri = "{0}/Organizations/{1}/appliance/uplink/statuses" -f $BaseURI, $config.OrgID
+    $Uri = "{0}/organizations/{1}/appliance/uplink/statuses" -f $BaseURI, $config.OrgID
     $Headers = Get-Headers
 
     $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
