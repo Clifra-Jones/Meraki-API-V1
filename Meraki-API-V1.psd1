@@ -9,7 +9,7 @@
 @{
 
 # Script module or binary module file associated with this manifest.
-RootModule = '.\Meraki-API-V1\Meraki-API-V1.psm1'
+RootModule = '.\Meraki-API-V1.psm1'
 
 # Version number of this module.
 ModuleVersion = '0.0.1'

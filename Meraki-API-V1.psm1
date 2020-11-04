@@ -12,7 +12,7 @@ $global:paging = @{
 
 #Private function
 function global:Read-Config () {
-    $ConfigPath = "$($env:USERPROFILE)/.meraki/config.json"
+    $ConfigPath = "$home/.meraki/config.json"
     $config = Get-Content -Raw -Path $ConfigPath | ConvertFrom-Json
     return $config
 }

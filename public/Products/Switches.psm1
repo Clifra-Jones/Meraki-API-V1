@@ -293,8 +293,11 @@ function Get-MerakiSwitchRoutingStaticRoutes() {
 
     $Uri = "{0}/devices/{1}/switch/routing/staticRoutes" -f $BaseUri, $serial
     $Headers = Get-Headers
-
+    $device = Get-MerakiDevice -Serial $serial
     $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+    $response | foreach-Object {
+        $_ | Add-Member -MemberType NoteProperty -Name "switch" -Value $device.name
+    }
 
     return $response
 }

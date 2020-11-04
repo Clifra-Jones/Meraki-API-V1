@@ -358,87 +358,95 @@ function DocumentNonStackSwitches() {
     )
     #Gather any switches that are not part of stacks
     $nonStackSwitches = @()
-    $Switches | foreach-Object {
-        $found = $false
-        foreach ($Stack in $Stacks) {
-            if ($stack.serials -contains $_.serial) {
-                $found = $true
-            }            
+    $found = $false
+    If ($Stacks) {
+        $Switches | foreach-Object {
+            foreach ($Stack in $Stacks) {
+                if ($stack.serials -contains $_.serial) {
+                    $found = $true
+                }            
+            }
+            If (-not $found) {
+                $nonStackSwitches += $_
+            }
         }
-        If (-not $found) {
-            $nonStackSwitches += $_
-        }
+    } else {
+        $nonStackSwitches = $switches
     }
     #Non-Stack Switches
     $nonStackSwitchInterfaces = @()
     if ($nonStackSwitches) {
-        foreach($switch in $nonStackSwitches) {
+        foreach($switch in $nonStackSwitches) {            
             $interfaces = Get-MerakiSwitchRoutingInterfaces -serial $switch.serial
-            $_ | Add-Member -MemberType:NoteProperty -Name "serial" -value $switch.serial
-            $_ | Add-Member -MemberType:NoteProperty -Name "switchName" -value $Switch.Name
-            $nonStackSwitchInterfaces += $interfaces
-        }
-
-        $excel = $nonStackSwitchInterfaces | Select-Object  @{n="Switch";e={$_.switchName}}, `
-                                                            @{n="Name";e={$_.name}}, `
-                                                            @{n="Subnet";e={$_.subnet}}, `
-                                                            @{n="Interface IP";e={$_.interfaceIp}}, `
-                                                            @{n="VLAN ID";e={$_.vlanId}}, `
-                                                            @{n="Default Gateway";e={$_.defaultGateway}} | `
-                                    Export-Excel -ExcelPackage $excel -WorkSheetName $WorkSheet -StartRow $startRow -StartColumn $StartColumn `
-                                        -TableName "nonStInterfaces" -Title "Non-Stack Interfaces" @titleParams -AutoSize -NumberFormat Text -PassThru
-        $script:StartRow += $nonStackSwitchInterfaces.count + 1
-        $nonStackSwitches | ConvertTo-Json | Set-Content "$outputFolder\JSON\SwitchInterfaces.json"
-
-        $StaticRoutes = $nonStackSwitches | Get-MerakiSwitchStackRoutingStaticRoutes
-        
-
-        $excel = $StaticRoutes | Select-Object  @{n="Switch";e={$_.switch}}, `
-                                                @{n="Name";e={$_.name}}, `
-                                                @{n="Subnet";e={$_.subnet}}, `
-                                                @{n="Interface IP";e={$_.intrfaceIp}}, `
-                                                @{n="VLAN ID";e={$_.vlanId}}, `
-                                                @{n="Default Gateway";e={$_.defaultGateway}} | `
-                                    Export-Excel -ExcelPackage $excel -WorksheetName $Worksheet -StartRow $StartRow -StartColumn $StartColumn `
-                                        -TableName "nonStStaticRoutes" -Title "Non-Stack Static Routes" @titleParams -AutoSize -NumberFormat Text -PassThru
-
-        $script:StartRow += $StaticRoutes.Count + 3
-
-        $StaticRoutes | ConvertTo-Json | Set-Content "$outputFolder\JSON\switchStaticRoutes.json"
-
-        $interfaceDHCP = $nonStackSwitchInterfaces  | foreach-Object {Get-MerakiSwitchStackRoutingInterfacesDHCP -serial $_.serial -interfaceId $_.interfaceId}
-        $x=0
-        $interfaceDHCP | Where-Object {$_.dhcpMode -eq 'shcpServer'} | foreach-Object {
-            $tableName = ("nsdhcp{0}" -f $x).toString()
-            $excel = $_ | Select-Object @{n="Interface Name";e={$_.interfaceName}}, `
-                                        @{n="DHCP Mode";e={$_.dhcpMode}}, `
-                                        @{n="DNS Name Servers";e={$_.dnsCustomNameServers}}, `
-                                        @{n="Boot Options Enabled";e={$_.bootOptionsEnabled}}, `
-                                        @{n="Boot Next Server";e={$_.bootNextServer}}, `
-                                        @{n="Boot Filename";e={$_.bootFileName}} | `
-                        Export-Excel -ExcelPackage $excel -WorksheetName $WorkSheet -StartRow $StartRow -StartColumn $StartColumn `
-                            -TableName $TableName -Title "Interface DHCP" @TableParams -AutoSize -Numberformat Text -PassThru
-            $script:StartRow += 4
-            
-            if ($_.reservedIpRanges -is [array] -and $_.reservedIpRanges.length -gt 0) {
-                $tableName = ("intRIPS{0}" -f $x).ToString()
-                $excel = $_.reservedIpRanges | Select-Object Start, End, Commect | `
-                    Export-Excel -ExcelPackage $Excel -WorksheetName $worksheet -StartRow $StartRow -StartColumn $StartColumn `
-                        -TableName $tableName -title "Reserved IP Ranges" @titleParams -AutoSize -Numberformat Text -PassThru                    
-                $script:StartRow = $_.reservedIpRanges.length + 3
+            if ($interfaces) {
+                $interfaces | ForEach-Object {
+                    $_ | Add-Member -MemberType:NoteProperty -Name "serial" -value $switch.serial
+                    $_ | Add-Member -MemberType:NoteProperty -Name "switchName" -value $Switch.Name
+                    $nonStackSwitchInterfaces += $interfaces
+                }
             }
-            if ($_.fixedIpAssignments -is [array] -and $_.fixedIpAssignments.Length -gt 0) {
-                $tableName = ("intFIPA{0}" -f $x).ToString()
-                $excel = $_.fixedIpAssignments.PSObject.Properties | Select-Object  @{n="Client Name";e={($_.value).Name}}, `
-                                                                                    @{n="MAC Address";e={$_.Name}} `
-                                                                                    @{n="IP Address";e={($_.value).ip}} | `
-                    Export-Excel -ExcelPackage $excel -WorksheetName $Worksheet -StartRow $StartRow -StartColumn $StartColumn `
-                        -TableName $TableName -Title "Fixed IP Assignments" @titleParams -AutoSize -Numberformat Text -PassThru
-                $script:StartRow += $_.fixedIpAssignments.length + 3
-            }
-            $interfaceDHCP | ConvertTo-Json | Set-Content "$outputFolder\JSON\switchInterfaceDhcp.json"
         }
-    }             
+        If ($nonStackSwitchInterfaces) {
+            $excel = $nonStackSwitchInterfaces | Select-Object  @{n="Switch";e={$_.switchName}}, `
+                                                                @{n="Name";e={$_.name}}, `
+                                                                @{n="Subnet";e={$_.subnet}}, `
+                                                                @{n="Interface IP";e={$_.interfaceIp}}, `
+                                                                @{n="VLAN ID";e={$_.vlanId}}, `
+                                                                @{n="Default Gateway";e={$_.defaultGateway}} | `
+                                        Export-Excel -ExcelPackage $excel -WorkSheetName $WorkSheet -StartRow $startRow -StartColumn $StartColumn `
+                                            -TableName "nonStInterfaces" -Title "Non-Stack Interfaces" @titleParams -AutoSize -NumberFormat Text -PassThru
+            $script:StartRow += $nonStackSwitchInterfaces.count + 3
+            $nonStackSwitches | ConvertTo-Json | Set-Content "$outputFolder\JSON\SwitchInterfaces.json"
+
+            $StaticRoutes = $nonStackSwitches | Get-MerakiSwitchRoutingStaticRoutes            
+
+            $excel = $StaticRoutes | Select-Object  @{n="Switch";e={$_.switch}}, `
+                                                    @{n="Name";e={$_.name}}, `
+                                                    @{n="Subnet";e={$_.subnet}}, `
+                                                    @{n="Interface IP";e={$_.intrfaceIp}}, `
+                                                    @{n="VLAN ID";e={$_.vlanId}}, `
+                                                    @{n="Default Gateway";e={$_.defaultGateway}} | `
+                                        Export-Excel -ExcelPackage $excel -WorksheetName $Worksheet -StartRow $StartRow -StartColumn $StartColumn `
+                                            -TableName "nonStStaticRoutes" -Title "Non-Stack Static Routes" @titleParams -AutoSize -NumberFormat Text -PassThru
+
+            $script:StartRow += $StaticRoutes.Count + 3
+
+            $StaticRoutes | ConvertTo-Json | Set-Content "$outputFolder\JSON\switchStaticRoutes.json"
+
+            $interfaceDHCP = $nonStackSwitchInterfaces  | foreach-Object {Get-MerakiSwitchRoutingInterfaceDHCP -serial $_.serial -interfaceId $_.interfaceId}
+            $x=0
+            $interfaceDHCP | Where-Object {$_.dhcpMode -eq 'shcpServer'} | foreach-Object {
+                $tableName = ("nsdhcp{0}" -f $x).toString()
+                $excel = $_ | Select-Object @{n="Interface Name";e={$_.interfaceName}}, `
+                                            @{n="DHCP Mode";e={$_.dhcpMode}}, `
+                                            @{n="DNS Name Servers";e={$_.dnsCustomNameServers}}, `
+                                            @{n="Boot Options Enabled";e={$_.bootOptionsEnabled}}, `
+                                            @{n="Boot Next Server";e={$_.bootNextServer}}, `
+                                            @{n="Boot Filename";e={$_.bootFileName}} | `
+                            Export-Excel -ExcelPackage $excel -WorksheetName $WorkSheet -StartRow $StartRow -StartColumn $StartColumn `
+                                -TableName $TableName -Title "Interface DHCP" @TableParams -AutoSize -Numberformat Text -PassThru
+                $script:StartRow += 4
+                
+                if ($_.reservedIpRanges -is [array] -and $_.reservedIpRanges.length -gt 0) {
+                    $tableName = ("intRIPS{0}" -f $x).ToString()
+                    $excel = $_.reservedIpRanges | Select-Object Start, End, Commect | `
+                        Export-Excel -ExcelPackage $Excel -WorksheetName $worksheet -StartRow $StartRow -StartColumn $StartColumn `
+                            -TableName $tableName -title "Reserved IP Ranges" @titleParams -AutoSize -Numberformat Text -PassThru                    
+                    $script:StartRow = $_.reservedIpRanges.length + 3
+                }
+                if ($_.fixedIpAssignments -is [array] -and $_.fixedIpAssignments.Length -gt 0) {
+                    $tableName = ("intFIPA{0}" -f $x).ToString()
+                    $excel = $_.fixedIpAssignments.PSObject.Properties | Select-Object  @{n="Client Name";e={($_.value).Name}}, `
+                                                                                        @{n="MAC Address";e={$_.Name}} `
+                                                                                        @{n="IP Address";e={($_.value).ip}} | `
+                        Export-Excel -ExcelPackage $excel -WorksheetName $Worksheet -StartRow $StartRow -StartColumn $StartColumn `
+                            -TableName $TableName -Title "Fixed IP Assignments" @titleParams -AutoSize -Numberformat Text -PassThru
+                    $script:StartRow += $_.fixedIpAssignments.length + 3
+                }
+                $interfaceDHCP | ConvertTo-Json | Set-Content "$outputFolder\JSON\switchInterfaceDhcp.json"
+            }
+        }
+    }
 }
 
 function DocumentSwitchLAGs() {
@@ -460,7 +468,7 @@ function DocumentSwitchPorts() {
     #Switch Ports
     $ports = $switches | Get-MerakiSwitchPorts
     If ($ports) {
-        $excel = $ports | Sort-Object switch | Select-Object Switch, @{n="Port";e={$_.PortId}}, @{n="VLAN";e={$_.vlan}},@{n="Voice VLAN";e={$_.voiceVlan}} | `
+        $excel = $ports | Sort-Object switch | Select-Object Switch, Name, @{n="Port";e={$_.PortId}}, @{n="VLAN";e={$_.vlan}},@{n="Voice VLAN";e={$_.voiceVlan}} | `
                 Export-Excel -ExcelPackage $excel -WorkSheetName $WorkSheet -StartRow $StartRow -StartColumn $StartColumn `
                     -TableName "Ports" -Title "Switch Ports" @titleParams -Autosize -NumberFormat Text -PassThru
     }
