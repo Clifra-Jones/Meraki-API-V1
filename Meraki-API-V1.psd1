@@ -142,7 +142,7 @@ AliasesToExport = @(`
     'GMOrgCC','GMOrg3pVP','GMOrgInv','GMNet','GMNetDevs','GMNetEvents','GMNetET','GMNetAppCFCats', `
     'GMNetCF','UMNetAppCF','GMAppPorts', 'GMNetAppRoutes', 'GMNetAppVLANs','GMNetAppVLAN', 'GMSwStackRoutInt', 'GMDevSwPort', `
     'GMNetAppSSVpn','GMAppUpStat', 'GMSWRoutInts','GMSWRoutInt','GMSWRoutIntDHCP','GMSWRoutStatic','GMSwStRoutIntsDHCP','GMSwStRoutIntDHCP', `
-    'GMNetSWLag','GMNetSWStacks','GMDevSwPorts','RMSWPorts','GMSSIDs','GMSSID','GMWirelessStat','GMNetSWStRoutInts', 'GMSwStack', 'GMSwStRoutStatic'
+    'GMNetSWLag','GMNetSWStacks','GMDevSwPorts','RMSWPorts','GMSSIDs','GMSSID','GMWirelessStat','GMNetSWStRoutInts','GMSwStack','GMSwStRoutStatic'
 )
 
 # DSC resources to export from this module

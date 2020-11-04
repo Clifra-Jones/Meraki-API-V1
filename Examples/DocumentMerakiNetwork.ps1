@@ -20,7 +20,7 @@ Param(
 )
 $ErrorActionPreference = "Stop"
 
-Import-Module .\Meraki-API-V1\Meraki-API-V1.psd1
+Import-Module Meraki-API-V1.psd1
 Import-Module ImportExcel
 
 If (-not (Test-Path -Path $outputFolder)) {
