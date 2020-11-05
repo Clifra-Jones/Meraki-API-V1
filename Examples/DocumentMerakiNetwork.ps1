@@ -22,18 +22,26 @@ $ErrorActionPreference = "Stop"
 
 Import-Module Meraki-API-V1.psd1
 Import-Module ImportExcel
+$OutputFolder = Resolve-Path $OutputFolder
 
 If (-not (Test-Path -Path $outputFolder)) {
-    New-Item -ItemType Directory -Path $OutputFolder
+    $OutputFolder = (New-Item -ItemType Directory -Path $OutputFolder).FullName
+} else {
+    $OutputFolder = (Get-Item -Path $OutputFolder)
 }
-If (-not(Test-Path -Path "$OutputFolder\*")) {
-    New-Item -ItemType Directory -Path $OutputFolder -Name "Doc"    
-    New-Item -ItemType Directory -Path $OutputFolder -Name "JSON"
+If (-not(Test-Path -Path (Join-Path -Path $OutputFolder -ChildPath '*'))) {
+    $docPath = (New-Item -ItemType Directory -Path $OutputFolder -Name "doc").FullName
+    $jsonPath = (New-Item -ItemType Directory -Path $OutputFolder -Name "json").FullName
+} else {
+    $docPath = Join-Path -Path $OutputFolder -ChildPath "doc"
+    $jsonPath = Join-Path -Path $outputFolder -ChildPath "json"
+}
+$document = Join-Path -Path $docPath -ChildPath "doc.xlsx"
+
+if (Test-Path -Path $document) {
+    Remove-Item $document
 }
 
-if (Test-Path -Path "$OutputFolder\doc\doc.xlsx") {
-    Remove-Item "$OutputFolder\doc\doc.xlsx"
-}
 
 $titleParams = @{
     TitleBold=$true;
@@ -63,7 +71,7 @@ If (-not $Network) {
 $Worksheet = "Network"
 $StartRow = 1
 $StartColumn = 1
-$excel = Export-Excel -Path "$OutputFolder\Doc\Doc.xlsx" -Worksheet $WorkSheet -PassThru
+$excel = Export-Excel -Path $document -Worksheet $WorkSheet -PassThru
 $networkItems = [PSCustomObject]@{
     Name = $Network.Name
     OrganizationID = $Network.OrganizationID
@@ -78,7 +86,7 @@ $excel = $networkProps | Select-Object @{n="Property";e={$_.Name}}, Value | `
                             -StartRow $StartRow -StartColumn $StartColumn -Title "Network" @titleParams `
                             -AutoSize -NumberFormat Text -Passthru 
 
-$Network | ConvertTo-Json | Set-Content -Path "$OutputFolder\JSON\network.json"             
+$Network | ConvertTo-Json | Set-Content -Path "$jsonPath/network.json"             
 
 $StartRow += ($networkProps | Select-Object Name).length + 3
 
@@ -106,7 +114,7 @@ function DocumentAppliances() {
                     -StartRow $StartRow -StartColumn $StartColumn -Title "Appliances" @titleParams -autoSize `
                     -PassThru -NumberFormat Text
 
-        $Appliances | ConvertTo-Json | Set-Content -Path "$OutputFolder\JSON\Appliances.json"  
+        $Appliances | ConvertTo-Json | Set-Content -Path "$jsonPath/Appliances.json"  
 
         $script:StartRow += $Appliance.count + 4
     }
@@ -130,7 +138,7 @@ Function DocumentUplinks() {
                                     $StartRow += $Uplinks.Count + 3
         $script:StartRow += $Uplinks.Count + 3
 
-        $uplinks | ConvertTo-Json | Set-Content -Path "$outputFolder\JSON\uplinks.json"
+        $uplinks | ConvertTo-Json | Set-Content -Path "$jsonPath/uplinks.json"
     }
 }
 
@@ -145,7 +153,7 @@ function DocumentApplianceVLANs() {
                                             -Startrow $StartRow -StartColumn $StartColumn -title "ApplianceVLANS" @titleParams -AutoSize -NumberFormat Text -passthru
 
 
-        $ApplianceVLANS | ConvertTo-Json | Set-Content -path "$outputFolder\JSON\ApplianceVLANS.json"  
+        $ApplianceVLANS | ConvertTo-Json | Set-Content -path "$jsonPath/ApplianceVLANS.json"  
 
         $script:StartRow += $ApplianceVLANS.Count + 3
     }
@@ -165,7 +173,7 @@ function DocumentAppliancePorts() {
                                     Export-Excel -ExcelPackage $excel -WorksheetName $Worksheet -TableName "AppliancePorts" `
                                         -StartRow $StartRow -StartColumn $StartColumn -Title "Per-port VLAN Settings" @titleParams -AutoSize -Numberformat Text -PassThru
 
-        $AppliancePorts | ConvertTo-Json | Set-Content -Path "$OutputFolder\json\AppliancePorts.json"                            
+        $AppliancePorts | ConvertTo-Json | Set-Content -Path "$jsonPath/AppliancePorts.json"                            
                                     
         $script:StartRow += $AppliancePorts.Count + 3
     }
@@ -180,7 +188,7 @@ function DocumentApplianceStaticRoutes() {
                                     Export-Excel -ExcelPackage $excel -WorksheetName $worksheet -StartRow $StartRow -StartColumn $StartColumn -TableName "StaticRoutes" `
                                         -Title "Static Routes" @titleParams -autoSize -NumberFormat Text -PassThru
 
-        $StaticRoutes | ConvertTo-Json | Set-Content -Path "$OutputFolder\json\StaticRoutes.json"
+        $StaticRoutes | ConvertTo-Json | Set-Content -Path "$jsonPath/StaticRoutes.json"
 
         $script:StartRow += $StaticRoutes.count + 3
     }
@@ -249,12 +257,12 @@ function DocumentSwitchStacks() {
     )
 
     if ($stacks) {
-        $Stacks | ConvertTo-Json | Set-Content -Path "$outputFolder\JSON\Stacks.json"
+        $Stacks | ConvertTo-Json | Set-Content -Path "$jsonPath/Stacks.json"
         $switchStacks = @()
         foreach ($Stack in $Stacks) {
             $StackMembers = ''
-            $stack.Serials | foreach-Object {
-                $device = Get-MerakiNetworkDevice -NetworkID $Network.id $_
+            $stack.serials | foreach-Object {
+                $device = Get-MerakiDevice $_
                 $StackMembers += "{0}`r`n" -f $device.Name
             }
             $swStack = [PSCustomObject]@{
@@ -291,7 +299,7 @@ function DocumentSwitchStacks() {
                     -StartColumn $StartColumn -TableName "StackInterfaces" -Title "Stack Interfaces" `
                         @titleParams -AutoSize -Numberformat Text -Passthru
 
-        $Stackinterfaces | ConvertTo-Json | Set-Content -Path "$OutputFolder\json\StackInterfaces.json"
+        $Stackinterfaces | ConvertTo-Json | Set-Content -Path "$jsonPath/StackInterfaces.json"
         
         $script:StartRow += $Stackinterfaces.count + 3  
 
@@ -346,7 +354,7 @@ function DocumentSwitchStacks() {
             }
         }
         
-        $interfaceDHCP | Set-Content -Path "$OutputFolder\json\StackInterfaceDHCP.json"
+        $interfaceDHCP | Set-Content -Path "$jsonPath/StackInterfaceDHCP.json"
     }
 }
 
@@ -388,7 +396,7 @@ function DocumentNonStackSwitches() {
                                     Export-Excel -ExcelPackage $excel -WorkSheetName $WorkSheet -StartRow $startRow -StartColumn $StartColumn `
                                         -TableName "nonStInterfaces" -Title "Non-Stack Interfaces" @titleParams -AutoSize -NumberFormat Text -PassThru
         $script:StartRow += $nonStackSwitchInterfaces.count + 1
-        $nonStackSwitches | ConvertTo-Json | Set-Content "$outputFolder\JSON\SwitchInterfaces.json"
+        $nonStackSwitches | ConvertTo-Json | Set-Content "$jsonPath/SwitchInterfaces.json"
 
         $StaticRoutes = $nonStackSwitches | Get-MerakiSwitchStackRoutingStaticRoutes
         
@@ -404,7 +412,7 @@ function DocumentNonStackSwitches() {
 
         $script:StartRow += $StaticRoutes.Count + 3
 
-        $StaticRoutes | ConvertTo-Json | Set-Content "$outputFolder\JSON\switchStaticRoutes.json"
+        $StaticRoutes | ConvertTo-Json | Set-Content "$jsonPath/switchStaticRoutes.json"
 
         $interfaceDHCP = $nonStackSwitchInterfaces  | foreach-Object {Get-MerakiSwitchStackRoutingInterfacesDHCP -serial $_.serial -interfaceId $_.interfaceId}
         $x=0
@@ -436,7 +444,7 @@ function DocumentNonStackSwitches() {
                         -TableName $TableName -Title "Fixed IP Assignments" @titleParams -AutoSize -Numberformat Text -PassThru
                 $script:StartRow += $_.fixedIpAssignments.length + 3
             }
-            $interfaceDHCP | ConvertTo-Json | Set-Content "$outputFolder\JSON\switchInterfaceDhcp.json"
+            $interfaceDHCP | ConvertTo-Json | Set-Content "$jsonPath/switchInterfaceDhcp.json"
         }
     }             
 }
@@ -450,7 +458,7 @@ function DocumentSwitchLAGs() {
                                 -TableName "LinkAggregations" -Title "Link Aggregations" -AutoSize -NumberFormat Text -PassThru
         $script:StartRow += $Lags.Count + 3
     }
-    $Lags | ConvertTo-Json | Set-Content "$outputFolder\JSON\LAGS.json"
+    $Lags | ConvertTo-Json | Set-Content "$jsonPath/LAGS.json"
 }
 
 function DocumentSwitchPorts() {
@@ -464,7 +472,7 @@ function DocumentSwitchPorts() {
                 Export-Excel -ExcelPackage $excel -WorkSheetName $WorkSheet -StartRow $StartRow -StartColumn $StartColumn `
                     -TableName "Ports" -Title "Switch Ports" @titleParams -Autosize -NumberFormat Text -PassThru
     }
-    $ports | ConvertTo-Json | Set-Content "$outputFolder\json\switchPorts.json"
+    $ports | ConvertTo-Json | Set-Content "$jsonPath/switchPorts.json"
     $script:StartRow += $ports.count + 3
 }
 
@@ -480,7 +488,7 @@ function DocumentAccessPoints() {
                     Export-Excel -ExcelPackage $excel -WorksheetName $worksheet -StartRow $StartRow `
                         -StartColumn $StartColumn -TableName "AccessPoints" -Title "Access Points" @titleParams -AutoSize -Numberformat Text -PassThru
 
-        $AccessPoints | ConvertTo-JSON | Set-Content "$outputFolder\json\AccessPoints.json"
+        $AccessPoints | ConvertTo-JSON | Set-Content "$jsonPath/AccessPoints.json"
 
         $script:StartRow += $AccessPoints.count + 3
 
@@ -514,7 +522,7 @@ function DocumentAccessPoints() {
                                             @{n="Mandatory DHCP Enabled";e={$_.mandatoryDhcpEnabled}} | `
                 Export-Excel -ExcelPackage $excel -WorksheetName $worksheet -Startrow $StartRow -StartColumn $StartColumn `
                     -TableName "SSIDS" -Title "SSIDs" @titleParams -AutoSize -NumberFormat Text -PassThru
-            $SSIDs | ConvertTo-Json | Set-Content "$OutputFolder\json\SSIDs.json"
+            $SSIDs | ConvertTo-Json | Set-Content "$jsonPath/SSIDs.json"
         }
     }    
 }
@@ -533,5 +541,15 @@ DocumentSwitchLags $network
 DocumentSwitchPorts  $switches 
 DocumentAccessPoints $AccessPoints
 
-
-Close-ExcelPackage $excel -Show                        
+if ($IsWindows) {
+    Close-ExcelPackage $excel -Show                        
+} else {
+    if ($IsLinux) {        
+        Close-ExcelPackage $excel
+        Write-Output "Open {0} in yur prefered speadsheep application." -f $document
+        "LibreOffice calc will lose most of the formatting."
+        "WPS Office Spreadsheet will retain all the formatting"
+    } else {
+        #MacOS, I have no MAC to test on yet.
+    }
+}
