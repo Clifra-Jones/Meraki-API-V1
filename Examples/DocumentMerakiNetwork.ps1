@@ -1,3 +1,25 @@
+# .Description Document a Meraki Network
+#
+<# 
+    .Synopsis 
+        This script produces an Excel worksheet documenting all aspects of a Meraki network.
+        It also export JSON files of each configuration.
+#>
+# Parameters 
+#       NetworkName:
+#       Type: String
+#       Description: The full network name
+#
+#   id:
+#       Type: String
+#       Description: Network ID
+#
+#   OutputFolder"
+#       Type: String
+#       Description:    Folder to outpur the documentation. 2 folders are created underneath this folder, doc and json.
+#                       The doc folder will contain a file called doc.xlsx. The jason filder will contain json files for each
+#                       configuration i.e. network.json. These files could used to restore a network configuration.
+#
 [CmdletBinding(DefaultParameterSetName='NetworkName')]
 Param(
     [Parameter(
@@ -386,7 +408,6 @@ function DocumentNonStackSwitches() {
     if ($nonStackSwitches) {
         foreach($switch in $nonStackSwitches) {            
             $interfaces = Get-MerakiSwitchRoutingInterfaces -serial $switch.serial
-<<<<<<< HEAD
             $_ | Add-Member -MemberType:NoteProperty -Name "serial" -value $switch.serial
             $_ | Add-Member -MemberType:NoteProperty -Name "switchName" -value $Switch.Name
             $nonStackSwitchInterfaces += $interfaces
@@ -439,14 +460,6 @@ function DocumentNonStackSwitches() {
                     Export-Excel -ExcelPackage $Excel -WorksheetName $worksheet -StartRow $StartRow -StartColumn $StartColumn `
                         -TableName $tableName -title "Reserved IP Ranges" @titleParams -AutoSize -Numberformat Text -PassThru                    
                 $script:StartRow = $_.reservedIpRanges.length + 3
-=======
-            if ($interfaces) {
-                $interfaces | ForEach-Object {
-                    $_ | Add-Member -MemberType:NoteProperty -Name "serial" -value $switch.serial
-                    $_ | Add-Member -MemberType:NoteProperty -Name "switchName" -value $Switch.Name
-                    $nonStackSwitchInterfaces += $interfaces
-                }
->>>>>>> f9334242e6f7c945e77400d9cb7d90daf11ed05c
             }
         }
         If ($nonStackSwitchInterfaces) {
@@ -508,10 +521,7 @@ function DocumentNonStackSwitches() {
                 }
                 $interfaceDHCP | ConvertTo-Json | Set-Content "$outputFolder\JSON\switchInterfaceDhcp.json"
             }
-<<<<<<< HEAD
             $interfaceDHCP | ConvertTo-Json | Set-Content "$jsonPath/switchInterfaceDhcp.json"
-=======
->>>>>>> f9334242e6f7c945e77400d9cb7d90daf11ed05c
         }
     }
 }
