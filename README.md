@@ -10,7 +10,7 @@
 
 ## Windows
 
-**NOTE** This module has only bee tested with PowerShell Core 6.0 and higher. Functionality with Windows PowerShell cannot be assured.
+**NOTE** This module has only been tested with PowerShell Core 6.0 and higher. Functionality with Windows PowerShell cannot be assured.
 
 ## Powershell Core 6 or 7
 
@@ -54,13 +54,13 @@ Open an elevated command prompt
 
 ## ZIP FILE INSTALLATION
 
-Same as above, just make a directory called Meraki-API in one of the above folders and unzip the file into that directory.
+Same as above, just make a directory called Meraki-API-V1 in one of the above folders and unzip the file into that directory.
 
 # USAGE
 
 API Access must be enabled on your Meraki Dashboard.
 
-You will need to have a Meraki API key. You gan get your key by logging into your Meraki Dashboard, go to your profile and generate your API key.
+You will need to have a Meraki API key. You can get your key by logging into your Meraki Dashboard, go to your profile and generate your API key.
 Save this key in a safe place.
 
 Once you have your API key you need to obtain the Organization ID for the Organizations you have access to. You can do this with the GetMerakiOrganizations function.
