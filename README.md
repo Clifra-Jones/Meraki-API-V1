@@ -1,7 +1,7 @@
 
 # Meraki-API-V1
 
-## THIS IS NOT READY TO USE! DO NOT DOWNLOAD THIS MODULE!!!
+## This is the mot recent module. You should use this module as opposed to the V0 module.
 
 ## INSTALLATION
 
