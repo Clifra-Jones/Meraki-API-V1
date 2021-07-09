@@ -277,3 +277,80 @@ function Get-MerakiApplianceUplinkStatuses() {
 
 Set-Alias -Name GMAppUpStat -value Get-MerakiApplianceUplinkStatuses -Option ReadOnly
 
+function Get-MerakiNetworkApplianceVpnStats() {
+    [cmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipeline = $true,
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [string]$id,
+        [int]$perPage=100,
+        [int]$timespan=5,
+        [switch]$Sumarize        
+    )
+
+    Begin {
+        $Headers = Get-Headers
+        $config = read-config
+        $OrgID = $config.OrgID
+
+        class vpnPeer {
+            [string]$networkID
+            [string]$networkName
+            [string]$peerNetworkId
+            [string]$peerNetworkName
+            [int]$receivedKilobytes
+            [int]$sentKilobytes
+        }
+
+        class summaryVpnPeer {
+            [string]$networkID
+            [string]$networkName
+            [int]$totalReceivedKilobytes
+            [int]$totalSentKilobytes
+        }
+    }
+
+    Process {
+        $Network = Get-MerakiNetwork -networkID $id
+
+        $Uri = "{0}/organizations/{1}/appliance/vpn/stats" -f $BaseURI, $OrgID
+
+        $TimeSpan_Seconds = (New-TimeSpan -Days $timespan).TotalSeconds
+
+        $Uri = "{0}?perPage={1}&networkIds%5B%5D={2}&timespan={3}" -f $Uri, $timespan, $id, $TimeSpan_Seconds
+
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+        
+        $peers = $response.merakiVpnPeers
+        $PeerNetworks = New-object System.Collections.Generic.List[psobject]
+        foreach ($peer in $peers) {
+            $P = [vpnPeer]::New()
+            $P.networkID = $id
+            $P.networkName = $Network.name
+            $P.peerNetworkId = $peer.networkId
+            $P.peerNetworkName = $peer.networkName
+            $P.receivedKilobytes = $peer.usageSummary.receivedInKilobytes
+            $P.sentKiloBytes = $peer.usageSummary.sentInKilobytes
+
+            $PeerNetworks.Add($P)
+        }
+        $vpnPeers = $PeerNetworks.ToArray()
+
+        if ($Sumarize) {   
+            $summary = [summaryVpnPeer]::New()
+            $summary.networkID = $id
+            $Summary.networkName = $Network.name
+            $summary.totalReceivedKilobytes = ($vpnPeers | Measure-Object -Property receivedKilobytes -Sum).Sum
+            $summary.totalSentKilobytes = ($vpnPeers | Measure-Object -Property sentKilobytes -Sum).Sum            
+
+            return $summary
+        } else {
+            $vpnPeers
+        }
+    }
+}
+
+Set-Alias -Name GMAVpnStats -Value Get-MerakiNetworkApplianceVpnStats -Option ReadOnly

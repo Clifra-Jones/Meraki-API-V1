@@ -12,7 +12,7 @@
 RootModule = '.\Meraki-API-V1.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.1'
+ModuleVersion = '0.0.2'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -127,7 +127,8 @@ FunctionsToExport = @(`
     'Get-MerakiSwitchStackRoutingInterfacesDHCP',
     'Get-MerakiNetworkSwitchStack', `
     'Get-MerakiSwitchStackRoutingStaticRoutes', `
-    'Get-MerakiDeviceSwitchPort'
+    'Get-MerakiDeviceSwitchPort',
+    'Get-MerakiNetworkApplianceVpnStats'
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
@@ -142,7 +143,7 @@ AliasesToExport = @(`
     'GMOrgCC','GMOrg3pVP','GMOrgInv','GMNet','GMNetDevs','GMNetEvents','GMNetET','GMNetAppCFCats', `
     'GMNetCF','UMNetAppCF','GMAppPorts', 'GMNetAppRoutes', 'GMNetAppVLANs','GMNetAppVLAN', 'GMSwStackRoutInt', 'GMDevSwPort', `
     'GMNetAppSSVpn','GMAppUpStat', 'GMSWRoutInts','GMSWRoutInt','GMSWRoutIntDHCP','GMSWRoutStatic','GMSwStRoutIntsDHCP','GMSwStRoutIntDHCP', `
-    'GMNetSWLag','GMNetSWStacks','GMDevSwPorts','RMSWPorts','GMSSIDs','GMSSID','GMWirelessStat','GMNetSWStRoutInts','GMSwStack','GMSwStRoutStatic'
+    'GMNetSWLag','GMNetSWStacks','GMDevSwPorts','RMSWPorts','GMSSIDs','GMSSID','GMWirelessStat','GMNetSWStRoutInts','GMSwStack','GMSwStRoutStatic','GMAVpnStats'
 )
 
 # DSC resources to export from this module
