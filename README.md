@@ -1,7 +1,8 @@
 
 # Meraki-API-V1
 
-## This is the mot recent module. You should use this module as opposed to the V0 module.
+## This is the most recent module. You should use this module as opposed to the V0 module.
+## The V0 module will still work but lacks many features found here.
 
 ## INSTALLATION
 
