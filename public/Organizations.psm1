@@ -280,3 +280,23 @@ function Get-MerakiOrganizationInventory() {
 }
 
 Set-Alias -Name GMOrgInv -Value Get-MerakiOrganizationInventory -Option ReadOnly
+
+function Get-MerakiOrganizationInventoryDevices() {
+    Param(
+        [string]$OrgID
+    )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        $OrgID = $config.OrgID
+    }
+
+    $Uri = "{0}/organizations/{1}/inventoryDevices" -f $BaseURI, $OrgID
+    $Headers = Get-Headers
+
+    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+
+    return $response
+}
+
+Set-Alias -Name GMOrgInvDevices -value Get-MerakiOrganizationInventoryDevices -Option ReadOnly
