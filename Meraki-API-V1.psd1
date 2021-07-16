@@ -129,8 +129,7 @@ FunctionsToExport = @(`
     'Get-MerakiSwitchStackRoutingStaticRoutes', `
     'Get-MerakiDeviceSwitchPort',
     'Get-MerakiNetworkApplianceVpnStats',
-    'Get-MerakiOrganizationInventoryDevices',
-    'Get-MerakiOrganizationInventory'
+    'Get-MerakiOrganizationInventoryDevices'
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
@@ -142,7 +141,7 @@ VariablesToExport = '*'
 # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
 AliasesToExport = @(`
     'StartMDevBlink','GMDev','GMOrgs','GMOrg','GMNets','GMOrgTemplates','GMOrgDevs','GMOrgAdmins', `
-    'GMOrgCC','GMOrg3pVP','GMOrgInv','GMNet','GMNetDevs','GMNetEvents','GMNetET','GMNetAppCFCats', 'GMOrgInvDevices','GMOrgInv', `
+    'GMOrgCC','GMOrg3pVP','GMOrgInv','GMNet','GMNetDevs','GMNetEvents','GMNetET','GMNetAppCFCats', 'GMOrgInvDevices', `
     'GMNetCF','UMNetAppCF','GMAppPorts', 'GMNetAppRoutes', 'GMNetAppVLANs','GMNetAppVLAN', 'GMSwStackRoutInt', 'GMDevSwPort', `
     'GMNetAppSSVpn','GMAppUpStat', 'GMSWRoutInts','GMSWRoutInt','GMSWRoutIntDHCP','GMSWRoutStatic','GMSwStRoutIntsDHCP','GMSwStRoutIntDHCP', `
     'GMNetSWLag','GMNetSWStacks','GMDevSwPorts','RMSWPorts','GMSSIDs','GMSSID','GMWirelessStat','GMNetSWStRoutInts','GMSwStack','GMSwStRoutStatic','GMAVpnStats'

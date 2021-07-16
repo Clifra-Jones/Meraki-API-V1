@@ -261,25 +261,6 @@ Set-Alias -Name GMOrg3pVP -Value Get-MerakiOrganizationThirdPartyVPNPeers -Optio
 .Description
 Get organization inventory
 #>
-function Get-MerakiOrganizationInventory() {
-    Param(
-        [string]$OrgID
-    )
-
-    if (-not $OrgID) {
-        $config = Read-Config
-        $OrgID = $config.OrgID
-    }
-
-    $Uri = "{0}/organizations/{1}/inventory" -f $BaseURI, $OrgID
-    $Headers = Get-Headers
-
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
-
-    return $response
-}
-
-Set-Alias -Name GMOrgInv -Value Get-MerakiOrganizationInventory -Option ReadOnly
 
 function Get-MerakiOrganizationInventoryDevices() {
     Param(
