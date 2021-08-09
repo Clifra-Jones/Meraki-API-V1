@@ -241,7 +241,7 @@ function Get-MerakiNetworkApplianceSiteToSiteVPN() {
         [string]$id
     )
 
-    $Uri = "{0}/networks/{1}/siteToSiteVpn" -f $BaseURI, $id
+    $Uri = "{0}/networks/{1}/appliance/vpn/siteToSiteVpn" -f $BaseURI, $id
     $Headers = Get-Headers
 
     $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
