@@ -238,15 +238,45 @@ function Get-MerakiNetworkApplianceSiteToSiteVPN() {
             ValueFromPipeline = $true,
             ValueFromPipelineByPropertyName = $true
         )]
-        [string]$id
+        [string]$id,
+        [switch]$hr
     )
 
     $Uri = "{0}/networks/{1}/appliance/vpn/siteToSiteVpn" -f $BaseURI, $id
     $Headers = Get-Headers
 
     $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
-
-    return $response
+    if ($hr) {
+        $heading = [pscustomobject][ordered]@{
+            network = (Get-MerakiNetwork -networkID $id).name
+            mode = $response.mode
+        }
+        Write-Output $heading | Format-List
+        Write-Output "Hubs:"
+        if ($response.mode = "spoke") {
+            $hubs = @()
+            $response.hubs | ForEach-Object {
+                $Hub = [PSCustomObject][ordered]@{
+                    Name = (Get-MerakiNetwork -networkID $_.HubId).name
+                    DefaultRoute = $_.useDefaultRoute
+                }
+                $Hubs += $Hub
+            }
+            Write-Output $hubs | Format-Table
+        }
+        Write-Output "Subnets:"
+        $subnets = @()
+        $response.subnets | ForEach-Object {
+            $subnet = [PSCustomObject][ordered]@{
+                localSubnet = $_.localSubnet
+                useVpn = $_.useVpn
+            }
+            $subnets += $subnet
+        }
+        Write-Output $subnets | Format-Table
+    } else {
+        return $response
+    }
 }
 
 Set-Alias -Name GMNetAppSSVpn -Value Get-MerakiNetworkApplianceSiteToSiteVPN -Option ReadOnly
