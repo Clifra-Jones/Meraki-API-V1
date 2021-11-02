@@ -72,7 +72,7 @@ function Update-MerakiNetworkApplianceContentFiltering() {
             ParameterSetName = "values",
             Mandatory = $true
         )]
-        [psObject]$blockedUrlCategories,
+        [string[]]$blockedUrlCategories,
         [Parameter(
             Mandatory = $true, ParameterSetName = 'values'
         )]
@@ -82,21 +82,26 @@ function Update-MerakiNetworkApplianceContentFiltering() {
         )]
         [psObject]$ContentFilteringRules
     )
+
+
     $Uri = "{0}/networks/{1}/appliance/contentFiltering" -f $BaseURI, $id
     $Headers = Get-Headers
+
+
 
     if ($ContentFilteringRules) {
         $allowedURLPatterns = $ContentFilteringRules.allowedUrlPatterns
         $blockedURLPatterns = $ContentFilteringRules.blockedUrlPatterns
-        $blockedUrlCategories = $ContentFilteringRules.blockedUrlCategories
         $urlCategoryListSize = $ContentFilteringRules.urlCategoryListSize
-    }
-
+        $ContentFilteringRules.blockedUrlCategories | ForEach-Object {
+            $blockedUrlCategories += $_.Id
+        }
+   }
 
     $psBody = [PSCustomObject]@{
         allowedUrlPatterns = $allowedURLPatterns
         blockedUrlPatterns = $blockedURLPatterns
-        blockedUrlCategories = $blockedUrlCategories | ForEach-Object {$_.id}
+        blockedUrlCategories = $blockedUrlCategories
         urlCategoryListSize = $urlCategoryListSize
     }
     
@@ -108,6 +113,39 @@ function Update-MerakiNetworkApplianceContentFiltering() {
 }
 
 Set-Alias -Name UMNetAppCF -value Update-MerakiNetworkContentFiltering -Option ReadOnly
+
+function Add-MerakiNetworkApplianceContentFilteringRules() {
+    Param (
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipeline = $true,
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [String]$Id,
+        [String[]]$allowedURLPatterns,
+        [String[]]$blockedURLPatterns
+    )
+
+    Process {
+        if ((-not $allowedURLPatterns) -and (-not $blockedURLPatterns) ) {
+            Write-Host "You must provide al least one fo the content filtering patterns" -ForegroundColor Red
+            exit
+        }
+        $cfr = Get-MerakiNetworkApplianceContentFiltering -Id $Id
+        if ($allowedURLPatterns) {
+            $allowedURLPatterns | ForEach-Object {
+                $cfr.allowUrlPatterns += $_
+            }
+        }
+        If ($blockedURLPatterns) {
+            $blockedURLPatterns | ForEach-Object {
+                $cfr.blockedURLPatterns += $_
+            }
+        }
+    
+        Update-MerakiNetworkApplianceContentFiltering -Id $Id -ContentFilteringRules $Cfr
+    }
+}
 
 function Get-MerakiAppliancePorts() {
     [cmdletbinding()]
