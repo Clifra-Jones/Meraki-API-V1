@@ -147,6 +147,8 @@ function Add-MerakiNetworkApplianceContentFilteringRules() {
     }
 }
 
+Set-Alias -Name AddMNetAppCFR -Value Add-MerakiNetworkApplianceContentFilteringRules -Option ReadOnly
+
 function Get-MerakiAppliancePorts() {
     [cmdletbinding()]
     Param(
