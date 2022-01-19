@@ -4,6 +4,16 @@
 ## This is the most recent module. You should use this module as opposed to the V0 module.
 ## The V0 module will still work but lacks many features found here.
 
+## Added 2 new functions to the Content Filtering Functionality.
+Add-MerakiNetworkApplianceContentFilteringRules
+Remove-MerakiNetworkApplianceContentFilteringRules
+
+Both functions take the same parameters.
+id: The network id of a meraki MX appliance
+allowedURLPatterns: An array of allowed URLs to add/remove.
+blockedURLPatterns: An arracy of blocked URLs to add/remove.
+
+
 ## INSTALLATION
 
 **NOTE**: This module will eventually be published to the Powershell Gallery once significant testing has been done.

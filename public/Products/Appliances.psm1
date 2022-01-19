@@ -134,7 +134,7 @@ function Add-MerakiNetworkApplianceContentFilteringRules() {
         $cfr = Get-MerakiNetworkApplianceContentFiltering -Id $Id
         if ($allowedURLPatterns) {
             $allowedURLPatterns | ForEach-Object {
-                $cfr.allowUrlPatterns += $_
+                $cfr.allowedUrlPatterns += $_
             }
         }
         If ($blockedURLPatterns) {
@@ -148,6 +148,46 @@ function Add-MerakiNetworkApplianceContentFilteringRules() {
 }
 
 Set-Alias -Name AddMNetAppCFR -Value Add-MerakiNetworkApplianceContentFilteringRules -Option ReadOnly
+
+function Remove-MerakiNetworkApplianceContentFilteringRules () {
+    Param(
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipeline = $true,
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [string]$id,
+        [string[]]$allowedURLPatterns,
+        [string[]]$blockedURLPatterns
+    )
+
+    Process {
+        If ((-not $allowedURLPatterns) -and (-not $blockedURLPatterns)) {
+            Write-Host "You must provide al least one fo the content filtering patterns" -ForegroundColor Red
+            exit
+        }
+        $cfr = Get-MerakiNetworkApplianceContentFiltering -Id $id
+        if ($allowedURLPatterns) {
+            $AUPList = [System.Collections.ArrayList]::New($cfr.allowedUrlPatterns)
+            $allowedURLPatterns | Foreach-Object {
+                $AUPList.Remove($_)
+            }
+            $cfr.allowedUrlPatterns = $AUPList.ToArray()
+        }
+
+        if ($blockedURLPatterns) {
+            $BUPList = [System.Collections.ArrayList]::New($cfr.blockedUrlPatterns)
+            $blockedURLPatterns | ForEach-Object {
+                $BUPList.remove($_)
+            }
+            $cfr.blockedUrlPatterns = $BUPList.ToArray()
+        }
+
+        Update-MerakiNetworkApplianceContentFiltering -id $id -ContentFilteringRules $cfr
+    }
+}
+
+set-Alias -Name RemoveMNetAppCfr -Value Remove-MerakiNetworkApplianceContentFilteringRules -Option ReadOnly
 
 function Get-MerakiAppliancePorts() {
     [cmdletbinding()]
