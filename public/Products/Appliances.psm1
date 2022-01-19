@@ -149,6 +149,46 @@ function Add-MerakiNetworkApplianceContentFilteringRules() {
 
 Set-Alias -Name AddMNetAppCFR -Value Add-MerakiNetworkApplianceContentFilteringRules -Option ReadOnly
 
+function Remove-MerakiNetworkApplianceContentFilteringRules () {
+    Param(
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipeline = $true,
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [string]$id,
+        [string[]]$allowedURLPatterns,
+        [string[]]$blockedURLPatterns
+    )
+
+    Process {
+        If ((-not $allowedURLPatterns) -and (-not $blockedURLPatterns)) {
+            Write-Host "You must provide al least one fo the content filtering patterns" -ForegroundColor Red
+            exit
+        }
+        $cfr = Get-MerakiNetworkApplianceContentFiltering -Id $id
+        if ($allowedURLPatterns) {
+            $AUPList = [System.Collections.ArrayList]::New($cfr.allowUrlPatterns)
+            $allowedURLPatterns | Foreach-Object {
+                $AUPList.Remove($_)
+            }
+            $cfr.allowUrlPattern = $AUPList.ToArray()
+        }
+
+        if ($blockedURLPatterns) {
+            $BUPList = [System.Collections.ArrayList]::New($cfr.blockUrlPatterns)
+            $blockedURLPatterns | ForEach-Object {
+                $BUPList.remove($_)
+            }
+            $cfr.blockUrlPatterns = $BUPList.ToArray()
+        }
+
+        Update-MerakiNetworkApplianceContentFiltering -id $id -ContentFilteringRules $cfr
+    }
+}
+
+set-Alias -Name AddMNetAppCfr -Value Remove-MerakiNetworkApplianceContentFilteringRules -Option ReadOnly
+
 function Get-MerakiAppliancePorts() {
     [cmdletbinding()]
     Param(
