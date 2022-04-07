@@ -363,9 +363,15 @@ function Get-MerakiNetworkSwitchStacks() {
     $Uri = "{0}/networks/{1}/switch/stacks" -f $BaseURI, $id
     $Headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+    $Network = Get-MerakiNetwork -networkID $id
+    if ($network.productTypes -contains "switch") {
 
-    return $response
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+
+        return $response
+    } else {
+        return $null
+    }
 }
 
 Set-Alias -Name GMNetSWStacks -Value Get-MerakiNetworkSwitchStacks -Option ReadOnly
