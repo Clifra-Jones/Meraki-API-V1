@@ -253,7 +253,7 @@ function Get-MerakiNetworkApplianceVLANS() {
         $i = 1
         $count = $input.Count
         $input | ForEach-Object {
-            $Uri = "{0}/networks/{1}//appliance/vlans" -f $BaseURI, $_.id
+            $Uri = "{0}/networks/{1}/appliance/vlans" -f $BaseURI, $_.id
             If (-not $NoProgress) {
                 Write-Progress -Activity "Getting VLANS for: " -Status $_.Name -PercentComplete ($i/$count*100)
             }
@@ -295,7 +295,7 @@ function Get-MerakiNetworkApplianceVLAN() {
         [string]$id
     )
     
-    $Uri = "{0}/networks/{1}/appliance/vlans{2}" -f $BaseURI, $networkId, $id
+    $Uri = "{0}/networks/{1}/appliance/vlans/{2}" -f $BaseURI, $networkId, $id
     $Headers = Get-Headers
 
     $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
