@@ -90,20 +90,28 @@ function Update-MerakiNetworkApplianceContentFiltering() {
 
 
     if ($ContentFilteringRules) {
-        $allowedURLPatterns = $ContentFilteringRules.allowedUrlPatterns
-        $blockedURLPatterns = $ContentFilteringRules.blockedUrlPatterns
-        $urlCategoryListSize = $ContentFilteringRules.urlCategoryListSize
-        $ContentFilteringRules.blockedUrlCategories | ForEach-Object {
-            $blockedUrlCategories += $_.Id
+        if ($ContentFilteringRules.allowedUrlPatterns) {
+            $allowedURLPatterns = $ContentFilteringRules.allowedUrlPatterns
+        }
+        if ($ContentFilteringRules.blockedUrlPatterns) {
+            $blockedURLPatterns = $ContentFilteringRules.blockedUrlPatterns
+        }
+        if ($ContentFilteringRules.urlCategoryListSize) {
+            $urlCategoryListSize = $ContentFilteringRules.urlCategoryListSize
+        }
+        if ($ContentFilteringRules.blockedUrlCategories) {
+            $ContentFilteringRules.blockedUrlCategories | ForEach-Object {                
+                $blockedUrlCategories += $_.Id
+            }
         }
    }
+    $properties = [ordered]@{}
+    if ($allowedURLPatterns) {$properties.Add("allowedUrlPatterns", $allowedURLPatterns) }
+    if ($blockedURLPatterns) {$properties.Add("blockedUrlPatterns", $blockedURLPatterns) }
+    if ($urlCategoryListSize) {$properties.Add("urlCategoryListSize", $urlCategoryListSize) }
+    if ($blockedUrlCategories) {$properties.Add("blockedUrlCategories", $blockedUrlCategories) }
 
-    $psBody = [PSCustomObject]@{
-        allowedUrlPatterns = $allowedURLPatterns
-        blockedUrlPatterns = $blockedURLPatterns
-        blockedUrlCategories = $blockedUrlCategories
-        urlCategoryListSize = $urlCategoryListSize
-    }
+    $psBody = [PSCustomObject]$properties
     
     $body = $psBody | ConvertTo-Json
 
