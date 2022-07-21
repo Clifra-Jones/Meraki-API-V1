@@ -78,7 +78,7 @@ function Update-MerakiNetworkApplianceContentFiltering() {
         )]
         [string]$urlCategoryListSize,
         [Parameter(
-            Mandatory = $true, ParameterSetName = "object"
+            ParameterSetName = "object"
         )]
         [psObject]$ContentFilteringRules
     )
@@ -87,8 +87,7 @@ function Update-MerakiNetworkApplianceContentFiltering() {
     $Uri = "{0}/networks/{1}/appliance/contentFiltering" -f $BaseURI, $id
     $Headers = Get-Headers
 
-
-
+    
     if ($ContentFilteringRules) {
         if ($ContentFilteringRules.allowedUrlPatterns) {
             $allowedURLPatterns = $ContentFilteringRules.allowedUrlPatterns
@@ -104,7 +103,7 @@ function Update-MerakiNetworkApplianceContentFiltering() {
                 $blockedUrlCategories += $_.Id
             }
         }
-   }
+    } 
     $properties = [ordered]@{}
     if ($allowedURLPatterns) {$properties.Add("allowedUrlPatterns", $allowedURLPatterns) }
     if ($blockedURLPatterns) {$properties.Add("blockedUrlPatterns", $blockedURLPatterns) }
@@ -117,7 +116,7 @@ function Update-MerakiNetworkApplianceContentFiltering() {
 
     $response = Invoke-RestMethod -Method PUT -Uri $Uri -Body $body -Headers $Headers
 
-    return $response
+    return  $response
 }
 
 Set-Alias -Name UMNetAppCF -value Update-MerakiNetworkContentFiltering -Option ReadOnly
