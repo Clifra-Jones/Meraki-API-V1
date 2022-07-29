@@ -45,3 +45,39 @@ function global:Get-Headers() {
     }
     return $Headers
 }
+
+function global:ConvertTo-HashTable() {
+    [CmdletBinding()]
+    [OutputType('hashtable')]
+    Param(
+        [Parameter(ValueFromPipeline)]
+        $inputObject        
+    )
+    process{
+        if ($null -eq $inputObject) {
+            return $null
+        }
+        if ($inputObject -is [System.Collections.IEnumerable] -and $inputObject -isnot [string]) {
+            $collection = @(
+                foreach ($object in $inputObject) {
+                    ConvertTo-HashTable -inputObject $object
+                }
+            )
+            Write-Output -NoEnumerate $collection
+        } elseIf($inputObject -is [psobject]) {
+            $hash = @{}
+            foreach ($property in $inputObject.psObject.properties) {
+                if ($property.Value -is [psobject]) {
+                    $hash[$property.name] = ConvertTo-Hashtable -inputObject $Property.value
+                } else {
+                    $hash[$property.Name] = $property.Value
+                }
+            }
+            $hash
+        } elseif ($inputObject -is [hashtable]) {
+            $inputObject
+        } else {
+            ConvertTo-Hashtable -inputObject $inputObject
+        }
+    }
+}

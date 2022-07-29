@@ -380,11 +380,20 @@ function Get-MerakiApplianceUplinkStatuses() {
             ValueFromPipeline = $true,
             ValueFromPipelineByPropertyName = $true
         )]
-        [String]$serial="*"
+        [String]$serial="*",
+        [string]$profileName
     )
     $config = Read-Config
+    if ($profileName) {
+        $OrgID = $config.profiles.$profileName
+        if (-not $orgId) {
+            throw "invalid profile name!"
+        }
+    } else {
+        $OrgID = $config.profiles.default
+    }
 
-    $Uri = "{0}/organizations/{1}/appliance/uplink/statuses" -f $BaseURI, $config.OrgID
+    $Uri = "{0}/organizations/{1}/appliance/uplink/statuses" -f $BaseURI, $OrgID
     $Headers = Get-Headers
 
     $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
@@ -405,13 +414,21 @@ function Get-MerakiNetworkApplianceVpnStats() {
         [string]$id,
         [int]$perPage=100,
         [int]$timespan=5,
-        [switch]$Sumarize        
+        [switch]$Sumarize,
+        [string]$profileName
     )
 
     Begin {
         $Headers = Get-Headers
         $config = read-config
-        $OrgID = $config.OrgID
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgId) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }
 
         class vpnPeer {
             [string]$networkID

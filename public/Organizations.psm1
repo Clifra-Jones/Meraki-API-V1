@@ -6,32 +6,122 @@ Creates a file in the user profile folder un the .meraki folder named config.jso
 This file contains the users Meraki API Key and the default Organization ID
 #>
 function Set-MerakiAPI() {
+    [CmdletBinding(DefaultParameterSetName="default")]
     Param(
         [string]$APIKey,
-        [string]$OrgID
+        [Parameter(
+            Mandatory = $true,
+            ParameterSetName = "profile"
+        )]
+        [Parameter(
+            ParameterSetName = "default'"
+        )]
+        [string]$OrgID,
+        [Parameter(
+            ParameterSetName = "profile",
+            Mandatory = $true
+        )]
+        [string]$profileName
     )
-
-    if (-not $APIKey) {
-        $APIKey = Read-Host -Prompt "API Key: "
-    }
-
-    if (-not $OrgID) {
-        $OrgID = Read-Host -Prompt  "Organization ID"
-    }
-
-    $objConfig = @{
-        APIKey = $APIKey
-        OrgID = $OrgID
-    }
     
     $configPath = "{0}/.meraki" -f $HOME
+    $configFile = "{0}/config.json" -f $configPath
 
+    if (-not (Test-Path -Path $configFile)) {
+        if (-not $APIKey) {
+            $APIKey = Read-Host -Prompt "API Key: "
+        }   
+
+        if (-not $APIKey) {
+            Throw "APIKey required if config file does not exist!"
+        }
+        if ((-not $OrgId) -and (-not $profileName)) {
+            $orgs = Get-MerakiOrganizations -APIKey $APIKey
+            $config = @{
+                APIKey = $apiKey
+            }
+            $config.Add('profiles', @{default = $orgs[0].Id})
+            foreach ($org in $orgs) {
+                $config.profiles.Add($org.name, $org.id)
+            }
+        } else {
+            if (-not $profileName) {
+                $config = @{
+                    APIKey = $APIKey
+                }
+                $config.Add('profiles',@{default = $OrgID})
+            } else {
+                $config = @{
+                    APIKey = $apiKey
+                }
+                $config.Add('profiles',@{})
+                $config.profiles.Add($profileName, $OrgID)
+            }
+        }
+    } else {
+        # Read config into an object
+        $oConfig = Get-Content -Raw -Path $configFile | ConvertFrom-Json
+        # Convert the object to a hash table
+        $config = $oConfig | ConvertTo-HashTable
+
+        if ($APIKey) {
+            If ($config.APIKey -ne $APIKey) {
+                Write-Host "The APIKey you entered does not match the APIKey in the config file. This will overwrite the existing config file!" -ForegroundColor Yellow
+                $response = ($R = read-host "Continue? [Y/n]:") ? $R : 'Y'
+                if ($response-eq "Y") {
+                    $config = @{
+                        APIKey = $APiKey
+                    }
+                } else {
+                    Throw "Aborting!"
+                }
+            }
+        }
+        if ((-not $OrgID) -and (-not $profileName)) {
+            $response = ($R = read-host "Overwrite Profiles from organization names? [Y/n]:") ? $R : 'Y'
+            if ($response -eq 'Y') {
+                $orgs = Get-MerakiOrganizations -APIKey $config.APIKey
+                $config.Add('profiles', @{default = $orgs[0].Id})
+                foreach ($org in $orgs) {
+                    $config.profiles.Add($org.name, $org.Id)
+                }
+            }
+        } else {
+            if (-not $profileName) {
+                if ($config.profiles.default) {
+                    $config.profiles.default = $orgId
+                } else {
+                    $config.profiles.Add('default', $orgId)
+                }
+            } else {
+                if ($config.profiles.$profileName) {
+                    $config.profiles.$profileName = $OrgId
+                } else {
+                    $config.profiles.Add($profileName, $OrgId)
+                }
+            }
+        }
+    }
+    
     if (-not (Test-Path -Path $configPath)) {
-        New-Item -Path $configPath -ItemType:Directory
+        [void](New-Item -Path $configPath -ItemType:Directory)
     }
 
-    $objConfig | ConvertTo-Json | Out-File -FilePath "$configPath/config.json"
+    $config | ConvertTo-Json | Out-File -FilePath $configFile
 }
+
+function Set-MerakiProfile () {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$profileName
+    )
+    $configFile = "{0}/.meraki/config.json" -f $home
+    $Config = Get-Content -Path $configFile | ConvertFrom-Json | ConvertTo-HashTable
+
+    $orgID = $Config.profiles.$profileName
+    Set-MerakiAPI -OrgID $orgID -profileName 'default'
+}
+
 
 <#
 .Description
@@ -80,8 +170,25 @@ Set-Alias -Name GMOrg -value Get-MerakiOrganization -Option ReadOnly
 Retrieves all Networks for a Meraki Organization
 #>
 function Get-MerakiNetworks() {
-    $config = Read-Config
-    $Uri = "{0}/organizations/{1}/networks" -f $BaseURI, $config.OrgID
+    [CmdletBinding(DefaultParameterSetName = 'none')]
+    Param(
+        [Parameter(ParameterSetName = 'orgid')]
+        [string]$OrdID,
+        [Parameter(ParameterSetName = 'profilename')]
+        [string]$profileName
+    )
+    if (-not $orgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $orgID = $config.profiles.$profileName
+            if (-not $orgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $orgID = $config.profiles.default
+        }
+    }
+    $Uri = "{0}/organizations/{1}/networks" -f $BaseURI, $orgID
     $Headers = Get-Headers
 
     $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
@@ -96,13 +203,24 @@ Set-Alias -Name GMNets -Value Get-MerakiNetworks -Option ReadOnly
 Get Organization Configuration Templates
 #>
 function Get-MerakiOrganizationConfigTemplates() {
+    [CmdletBinding(DefaultParameterSetName = 'none')]
     Param(
-        [String]$OrgID
+        [Parameter(ParameterSetName = 'orgid')]
+        [String]$OrgID,
+        [Parameter(ParameterSetName = 'profilename')]
+        [string]$profileName
     )
 
     if (-not $OrgID) {
         $config = Read-Config
-        $OrgID = $config.OrgID
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }
     }
 
     $Uri = "{0}/organizations/{1}/configTemplates" -f $BaseURI, $OrgID
@@ -120,16 +238,27 @@ Set-Alias -Name GMOrgTemplates -value Get-MerakiOrganizationConfigTemplates -Opt
 Retrieves all devices in an organization
 #>
 function Get-MerakiOrganizationDevices() {
+    [CmdletBinding(DefaultParameterSetName = 'none')]
     Param(
-        [string]$OrgID
+        [Parameter(ParameterSetName = 'orgId')]
+        [string]$OrgID,
+        [Parameter(ParameterSetName = 'profilename')]
+        [string]$profileName
     )
 
     If (-not $OrgID) {
         $config = Read-Config
-        $OrgID = $config.OrgID
+        if ($profileName) {
+            $OrgID = $config.profiles.$profilename
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }
     }
 
-    $Uri = "{0}/organizations/{1}/devices" -f $BaseURI, $config.OrgID
+    $Uri = "{0}/organizations/{1}/devices" -f $BaseURI, $OrgID
     $Headers = Get-Headers
 
     $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
@@ -144,13 +273,24 @@ Set-Alias GMOrgDevs -Value Get-MerakiOrganizationDevices -Option ReadOnly
 Get Organization Admins
 #>
 function Get-MerakiOrganizationAdmins() {
+    [CmdletBinding(DefaultParameterSetName = 'none')]
     Param(
-        [string]$OrgID
+        [Parameter(ParameterSetName = 'orgid')]
+        [string]$OrgID,
+        [Parameter(ParameterSetName = 'profilename')]
+        [string]$profileName
     )
 
     If (-not $orgID) {
         $config = Read-Config
-        $OrgID = $config.OrgID
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-noy $OrgID) { 
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }
     }
 
     $Uri = "{0}/organizations/{1}/admins" -f $BaseURI, $OrgID
@@ -168,19 +308,30 @@ Set-Alias -name GMOrgAdmins -Value Get-MerakiOrganizationAdmins -Option ReadOnly
 Get Organization configuration Changes
 #>
 function Get-MerakiOrganizationConfigurationChanges() {
-    [CmdletBinding(DefaultParameterSetName = 'TimeSpan')]
-    Param(                 
-        [string]$OrgID,
+    [CmdletBinding(DefaultParameterSetName = 'default')]
+    Param(                
+        [Parameter(ParameterSetName = 'orgid')]
+        [Parameter(ParameterSetName = 'orgid2')]
+        [string]$OrgID,        
+        [Parameter(ParameterSetName = 'profilename')]
+        [Parameter(ParameterSetName = 'profilename2')]
+        [string]$profileName,
+        [Parameter(ParameterSetName = 'orgid')]
+        [Parameter(ParameterSetName = 'profilename')]
         [Parameter(ParameterSetName = 'StartEnd')]
-        [ValidateScript({$_ -as [DateTime]})]
+        [ValidateScript({$_ -is [DateTime]})]
         [datetime]$StartTime,
+        [Parameter(ParameterSetName = 'orgid')]
+        [Parameter(ParameterSetName = 'profilename')]
         [Parameter(ParameterSetName = 'StartEnd')]
-        [ValidateScript({$_ -as [DateTime]})]
-        [DateTime]$EndTime,
+        [ValidateScript({$_ -is [DateTime]})]
+        [DateTime]$EndTime,        
+        [Parameter(ParameterSetName = 'orgid2')]
+        [Parameter(ParameterSetName = 'profilename2')]
         [Parameter(ParameterSetName = 'TimeSpan')]
-        [ValidateScript({$_ -as [long]})]
-        [long]$TimeSpan,
-        [ValidateScript({$_ -as [int]})]
+        [ValidateScript({$_ -is [int32]})]
+        [Int]$TimeSpan,
+        [ValidateScript({$_ -is [int]})]
         [int]$PerPage,
         [string]$NetworkID,
         [string]$AdminID
@@ -188,7 +339,14 @@ function Get-MerakiOrganizationConfigurationChanges() {
     
     If (-not $OrgID) {
         $config = Read-Config
-        $OrgID = $config.OrgID
+        if ($profileName) {
+            $OrgId = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }
     }
 
     $Uri = "{0}/organizations/{1}/configurationChanges" -f $BaseURI, $OrgID
@@ -237,17 +395,27 @@ Set-Alias -name GMOrgCC -Value Get-MerakiOrganizationConfigurationChanges -Optio
 Get organization thrid party VPN peers
 #>
 function Get-MerakiOrganizationThirdPartyVPNPeers() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'none')]
     Param(
-        [STRING]$OrgID
+        [Parameter(ParameterSetName = 'orgid')]
+        [STRING]$OrgID,
+        [Parameter(ParameterSetName = 'profileName')]
+        [string]$profileName
     )
 
     if (-not $OrgID) {
         $config = Read-Config
-        $OrgId = $config.OrgID
+        if ($profileName) {
+            $OrgId = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgId = $config.profiles.default
+        }
     }
 
-    $Uri = "{0}/organizations/{1}/thirdPartyVPNPeers" -f $BaseURI, $OrgID
+    $Uri = "{0}/organizations/{1}/appliance/vpn/thirdPartyVPNPeers" -f $BaseURI, $OrgID
     $Headers = Get-Headers
 
     $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
@@ -263,13 +431,24 @@ Get organization inventory
 #>
 
 function Get-MerakiOrganizationInventoryDevices() {
+    [CmdletBinding(DefaultParameterSetName = 'none')]
     Param(
-        [string]$OrgID
+        [Parameter(ParameterSetName = 'orgid')]
+        [string]$OrgID,
+        [Parameter(ParameterSetName = 'profilename')]
+        [string]$profileName
     )
 
     if (-not $OrgID) {
         $config = Read-Config
-        $OrgID = $config.OrgID
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
     }
 
     $Uri = "{0}/organizations/{1}/inventoryDevices" -f $BaseURI, $OrgID

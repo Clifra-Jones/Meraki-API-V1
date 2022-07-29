@@ -4,6 +4,16 @@
 ## This is the most recent module. You should use this module as opposed to the V0 module.
 ## The V0 module will still work but lacks many features found here.
 
+## 07/28/2022
+## Added support for named profiles
+If you support multiple organizations you now interact with these organizations using named profiles.
+Updated the Set-MerakiAPI function tosupport creating Named profiles.
+Added function Set-MerakiProfile, this function will set the defaukt profile to the specified named profile.
+All functions that utilize the Organization ID have an additional parameter named 'profileName' that will run the function
+against the organization assigned to that profile.
+See Wiki for details.
+
+
 ## Added 2 new functions to the Content Filtering Functionality.
 Add-MerakiNetworkApplianceContentFilteringRules
 Remove-MerakiNetworkApplianceContentFilteringRules

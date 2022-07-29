@@ -12,7 +12,7 @@
 RootModule = '.\Meraki-API-V1.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.2'
+ModuleVersion = '0.0.3'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -24,10 +24,10 @@ GUID = '794ac708-5ac6-4ce3-8bcf-f1d79978e66a'
 Author = 'Cliff Williams'
 
 # Company or vendor of this module
-CompanyName = 'Unknown'
+CompanyName = 'Balfour Beatty US'
 
 # Copyright statement for this module
-Copyright = '(c) Cliff Williams. All rights reserved.'
+Copyright = '(c) Balfour Beatty US All rights reserved.'
 
 # Description of the functionality provided by this module
 # Description = ''
@@ -77,61 +77,63 @@ NestedModules = @(`
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
 FunctionsToExport = @(`
-    'Get-MerakiOrganizations', `
-    'Get-MerakiOrganization', `
-    'Get-MerakiNetworks', `
-    'Get-MerakiOrganizationConfigTemplates', `
-    'Get-MerakiOrganizationDevices', `
-    'Get-MerakiOrganizationAdmins', `
-    'Get-MerakiOrganizationConfigurationChanges', `
-    'Get-MerakiNetwork', `
-    'Get-MerakiNetworkDevices', `
-    'Get-MerakiNetworkEvents', `
-    'Get-MerakiNetworkEventTypes', `
-    'Get-MerakiNetworkApplianceContentFilteringCategories', `
-    'Update-MerakiNetworkApplianceContentFiltering', `
-    'Get-MerakiAppliancePorts', `
-    'Get-MerakiNetworkApplianceStaticRoutes', `
-    'Get-MerakiNetworkApplianceVLANS', `
-    'Get-MerakiNetworkApplianceVLAN', `
-    'Get-MerakiNetworkApplianceSiteToSiteVPN', `
-    'Get-MerakiApplianceUplinkStatuses', `
-    'Get-MerakiDevice', `
-    'Start-MerakiDeviceBlink', `
-    'Restart-MerakiDevice', `
-    'Get-MerakiNetworkApplianceContentFilteringCategories', `
-    'Get-MerakiNetworkApplianceContentFiltering', `
-    'Update-MerakiNetworkApplianceContentFiltering', `
-    'Get-MerakiAppliancePorts', `
-    'Get-MerakiNetworkApplianceStaticRoutes', `
-    'Get-MerakiNetworkApplianceVLANS', `
-    'Get-MerakiNetworkApplianceVLAN', `
-    'Get-MerakiNetworkApplianceSiteToSiteVPN', `
-    'Get-MerakiApplianceUplinkStatuses', `
-    'Get-MerakiSwitchRoutingInterfaces', `
-    'Get-MerakiSwitchRoutingInterface', `
-    'Get-MerakiSwitchRoutingInterfaceDHCP', `
-    'Get-MerakiSwitchRoutingStaticRoutes', `
-    'Get-MerakiNetworkSwitchLAG', `
-    'Get-MerakiNetworkSwitchStacks', `
-    'Get-MerakiSwitchPorts', `
-    'Reset-MerakiSwitchPorts', `
-    'Set-MerakiAPI', `
-    'Get-MerakiSSIDs', `
-    'Get-MerakiSSID', `
-    'Get-MerakiWirelessStatus', `
-    'Get-MerakiSwitchStackRoutingInterface', `
-    'Get-MerakiSwitchStackRoutingInterfaces', `
-    'Get-MerakiSwitchStackRoutingInterfaceDHCP', `
-    'Get-MerakiSwitchStackRoutingInterfacesDHCP', `
+    'Get-MerakiOrganizations', 
+    'Get-MerakiOrganization', 
+    'Get-MerakiNetworks', 
+    'Get-MerakiOrganizationConfigTemplates', 
+    'Get-MerakiOrganizationDevices', 
+    'Get-MerakiOrganizationAdmins', 
+    'Get-MerakiOrganizationConfigurationChanges',
+    'Get-MerakiOrganizationThirdPartyVPNPeers',
+    'Get-MerakiNetwork', 
+    'Get-MerakiNetworkDevices', 
+    'Get-MerakiNetworkEvents', 
+    'Get-MerakiNetworkEventTypes', 
+    'Get-MerakiNetworkApplianceContentFilteringCategories', 
+    'Update-MerakiNetworkApplianceContentFiltering', 
+    'Get-MerakiAppliancePorts', 
+    'Get-MerakiNetworkApplianceStaticRoutes', 
+    'Get-MerakiNetworkApplianceVLANS', 
+    'Get-MerakiNetworkApplianceVLAN', 
+    'Get-MerakiNetworkApplianceSiteToSiteVPN', 
+    'Get-MerakiApplianceUplinkStatuses', 
+    'Get-MerakiDevice', 
+    'Start-MerakiDeviceBlink', 
+    'Restart-MerakiDevice', 
+    'Get-MerakiNetworkApplianceContentFilteringCategories', 
+    'Get-MerakiNetworkApplianceContentFiltering', 
+    'Update-MerakiNetworkApplianceContentFiltering', 
+    'Get-MerakiAppliancePorts', 
+    'Get-MerakiNetworkApplianceStaticRoutes', 
+    'Get-MerakiNetworkApplianceVLANS', 
+    'Get-MerakiNetworkApplianceVLAN', 
+    'Get-MerakiNetworkApplianceSiteToSiteVPN', 
+    'Get-MerakiApplianceUplinkStatuses', 
+    'Get-MerakiSwitchRoutingInterfaces',
+    'Get-MerakiSwitchRoutingInterface', 
+    'Get-MerakiSwitchRoutingInterfaceDHCP', 
+    'Get-MerakiSwitchRoutingStaticRoutes', 
+    'Get-MerakiNetworkSwitchLAG', 
+    'Get-MerakiNetworkSwitchStacks', 
+    'Get-MerakiSwitchPorts', 
+    'Reset-MerakiSwitchPorts', 
+    'Set-MerakiAPI', 
+    'Get-MerakiSSIDs', 
+    'Get-MerakiSSID', 
+    'Get-MerakiWirelessStatus', 
+    'Get-MerakiSwitchStackRoutingInterface', 
+    'Get-MerakiSwitchStackRoutingInterfaces', 
+    'Get-MerakiSwitchStackRoutingInterfaceDHCP', 
+    'Get-MerakiSwitchStackRoutingInterfacesDHCP', 
     'Get-MerakiSwitchStackRoutingInterfacesDHCP',
-    'Get-MerakiNetworkSwitchStack', `
-    'Get-MerakiSwitchStackRoutingStaticRoutes', `
+    'Get-MerakiNetworkSwitchStack', 
+    'Get-MerakiSwitchStackRoutingStaticRoutes', 
     'Get-MerakiDeviceSwitchPort',
     'Get-MerakiNetworkApplianceVpnStats',
     'Get-MerakiOrganizationInventoryDevices',
     'Add-MerakiNetworkApplianceContentFilteringRules',
-    'Remove-MerakiNetworkApplianceContentFilteringRules'
+    'Remove-MerakiNetworkApplianceContentFilteringRules',
+    'Set-MerakiProfile'
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
