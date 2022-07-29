@@ -119,6 +119,9 @@ function Set-MerakiProfile () {
     $Config = Get-Content -Path $configFile | ConvertFrom-Json | ConvertTo-HashTable
 
     $orgID = $Config.profiles.$profileName
+    if (-not $OrgId) {
+        throw "Invalid profile name!"
+    }
     Set-MerakiAPI -OrgID $orgID -profileName 'default'
 }
 
@@ -149,12 +152,35 @@ function Get-MerakiOrganizations() {
 Set-Alias -Name GMOrgs -Value Get-MerakiOrganizations -Option ReadOnly
 
 function Get-MerakiOrganization() {
+    [CmdLetBinding(DefaultParameterSetName = 'none')]
     Param (
-        [Parameter(Mandatory = $true)]
-        [string]$OrgId
+        [Parameter(
+            Mandatory = $true,
+            ParameterSetName = 'orgid'
+        )]
+        [string]$OrgId,
+        [Parameter(
+            Mandatory = $true,
+            ParameterSetName = "profileName"
+        )]
+        [string]$profileName
     )
 
-    $Uri = "{0}/organizations/{1}" -f $OrgId
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgId = $config.profiles.$profileName
+            if (-not $OrgId) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgId = $config.profile.default
+            if (-not $OrgId) {
+                throw "There is no default profile. You must use the -OrgId parameter and supply the Organization Id."
+            }
+        }
+    }
+    $Uri = "{0}/organizations/{1}" -f $BaseURI, $OrgId
     $Headers = Get-Headers
 
     $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers

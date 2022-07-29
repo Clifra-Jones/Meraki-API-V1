@@ -7,8 +7,8 @@
 ## 07/28/2022
 ## Added support for named profiles
 If you support multiple organizations you now interact with these organizations using named profiles.
-Updated the Set-MerakiAPI function tosupport creating Named profiles.
-Added function Set-MerakiProfile, this function will set the defaukt profile to the specified named profile.
+Updated the Set-MerakiAPI function to support creating named profiles.
+Added function Set-MerakiProfile, this function will set the default profile to the specified named profile.
 All functions that utilize the Organization ID have an additional parameter named 'profileName' that will run the function
 against the organization assigned to that profile.
 See Wiki for details.
