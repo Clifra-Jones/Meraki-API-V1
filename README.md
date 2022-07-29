@@ -11,6 +11,9 @@ Updated the Set-MerakiAPI function to support creating named profiles.
 Added function Set-MerakiProfile, this function will set the default profile to the specified named profile.
 All functions that utilize the Organization ID have an additional parameter named 'profileName' that will run the function
 against the organization assigned to that profile.
+
+If you have an existing configuration file importing the updated module will convert your configuration file to the new format that supports named profiles.
+
 See Wiki for details.
 
 
