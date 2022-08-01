@@ -255,30 +255,15 @@ function Get-MerakiNetworkApplianceVLANS() {
         [string]$id,
         [switch]$NoProgress
     )
+    Begin {
         $Headers = Get-Headers       
-        $VLANs = New-Object System.Collections.Generic.List[psobject]     
-        $i = 1
-        $count = $input.Count
-        $input | ForEach-Object {
-            $Uri = "{0}/networks/{1}/appliance/vlans" -f $BaseURI, $_.id
-            If (-not $NoProgress) {
-                Write-Progress -Activity "Getting VLANS for: " -Status $_.Name -PercentComplete ($i/$count*100)
-            }
-            try {
-                $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers 
-                if ($response.length) {                    
-                    $response | ForEach-Object {
-                        $VLANs.add($_)
-                    }
-                }
-            } catch {
-                #$_.Exception
-            }
-            $i += 1
-        }
-        Write-Progress -Completed -Activity "Get VLANS for:"
-        return $VLANs.toArray()
-    
+        $Uri = "{0}/networks/{1}/appliance/vlans" -f $BaseURI, $id
+    }
+
+    Process {
+        return Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers 
+    }
+        
 }
 
 Set-Alias -Name GMNetAppVLANs -Value Get-MerakiNetworkApplianceVLANS -Option ReadOnly
