@@ -1,18 +1,17 @@
 #Private Variables
 
-$script:BaseURI = "https://api.meraki.com/api/v1"
+$BaseURI = "https://api.meraki.com/api/v1"
 
-$script:paging = @{
+$paging = @{
     next = $null
     prev = $null
     first = $null
     last = $null
 }
 
-
 #Private function
 function Read-Config () {
-    $ConfigPath = "$($env:USERPROFILE)/.meraki/config.json"
+    $ConfigPath = "$home/.meraki/config.json"
     $config = Get-Content -Raw -Path $ConfigPath | ConvertFrom-Json
     return $config
 }

@@ -1,52 +1,13 @@
 #Root module for Meraki API Version 1
+. $PSScriptRoot/private/Private.ps1
+. $PSScriptRoot/public/Organizations.ps1
+. $PSScriptRoot/public/Networks.ps1
+. $PSScriptRoot/public/Devices.ps1
+. $PSScriptRoot/public/Products/Appliances.ps1
+. $PSScriptRoot/public/Products/Switches.ps1
+. $PSScriptRoot/public/Products/Wireless.ps1
 
-$global:BaseURI = "https://api.meraki.com/api/v1"
-
-$global:paging = @{
-    next = $null
-    prev = $null
-    first = $null
-    last = $null
-}
-
-
-#Private function
-function global:Read-Config () {
-    $ConfigPath = "$home/.meraki/config.json"
-    $config = Get-Content -Raw -Path $ConfigPath | ConvertFrom-Json
-    return $config
-}
-
-function global:ConvertTo-UTime () {
-    Param(
-        [datetime]$DateTime
-    )
-
-    $uTime = ([System.DateTimeOffset]$DateTime).ToUnixTimeMilliseconds() / 1000
-
-    return $Utime
-}
-
-function global:ConvertFrom-UTime() {
-    Param(
-        [decimal]$Utime
-    )
-
-    [DateTime]$DateTime = [System.DateTimeOffset]::FromUnixTimeMilliseconds(1000 * $Utime).LocalDateTime
-
-    return $DateTime
-}
-
-function global:Get-Headers() {
-    $config = Read-Config
-    $Headers = @{
-        "X-Cisco-Meraki-API-Key" = $config.APIKey
-        "Content-Type" = 'application/json'
-    }
-    return $Headers
-}
-
-function global:ConvertTo-HashTable() {
+function ConvertTo-HashTable() {
     [CmdletBinding()]
     [OutputType('hashtable')]
     Param(
