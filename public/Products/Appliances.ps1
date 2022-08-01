@@ -261,7 +261,8 @@ function Get-MerakiNetworkApplianceVLANS() {
     }
 
     Process {
-        return Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers 
+        $response =  Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers 
+        return $response
     }
         
 }
