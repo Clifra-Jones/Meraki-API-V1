@@ -1,4 +1,6 @@
-#Root module for Meraki API Version 1
+# Root module for Meraki API Version 1
+
+# Dot source the function files.
 . $PSScriptRoot/private/Private.ps1
 . $PSScriptRoot/public/Organizations.ps1
 . $PSScriptRoot/public/Networks.ps1
