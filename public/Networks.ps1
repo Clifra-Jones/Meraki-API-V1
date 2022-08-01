@@ -45,14 +45,17 @@ function Get-MerakiNetworkDevices () {
         $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
         return $response
     }
+    <#
+        .SYNOPSIS
+        Get the Network Devices for a Network.
+        .PARAMETER id
+        The Network ID.
+    #>
 }
 
 Set-Alias -Name GMNetDevs -Value Get-MerakiNetworkDevices -Option ReadOnly
 
-<#
-.Description
-Get network events
-#>
+
 function Get-MerakiNetworkEvents() {
     [cmdletbinding()]
     Param(
@@ -175,7 +178,15 @@ function Get-MerakiNetworkEvents() {
         }
 
         return $response.events | Sort-Object occurredAt
+
+        
     }
+    <#
+    .SYNOPSIS
+    Get Network Event.
+    .Description
+    Get network events
+    #>
 }
 
 Set-Alias -Name GMNetEvents -value Get-MerakiNetworkEvents -Option ReadOnly

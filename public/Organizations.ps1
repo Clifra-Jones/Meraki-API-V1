@@ -108,6 +108,33 @@ function Set-MerakiAPI() {
     }
 
     $config | ConvertTo-Json | Out-File -FilePath $configFile
+    <#
+    .SYNOPSIS 
+    Set the configuration file.
+    .DESCRIPTION
+    Sets up the configuration file. this can be the initial configuration or creating named profiles.
+    .PARAMETER APIKey
+    Your Meraki API key. If a configuration file exists and this key does not match the key in the file a 
+    new file will be created overwriting the existing file.
+    .PARAMETER OrgID
+    The ID of an organization to add to the profile.    
+    .PARAMETER profileName
+    The name of the profile to create. If ommitted the OrgID is set as the default profile.
+    .NOTES
+    If the OrgID and profileName parameters are omitted named profiles will be created based on the Organization names pulled from Meraki.
+    This approach may not be the best as most of the time these names will have multiple words and spaces and just be too long.
+    The best approach is to create the default profile with:
+    PS> Set-MerakiAPI -APIKey 'GTR15Y124...' -OrgId 123456
+    to create the defaul profile then create named profiles for your other organizations with:
+    PS> Set-MerakiAPI -OrgID 456123 -profileName "otherOrg"
+    You should set a named profile for your default just so you can easily switch between them.
+    .EXAMPLE
+    Create the default profile
+    PS> Set-MerakiAPI -APIKey 'GDTE63534HD74BD93847' -OrgId 123456
+    Create a Named Profile.
+    Set-MerakiAPI -OrgId 123456 -ProfileName USNetwork
+
+    #>
 }
 
 function Set-MerakiProfile () {
@@ -123,13 +150,15 @@ function Set-MerakiProfile () {
         throw "Invalid profile name!"
     }
     Set-MerakiAPI -OrgID $orgID -profileName 'default'
+    <#
+    .SYNOPSIS
+    Set the default profile to the specified named profile.
+    .PARAMETER profileName
+    The Name of the profile to use.
+    #>
 }
 
 
-<#
-.Description
-Retrieves the Organization nformation thet the provided Meraki API Key has access to. This will retrieve the Organization ID.
-#>
 function Get-MerakiOrganizations() {
     Param(
         [Parameter(Mandatory = $true)]
@@ -146,7 +175,14 @@ function Get-MerakiOrganizations() {
     $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
     
     return $response
-
+    <#
+    .SYNOPSIS 
+    Get Meraki Organizations
+    .DESCRIPTION
+    Get all Meraki Organizations your API Key has access to.
+    .PARAMETER APIKey
+    Meraki API Key.
+    #>
 }
 
 Set-Alias -Name GMOrgs -Value Get-MerakiOrganizations -Option ReadOnly
@@ -186,15 +222,19 @@ function Get-MerakiOrganization() {
     $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
 
     return $response
+    <#
+    .SYNOPSIS 
+    Get Meraki Organization
+    .PARAMETER OrgId
+    The organization ID
+    .PARAMETER profileName
+    Use the profile name to get organization.
+    #>
 }
 
 Set-Alias -Name GMOrg -value Get-MerakiOrganization -Option ReadOnly
 
 
-<#
-.Description
-Retrieves all Networks for a Meraki Organization
-#>
 function Get-MerakiNetworks() {
     [CmdletBinding(DefaultParameterSetName = 'none')]
     Param(
@@ -220,14 +260,20 @@ function Get-MerakiNetworks() {
     $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
 
     return $response
+    <#
+    .SYNOPSIS
+    Get all Meraki Networks.
+    .DESCRIPTION
+    Get all Meraki networks in an organization.
+    .PARAMETER OrdID
+    The Organization ID.
+    .PARAMETER profileName
+    The profile name to use to get networks.
+    #>
 }
 
 Set-Alias -Name GMNets -Value Get-MerakiNetworks -Option ReadOnly
 
-<#
-.Description
-Get Organization Configuration Templates
-#>
 function Get-MerakiOrganizationConfigTemplates() {
     [CmdletBinding(DefaultParameterSetName = 'none')]
     Param(
@@ -255,14 +301,21 @@ function Get-MerakiOrganizationConfigTemplates() {
     $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $headers
 
     return $response
+    <# 
+    .SYNOPSIS
+    Get the Organization Configuration Templates
+    .DESCRIPTION
+    Get the cpnfiguration templates for a given organization.
+    .PARAMETER OrgID
+    The Organization Id.
+    .PARAMETER profileName
+    The profile name to use to get the templates.
+    #>
 }
 
 Set-Alias -Name GMOrgTemplates -value Get-MerakiOrganizationConfigTemplates -Option ReadOnly
 
-<#
-.Description
-Retrieves all devices in an organization
-#>
+
 function Get-MerakiOrganizationDevices() {
     [CmdletBinding(DefaultParameterSetName = 'none')]
     Param(
@@ -290,14 +343,20 @@ function Get-MerakiOrganizationDevices() {
     $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
 
     return $response
+    <#
+    .SYNOPSIS
+    Get organization Devices.
+    .DESCRIPTION
+    Get all devices in an organization.
+    .PARAMETER OrgID
+    The Organization Id.
+    .PARAMETER profileName
+    Profile name to use to get the devices.
+    #>
 }
 
 Set-Alias GMOrgDevs -Value Get-MerakiOrganizationDevices -Option ReadOnly
 
-<#
-.Description
-Get Organization Admins
-#>
 function Get-MerakiOrganizationAdmins() {
     [CmdletBinding(DefaultParameterSetName = 'none')]
     Param(
@@ -325,14 +384,19 @@ function Get-MerakiOrganizationAdmins() {
     $response = Invoke-RestMethod -Method GET -Uri $uri -Headers $Headers
 
     return $response
+    <#
+    .SYNOPSIS
+    Get Organization Admins.
+    .PARAMETER OrgID
+    The Organization ID.
+    .PARAMETER profileName
+    The profile name to get admins with.
+    #>
 }
 
 Set-Alias -name GMOrgAdmins -Value Get-MerakiOrganizationAdmins -Option ReadOnly
 
-<#
-.Description
-Get Organization configuration Changes
-#>
+
 function Get-MerakiOrganizationConfigurationChanges() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(                
@@ -411,15 +475,34 @@ function Get-MerakiOrganizationConfigurationChanges() {
     $response = Invoke-RestMethod -Method GET -Uri $Uri -body $Body -Headers $Headers
 
     return $response
+    <#
+    .SYNOPSIS 
+    Get Organization Configuration Changes
+    .DESCRIPTION
+    Gets configuration chenges made to an organization's network.
+    .PARAMETER OrgID
+    The OPrganization Id.
+    .PARAMETER profileName
+    The profile name to use to get the changes.
+    .PARAMETER StartTime
+    The start time to pull changes.
+    .PARAMETER EndTime
+    The end time to pull changes.
+    .PARAMETER TimeSpan
+    A timespan to pull changes.
+    .PARAMETER PerPage
+    Number of records to pull per page.
+    .PARAMETER NetworkID
+    Filter results by Network ID.
+    .PARAMETER AdminID
+    Filter results by Admin ID.
+    #>
     
 }
 
 Set-Alias -name GMOrgCC -Value Get-MerakiOrganizationConfigurationChanges -Option ReadOnly
 
-<#
-.Description
-Get organization thrid party VPN peers
-#>
+
 function Get-MerakiOrganizationThirdPartyVPNPeers() {
     [CmdletBinding(DefaultParameterSetName = 'none')]
     Param(
@@ -447,14 +530,18 @@ function Get-MerakiOrganizationThirdPartyVPNPeers() {
     $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
 
     return $response
+    <#
+    .SYNOPSIS
+    Get Organization 3rd paty VPNs.
+    .PARAMETER OrgID
+    Organization ID.
+    .PARAMETER profileName
+    Profile Name to use.
+    #>
 }
 
 Set-Alias -Name GMOrg3pVP -Value Get-MerakiOrganizationThirdPartyVPNPeers -Option ReadOnly
 
-<#
-.Description
-Get organization inventory
-#>
 
 function Get-MerakiOrganizationInventoryDevices() {
     [CmdletBinding(DefaultParameterSetName = 'none')]
@@ -483,6 +570,14 @@ function Get-MerakiOrganizationInventoryDevices() {
     $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
 
     return $response
+    <#
+    .SYNOPSIS
+    Get the organization device inventory 
+    .PARAMETER OrgID
+    Organization ID.
+    .PARAMETER profileName
+    Profile name to use.
+    #>
 }
 
 Set-Alias -Name GMOrgInvDevices -value Get-MerakiOrganizationInventoryDevices -Option ReadOnly
