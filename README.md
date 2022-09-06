@@ -1,6 +1,11 @@
 
 # Meraki-API-V1
 
+This module allows you to interact with your Meraki network using Powershell.
+
+A full command reference is available at https://clifra-jones.github.io/Meraki-API-V1/docs/referrence.html
+
+
 ## This is the most recent module. You should use this module as opposed to the V0 module.
 ## The V0 module will still work but lacks many features found here.
 
@@ -101,5 +106,4 @@ You must configure your profile to use the API module. To do this use the Set-Me
 
 This will create the file .meraki/config.json in your user profile. 
 
-## See Wiki for documentation.
 
