@@ -1,10 +1,6 @@
 # Meraki Organization functions
 
-<#
-.Description
-Creates a file in the user profile folder un the .meraki folder named config.json.
-This file contains the users Meraki API Key and the default Organization ID
-#>
+
 function Set-MerakiAPI() {
     [CmdletBinding(DefaultParameterSetName="default")]
     Param(
@@ -123,17 +119,12 @@ function Set-MerakiAPI() {
     .NOTES
     If the OrgID and profileName parameters are omitted named profiles will be created based on the Organization names pulled from Meraki.
     This approach may not be the best as most of the time these names will have multiple words and spaces and just be too long.
-    The best approach is to create the default profile with:
-    PS> Set-MerakiAPI -APIKey 'GTR15Y124...' -OrgId 123456
-    to create the defaul profile then create named profiles for your other organizations with:
-    PS> Set-MerakiAPI -OrgID 456123 -profileName "otherOrg"
-    You should set a named profile for your default just so you can easily switch between them.
     .EXAMPLE
     Create the default profile
     PS> Set-MerakiAPI -APIKey 'GDTE63534HD74BD93847' -OrgId 123456
+    .EXAMPLE
     Create a Named Profile.
     Set-MerakiAPI -OrgId 123456 -ProfileName USNetwork
-
     #>
 }
 
@@ -153,8 +144,11 @@ function Set-MerakiProfile () {
     <#
     .SYNOPSIS
     Set the default profile to the specified named profile.
+    .DESCRIPTION
+    Use this function to set the default profile for all subsequent command. 
+    This changes the organization ID of the default profile so any future commands will use this profile even after closing out of PowerShell.
     .PARAMETER profileName
-    The Name of the profile to use.
+    The name of the profile to use.
     #>
 }
 
@@ -229,6 +223,8 @@ function Get-MerakiOrganization() {
     The organization ID
     .PARAMETER profileName
     Use the profile name to get organization.
+    .OUTPUTS
+    A Meraki organization Object
     #>
 }
 
@@ -269,6 +265,8 @@ function Get-MerakiNetworks() {
     The Organization ID.
     .PARAMETER profileName
     The profile name to use to get networks.
+    .OUTPUTS
+    An array of Meraki network objects.
     #>
 }
 
@@ -307,9 +305,11 @@ function Get-MerakiOrganizationConfigTemplates() {
     .DESCRIPTION
     Get the cpnfiguration templates for a given organization.
     .PARAMETER OrgID
-    The Organization Id.
+    The Organization Id. If omitted uses the default profile.
     .PARAMETER profileName
     The profile name to use to get the templates.
+    .OUTPUTS
+    An array of Meraki configuration template objects.
     #>
 }
 
@@ -349,9 +349,11 @@ function Get-MerakiOrganizationDevices() {
     .DESCRIPTION
     Get all devices in an organization.
     .PARAMETER OrgID
-    The Organization Id.
+    The Organization Id. If ommitted uses the default profile.
     .PARAMETER profileName
-    Profile name to use to get the devices.
+    Profile name to use to get the devices. If ommitted uses the default profile.
+    .OUTPUTS
+    AN array of Meraki Device objects.
     #>
 }
 
@@ -388,9 +390,11 @@ function Get-MerakiOrganizationAdmins() {
     .SYNOPSIS
     Get Organization Admins.
     .PARAMETER OrgID
-    The Organization ID.
+    The Organization ID. If ommitted uses the default profile.
     .PARAMETER profileName
-    The profile name to get admins with.
+    The profile name to get admins with. If ommitted used the default profile.
+    .OUTPUTS
+    An array of Meraki Admin objects.
     #>
 }
 
@@ -481,9 +485,9 @@ function Get-MerakiOrganizationConfigurationChanges() {
     .DESCRIPTION
     Gets configuration chenges made to an organization's network.
     .PARAMETER OrgID
-    The OPrganization Id.
+    The Organization Id. If ommitted used th default profile.
     .PARAMETER profileName
-    The profile name to use to get the changes.
+    The profile name to use to get the changes. If ommitted used th default profile.
     .PARAMETER StartTime
     The start time to pull changes.
     .PARAMETER EndTime
@@ -496,6 +500,14 @@ function Get-MerakiOrganizationConfigurationChanges() {
     Filter results by Network ID.
     .PARAMETER AdminID
     Filter results by Admin ID.
+    .OUTPUTS
+    An array of configuration change objects.
+    .EXAMPLE
+    Filter logs for last 10 days by Administrator.
+    PS> Get-MerakiOrganizationAdmins | Where-Object {$_.Name -eq "John Doe"} | Get-MerakiOrganizationConfigurationChanges -TimeSpan 10
+    .EXAMPLE
+    Filter logs for changes to the Miami network that occurred between 6/1/2020 and 6/30/2020
+    Get-MerakiNetworks | Where-Object {$_.Name -like "*Miami*"} | Get-MerakiOrganizationConfigurationChanges -StartTime "06/01/2020" -EndTime "06/30/2020"
     #>
     
 }
@@ -534,9 +546,11 @@ function Get-MerakiOrganizationThirdPartyVPNPeers() {
     .SYNOPSIS
     Get Organization 3rd paty VPNs.
     .PARAMETER OrgID
-    Organization ID.
+    Organization ID. If ommitted used th default profile.
     .PARAMETER profileName
-    Profile Name to use.
+    Profile Name to use. If ommitted used th default profile.
+    .OUTPUTS
+    An array of VPN-peer objects.
     #>
 }
 
@@ -574,9 +588,11 @@ function Get-MerakiOrganizationInventoryDevices() {
     .SYNOPSIS
     Get the organization device inventory 
     .PARAMETER OrgID
-    Organization ID.
+    Organization ID. If ommitted used th default profile.
     .PARAMETER profileName
-    Profile name to use.
+    Profile name to use. If ommitted used th default profile.
+    .OUTPUTS
+    An array of inventory objects.
     #>
 }
 

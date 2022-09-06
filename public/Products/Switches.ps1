@@ -26,6 +26,16 @@ function Get-MerakiSwitchStackRoutingInterfaces() {
 
         return $response
     }
+    <#
+    .SYNOPSIS
+    Returns thr routing interfaces for a Switch stack.
+    .PARAMETER Id
+    The switch stack ID.
+    .PARAMETER networkId
+    The network Id.
+    .OUTPUTS
+    An array of Meraki Interface Objects.
+    #>
 }
 
 Set-Alias GMNetSWStRoutInts -Value Get-MerakiSwitchStackRoutingInterfaces
@@ -64,6 +74,18 @@ function Get-MerakiSwitchStackRoutingInterface() {
 
         return $response
     }
+    <#
+    .SYNOPSIS
+    Return a Meraki Switch stack routing interface.
+    .PARAMETER networkId
+    The network Id.
+    .PARAMETER stackId
+    The stack Id.
+    .PARAMETER interfaceId
+    The interface Id.
+    .OUTPUTS
+    A Meraki interface object.
+    #>
 }
 
 Set-Alias -Name GMSwStackRoutInt -Value Get-MerakiSwitchStackRoutingInterface
@@ -101,6 +123,16 @@ function Get-MerakiSwitchStackRoutingInterfacesDHCP() {
     End {
         return $responses.ToArray()
     }
+    <#
+    .SYNOPSIS
+    Returns the DHCP Settings for a switch stack interface.
+    .PARAMETER id
+    The stack Id.
+    .PARAMETER networkId
+    The network Id.
+    .OUTPUTS
+    An array of Meraki DHCP objects.
+    #>
 }
 
 Set-Alias GMSwStRoutIntsDHCP -Value Get-MerakiSwitchRoutingInterfaceDHCPs
@@ -143,6 +175,16 @@ function Get-MerakiSwitchStackRoutingStaticRoutes() {
     End {
         return $responses.ToArray()
     }
+    <#
+    .SYNOPSIS
+    Returns the switch stack static routes.
+    .PARAMETER id
+    The stack Id.
+    .PARAMETER networkId
+    The network Id.
+    .OUTPUTS
+    An array of Meraki witch stack static route objects.
+    #>
 }
 
 set-alias GMSwStRoutStatic -Value Get-MerakiSwitchStackRoutingStaticRoutes
@@ -204,6 +246,18 @@ function Get-MerakiSwitchStackRoutingInterfaceDHCP() {
     End {
         return $interfaceDHCPs.ToArray()
     }
+    <#
+    .SYNOPSIS
+    Returns the Meraki switch stack routing interface DHCP setting for an interface.
+    .PARAMETER interfaceId
+    The interface Id.
+    .PARAMETER networkId
+    The network Id
+    .PARAMETER stackId
+    The Stack Id.
+    .OUTPUTS
+    A Meraki interface DHCP object.
+    #>
 }
 
 Set-Alias GMSwStRoutIntDHCP -Value Get-MerakiSwitchRouting
@@ -230,6 +284,14 @@ function Get-MerakiSwitchRoutingInterfaces() {
 
         return $response
     }
+    <#
+    .SYNOPSIS
+    Returns the routing interfaces for a Meraki switch.
+    .PARAMETER serial
+    The serial number of the switch.
+    .OUTPUTS
+    An array of Meraki switch interfaces.
+    #>
 }
 
 Set-Alias -Name GMSWRoutInts -value Get-MerakiSwitchRoutingInterfaces -Option ReadOnly
@@ -253,6 +315,16 @@ function Get-MerakiSwitchRoutingInterface() {
     $response = Invoke-RestMethod -Mestod GET -Uri $Uri -Headers $Headers`
 
     return $response
+    <#
+    .SYNOPSIS
+    Returns an interface for a Meraki switch.
+    .PARAMETER serial
+    The serial number of the switch.
+    .PARAMETER interfaceId
+    The interface Id.
+    .OUTPUTS
+    A Meralki switch interface object.
+    #>
 }
 
 Set-Alias -Name GMSWRoutInt -Value Get-MerakiSwitchRoutingInterface -Option ReadOnly
@@ -275,6 +347,16 @@ function Get-MerakiSwitchRoutingInterfaceDHCP() {
 
         $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
         return $response
+    <#
+    .SYNOPSIS
+    Return DHCP settings for a Meraki switch interface.
+    .PARAMETER serial
+    The serial number of the switch.
+    .PARAMETER interfaceId
+    The interface Id.
+    .OUTPUTS
+    A Meraki wwitch interface DHCP Settings.
+    #>
 }
 
 Set-Alias GMSWRoutIntDHCP -value Get-MerakiSwitchRoutingInterfaceDHCP -option ReadOnly
@@ -300,6 +382,14 @@ function Get-MerakiSwitchRoutingStaticRoutes() {
     }
 
     return $response
+    <#
+    .SYNOPSIS
+    Returns the static routes for a Meraki switch.
+    .PARAMETER serial
+    The serial number of the switch.
+    .OUTPUTS
+    AN array of Meraki static routes.
+    #>
 }
 
 Set-Alias -Name GMSWRoutStatic -value Get-MerakiSwitchRoutingStaticRoutes -Option ReadOnly
@@ -345,6 +435,14 @@ function Get-MerakiNetworkSwitchLAG() {
     End {
         return $responses.ToArray()
     }
+    <#
+    .SYNOPSIS
+    Return the LAB configurations for a Meraki Network.
+    .PARAMETER id
+    The network Id.
+    .OUTPUTS
+    An array of switch lag objects.
+    #>
 }
 
 Set-Alias -Name GMNetSWLag -value Get-MerakiNetworkSwitchLAG -Option ReadOnly
@@ -372,6 +470,14 @@ function Get-MerakiNetworkSwitchStacks() {
     } else {
         return $null
     }
+    <#
+    .SYNOPSIS
+    Returns the switch stacks for a Meraki network.
+    .PARAMETER id
+    The network Id.
+    .OUTPUTS
+    An array of Meraki switch stack objects.
+    #>
 }
 
 Set-Alias -Name GMNetSWStacks -Value Get-MerakiNetworkSwitchStacks -Option ReadOnly
@@ -395,14 +501,20 @@ function Get-MerakiNetworkSwitchStack() {
     $response = Invoke-RestMethod -Method GET -Uri $uri -Headers $Headers
 
     return $response
+    <#
+    .SYNOPSIS
+    Returns a Meraki network switch stack.
+    .PARAMETER networkId
+    The network Id.
+    .PARAMETER stackId
+    The stack Id.
+    .OUTPUTS
+    A Meraki switch stack object.
+    #>
 }
 
 set-alias GMSwStack -Value Get-MerakiNetworkSwitchStack
 
-<#
-.Description
-Retrieve Switch Port settigs for a switch
-#>
 function Get-MerakiSwitchPorts() {
     [CmdletBinding()]
     Param(
@@ -431,6 +543,14 @@ function Get-MerakiSwitchPorts() {
     End {
         return $responses.ToArray()
     }
+    <#
+    .SYNOPSIS
+    Returns the port configurations for a Meraki switch
+    .PARAMETER serial
+    The serial number of the switch.
+    .OUTPUTS
+    An array of Meraki switch port objects.
+    #>
 }
 
 Set-Alias GMSwPorts -Value Get-MerakiSwitchPorts -Option ReadOnly
@@ -454,6 +574,16 @@ function Get-MerakiDeviceSwitchPort() {
     $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
 
     return $response
+    <#
+    .SYNOPSIS
+    Returns the port configuration for a Meraki switch port.
+    .PARAMETER serial
+    The switch serial number.
+    .PARAMETER portId
+    The port Id.
+    .OUTPUTS
+    A Meraki switch port object.]
+    #>
 }
 
 Set-Alias -Name GMDevSwPort -Value Get-MerakiDeviceSwitchPort
@@ -484,6 +614,16 @@ function Reset-MerakiSwitchPorts() {
     $response = Invoke-RestMethod -Method POST -Uri $Uri -body $body -header $Headers
 
     return $response
+    <#
+    .SYNOPSIS
+    Resets (cycles) a Meraki switch port.
+    .PARAMETER serial
+    The switch serial number.
+    .PARAMETER ports
+    An array of port Ids.
+    .OUTPUTS
+    An array of ports that were reset.
+    #>
 }
 
 Set-Alias -Name RMSWPorts -Value Reset-MerakiSwitchPorts -Option ReadOnly  

@@ -17,6 +17,14 @@ function Get-MerakiSSIDs() {
     $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
 
     return $response
+    <#
+    .SYNOPSIS
+    Returns the Wireless SSIDs for a Meraki Network.
+    .PARAMETER id
+    The network Id.
+    .OUTPUTS
+    An array of Meraki SSID objects.
+    #>
 }
 
 Set-Alias -Name GMSSIDs -Value Get-MerakiSSIDs -Option ReadOnly
@@ -25,7 +33,7 @@ function Get-MerakiSSID() {
     Param(
         [Parameter(Mandatory = $true)]
         [string]$networkId,
-        [Parameter(Madatory = $true)]
+        [Parameter(Mandatory = $true)]
         [Int]$number
     )
 
@@ -35,6 +43,16 @@ function Get-MerakiSSID() {
     $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
 
     return $response
+    <#
+    .SYNOPSIS 
+    Returns a Meraki SSID for a network.
+    .PARAMETER networkId
+    The network ID.
+    .PARAMETER number
+    The SSID Number.
+    .OUTPUTS
+    A Meraki SSID Object.
+    #>
 }
 
 Set-Alias -Name GMSSID -Value Get-MerakiSSID -Option ReadOnly
@@ -56,6 +74,14 @@ function Get-MerakiWirelessStatus() {
     $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
 
     return $response
+    <#
+    .SYNOPSIS
+    Returns the status of a Meraki Access Point.
+    .PARAMETER serial
+    The serial number of the Access Point.
+    .OUTPUTS
+    A Meraki Access Point status object.
+    #>
 }
 
 Set-Alias -Name GMWirelessStat -Value Get-MerakiWirelessStatus
