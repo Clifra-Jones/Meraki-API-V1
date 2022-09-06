@@ -5,12 +5,14 @@ This module allows you to interact with your Meraki network using Powershell.
 
 A full command reference is available at https://clifra-jones.github.io/Meraki-API-V1/docs/referrence.html
 
-
 ## This is the most recent module. You should use this module as opposed to the V0 module.
+
 ## The V0 module will still work but lacks many features found here.
 
 ## 07/28/2022
+
 ## Added support for named profiles
+
 If you support multiple organizations you now interact with these organizations using named profiles.
 Updated the Set-MerakiAPI function to support creating named profiles.
 Added function Set-MerakiProfile, this function will set the default profile to the specified named profile.
@@ -21,8 +23,8 @@ If you have an existing configuration file importing the updated module will con
 
 See Wiki for details.
 
-
 ## Added 2 new functions to the Content Filtering Functionality.
+
 Add-MerakiNetworkApplianceContentFilteringRules
 Remove-MerakiNetworkApplianceContentFilteringRules
 
@@ -30,7 +32,6 @@ Both functions take the same parameters.
 id: The network id of a meraki MX appliance
 allowedURLPatterns: An array of allowed URLs to add/remove.
 blockedURLPatterns: An arracy of blocked URLs to add/remove.
-
 
 ## INSTALLATION
 
@@ -47,13 +48,11 @@ User Scope Install (preferred)
 ### Command Prompt
 
 >cd %UserProfile%\Documents\PowerShell\Modules
-
 >git clone https://github.com/Clifra-Jones/Meraki-API-V1.git
 
 ### Powershell
 
 >cd $env:USERPROFILE\Documents\PowerShell\Modules
-
 >git clone https://github.com/Clifra-Jones/Meraki-API-V1.git
 
 ## System Scope Install
@@ -63,7 +62,6 @@ User Scope Install (preferred)
 Open an elevated command prompt
 
 >cd %PROGRAMFILES%\PowerShell\7\modules
-
 >git clone https://github.com/Clifra-Jones/Meraki-API.git
 
 # Linux/Mac
@@ -71,13 +69,11 @@ Open an elevated command prompt
 ### User Scope Install
 
 >cd ~/.local/share/powershell/Modules
-
 >git clone https://github.com/Clifra-Jones/Meraki-API-V1.git
 
 ### System Scope Install
 
 >cd /usr/local/share/powershell/Modules
-
 >sudo git clone https://github.com/Clifra-Jones/Meraki-API-V1.git
 
 ## ZIP FILE INSTALLATION
@@ -95,7 +91,6 @@ Once you have your API key you need to obtain the Organization ID for the Organi
 
 Open Powershell
 >Import-Module Meraki-API
-
 >Get-MerakiOrganizations -APIKey '{key string}'
 
 Configure your user profile to use the API.
@@ -103,7 +98,5 @@ Configure your user profile to use the API.
 You must configure your profile to use the API module. To do this use the Set-MerakiAPI function.
 
 >Set-MerakiAPI -APIKey '{key string}' -OrgID 'XXXXXX'
-
-This will create the file .meraki/config.json in your user profile. 
-
-
+>Set-MerakiAPI -APIKey '{key string}' -OrgId 'XXXXXX' -ProfileName 'ProfileName'
+This will create the file .meraki/config.json in your user profile.
