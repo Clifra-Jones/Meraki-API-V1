@@ -12,7 +12,7 @@ If you have an existing configuration file importing the updated module will con
 
 See Wiki for details.
 
-## Added 2 new functions to the Content Filtering Functionality.
+## Added 2 new functions to the Content Filtering Functionality
 
 Add-MerakiNetworkApplianceContentFilteringRules
 Remove-MerakiNetworkApplianceContentFilteringRules
