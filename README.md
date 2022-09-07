@@ -1,37 +1,15 @@
 
 # Meraki-API-V1
 
-This module allows you to interact with your Meraki network using Powershell.
+This module allows you to interact and managr your Meraki network using Powershell.
+This module uses the Version 1 REST API.
 
 A full command reference is available at https://clifra-jones.github.io/Meraki-API-V1/docs/referrence.html
+Release notes are available at https://clifra-jones.github.io/Meraki-API-V1/docs/releaseNotes.md
 
 ## This is the most recent module. You should use this module as opposed to the V0 module.
 
 ## The V0 module will still work but lacks many features found here.
-
-## 07/28/2022
-
-## Added support for named profiles
-
-If you support multiple organizations you now interact with these organizations using named profiles.
-Updated the Set-MerakiAPI function to support creating named profiles.
-Added function Set-MerakiProfile, this function will set the default profile to the specified named profile.
-All functions that utilize the Organization ID have an additional parameter named 'profileName' that will run the function
-against the organization assigned to that profile.
-
-If you have an existing configuration file importing the updated module will convert your configuration file to the new format that supports named profiles.
-
-See Wiki for details.
-
-## Added 2 new functions to the Content Filtering Functionality.
-
-Add-MerakiNetworkApplianceContentFilteringRules
-Remove-MerakiNetworkApplianceContentFilteringRules
-
-Both functions take the same parameters.
-id: The network id of a meraki MX appliance
-allowedURLPatterns: An array of allowed URLs to add/remove.
-blockedURLPatterns: An arracy of blocked URLs to add/remove.
 
 ## INSTALLATION
 
@@ -64,6 +42,11 @@ Open an elevated command prompt
 >cd %PROGRAMFILES%\PowerShell\7\modules
 >git clone https://github.com/Clifra-Jones/Meraki-API.git
 
+### Powershell
+
+>cd $env:PROGRAMFILES\Documents\PowerShell\Modules
+>git clone https://github.com/Clifra-Jones/Meraki-API-V1.git
+
 # Linux/Mac
 
 ### User Scope Install
@@ -87,7 +70,7 @@ API Access must be enabled on your Meraki Dashboard.
 You will need to have a Meraki API key. You can get your key by logging into your Meraki Dashboard, go to your profile and generate your API key.
 Save this key in a safe place.
 
-Once you have your API key you need to obtain the Organization ID for the Organizations you have access to. You can do this with the GetMerakiOrganizations function.
+Once you have your API key you need to obtain the Organization ID for the Organizations you have access to. You can do this with the Get-MerakiOrganizations function.
 
 Open Powershell
 >Import-Module Meraki-API
