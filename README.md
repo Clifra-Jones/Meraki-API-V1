@@ -46,7 +46,7 @@ Open an elevated command prompt
 
 ### Powershell
 
->cd $env:PROGRAMFILES\Documents\PowerShell\Modules
+>cd $env:PROGRAMFILES\PowerShell\Modules
 >git clone https://github.com/Clifra-Jones/Meraki-API-V1.git
 
 # Linux/Mac
