@@ -4,14 +4,13 @@
 This module allows you to interact and managr your Meraki network using Powershell.
 This module uses the Version 1 REST API.
 
-## This is the most recent module. You should use this module as opposed to the V0 module
+**This is the most recent module. You should use this module as opposed to the V0 module**
 
-## The V0 module will still work but lacks many features found here
+**The V0 module will still work but lacks many features found here**
 
-### [Module Referrence](https://clifra-jones.github.io/Meraki-API-V1/docs/referrence.html)
+[**Module Referrence**](https://clifra-jones.github.io/Meraki-API-V1/docs/referrence.html)
 
-### [Release notes](https://clifra-jones.github.io/Meraki-API-V1/docs/releaseNotes.md)
-
+[**Release notes**](https://clifra-jones.github.io/Meraki-API-V1/docs/releaseNotes.md)
 
 ## INSTALLATION
 
@@ -25,41 +24,62 @@ This module uses the Version 1 REST API.
 
 User Scope Install (preferred)
 
-### Command Prompt
+**Command Prompt**
 
->cd %UserProfile%\Documents\PowerShell\Modules
->git clone https://github.com/Clifra-Jones/Meraki-API-V1.git
+```bash
+cd %UserProfile%\Documents\PowerShell\Modules
+```
 
-### Powershell
+**Powershell**
 
->cd $env:USERPROFILE\Documents\PowerShell\Modules
->git clone https://github.com/Clifra-Jones/Meraki-API-V1.git
+```powershell
+cd $env:USERPROFILE\Documents\PowerShell\Modules
+```
+
+Clone the repository
+
+```bash
+git clone https://github.com/Clifra-Jones/Meraki-API-V1.git
+```
 
 ## System Scope Install
 
-### Command Prompt
+***Command Prompt***
 
 Open an elevated command prompt
 
->cd %PROGRAMFILES%\PowerShell\7\modules
->git clone https://github.com/Clifra-Jones/Meraki-API.git
+```bash
+cd %PROGRAMFILES%\PowerShell\7\modules
+```
 
-### Powershell
+**Powershell**
 
+```powershell
 >cd $env:PROGRAMFILES\Documents\PowerShell\Modules
->git clone https://github.com/Clifra-Jones/Meraki-API-V1.git
+```
+
+```bash
+git clone https://github.com/Clifra-Jones/Meraki-API-V1.git
+```
 
 # Linux/Mac
 
-### User Scope Install
+User Scope Install (preferred)
 
->cd ~/.local/share/powershell/Modules
->git clone https://github.com/Clifra-Jones/Meraki-API-V1.git
+```bash
+cd ~/.local/share/powershell/Modules
+```
 
-### System Scope Install
+System Scope Install
 
->cd /usr/local/share/powershell/Modules
->sudo git clone https://github.com/Clifra-Jones/Meraki-API-V1.git
+```bash
+cd /usr/local/share/powershell/Modules
+```
+
+clone the repository
+```bash
+sudo git clone https://github.com/Clifra-Jones/Meraki-API-V1.git
+```
 
 ## ZIP FILE INSTALLATION
 
@@ -82,6 +102,12 @@ Configure your user profile to use the API.
 
 You must configure your profile to use the API module. To do this use the Set-MerakiAPI function.
 
+```powershell
 >Set-MerakiAPI -APIKey '{key string}' -OrgID 'XXXXXX'
+```
+
+```powershell
 >Set-MerakiAPI -APIKey '{key string}' -OrgId 'XXXXXX' -ProfileName 'ProfileName'
+```
+
 This will create the file .meraki/config.json in your user profile.
