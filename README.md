@@ -10,7 +10,7 @@ This module uses the Version 1 REST API.
 
 **The V0 module will still work but lacks many features found here**
 
-[**Module Referrence**](https://clifra-jones.github.io/Meraki-API-V1/docs/referrence.html)
+[**Module Reference**](https://clifra-jones.github.io/Meraki-API-V1/docs/referrence.html)
 
 [**Release notes**](https://clifra-jones.github.io/Meraki-API-V1/docs/releaseNotes.md)
 
