@@ -1,7 +1,9 @@
 
+![Balfour Logo](https://www.balfourbeattyus.com/Balfour-dev.allata.com/media/content-media/2017-Balfour-Beatty-Logo-Blue.svg?ext=.svg)
+
 # Meraki-API-V1
 
-This module allows you to interact and managr your Meraki network using Powershell.
+This module allows you to interact and manage your Meraki network using Powershell.
 This module uses the Version 1 REST API.
 
 **This is the most recent module. You should use this module as opposed to the V0 module**
@@ -55,7 +57,7 @@ cd %PROGRAMFILES%\PowerShell\7\modules
 **Powershell**
 
 ```powershell
->cd $env:PROGRAMFILES\Documents\PowerShell\Modules
+cd $env:PROGRAMFILES\Documents\PowerShell\Modules
 ```
 
 ```bash
@@ -77,6 +79,7 @@ cd /usr/local/share/powershell/Modules
 ```
 
 clone the repository
+
 ```bash
 sudo git clone https://github.com/Clifra-Jones/Meraki-API-V1.git
 ```
@@ -95,19 +98,23 @@ Save this key in a safe place.
 Once you have your API key you need to obtain the Organization ID for the Organizations you have access to. You can do this with the Get-MerakiOrganizations function.
 
 Open Powershell
->Import-Module Meraki-API
->Get-MerakiOrganizations -APIKey '{key string}'
+```powershell
+Import-Module Meraki-API
+Get-MerakiOrganizations -APIKey '{key string}'
+```
 
 Configure your user profile to use the API.
 
 You must configure your profile to use the API module. To do this use the Set-MerakiAPI function.
 
 ```powershell
->Set-MerakiAPI -APIKey '{key string}' -OrgID 'XXXXXX'
+Set-MerakiAPI -APIKey '{key string}' -OrgID 'XXXXXX'
 ```
 
 ```powershell
->Set-MerakiAPI -APIKey '{key string}' -OrgId 'XXXXXX' -ProfileName 'ProfileName'
+Set-MerakiAPI -APIKey '{key string}' -OrgId 'XXXXXX' -ProfileName 'ProfileName'
 ```
 
 This will create the file .meraki/config.json in your user profile.
+
+See the command reference for additional information on functions, syntax, and examples.
