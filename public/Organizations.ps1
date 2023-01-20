@@ -2,20 +2,18 @@
 
 
 function Set-MerakiAPI() {
-    [CmdletBinding(DefaultParameterSetName="default")]
+    [CmdletBinding()]
     Param(
         [string]$APIKey,
-        [Parameter(
-            Mandatory = $true,
-            ParameterSetName = "profile"
-        )]
-        [Parameter(
-            ParameterSetName = "default'"
-        )]
         [string]$OrgID,
-        [Parameter(
-            ParameterSetName = "profile",
-            Mandatory = $true
+        [ValidateScript(
+            {
+                if (-not $OrgId) {
+                    throw "The profileName parameter must be used with the OrgId parameter"
+                } else {
+                    $true
+                }
+            }
         )]
         [string]$profileName
     )
@@ -184,14 +182,24 @@ Set-Alias -Name GMOrgs -Value Get-MerakiOrganizations -Option ReadOnly
 function Get-MerakiOrganization() {
     [CmdLetBinding(DefaultParameterSetName = 'none')]
     Param (
-        [Parameter(
-            Mandatory = $true,
-            ParameterSetName = 'orgid'
+        [ValidateScript(
+            {
+                if ($profileName) {
+                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
+                } else {
+                    $true
+                }
+            }
         )]
-        [string]$OrgId,
-        [Parameter(
-            Mandatory = $true,
-            ParameterSetName = "profileName"
+        [string]$OrgID,
+        [ValidateScript(
+            {
+                if ($OrgID) {
+                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
+                } else {
+                    $true
+                }
+            }
         )]
         [string]$profileName
     )
@@ -234,9 +242,25 @@ Set-Alias -Name GMOrg -value Get-MerakiOrganization -Option ReadOnly
 function Get-MerakiNetworks() {
     [CmdletBinding(DefaultParameterSetName = 'none')]
     Param(
-        [Parameter(ParameterSetName = 'orgid')]
-        [string]$OrdID,
-        [Parameter(ParameterSetName = 'profilename')]
+        [ValidateScript(
+            {
+                if ($profileName) {
+                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
+        [string]$OrgID,
+        [ValidateScript(
+            {
+                if ($OrgID) {
+                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
         [string]$profileName
     )
     if (-not $orgID) {
@@ -275,9 +299,25 @@ Set-Alias -Name GMNets -Value Get-MerakiNetworks -Option ReadOnly
 function Get-MerakiOrganizationConfigTemplates() {
     [CmdletBinding(DefaultParameterSetName = 'none')]
     Param(
-        [Parameter(ParameterSetName = 'orgid')]
-        [String]$OrgID,
-        [Parameter(ParameterSetName = 'profilename')]
+        [ValidateScript(
+            {
+                if ($profileName) {
+                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
+        [string]$OrgID,
+        [ValidateScript(
+            {
+                if ($OrgID) {
+                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
         [string]$profileName
     )
 
@@ -319,9 +359,25 @@ Set-Alias -Name GMOrgTemplates -value Get-MerakiOrganizationConfigTemplates -Opt
 function Get-MerakiOrganizationDevices() {
     [CmdletBinding(DefaultParameterSetName = 'none')]
     Param(
-        [Parameter(ParameterSetName = 'orgId')]
+        [ValidateScript(
+            {
+                if ($profileName) {
+                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
         [string]$OrgID,
-        [Parameter(ParameterSetName = 'profilename')]
+        [ValidateScript(
+            {
+                if ($OrgID) {
+                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
         [string]$profileName
     )
 
@@ -362,9 +418,25 @@ Set-Alias GMOrgDevs -Value Get-MerakiOrganizationDevices -Option ReadOnly
 function Get-MerakiOrganizationAdmins() {
     [CmdletBinding(DefaultParameterSetName = 'none')]
     Param(
-        [Parameter(ParameterSetName = 'orgid')]
+        [ValidateScript(
+            {
+                if ($profileName) {
+                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
         [string]$OrgID,
-        [Parameter(ParameterSetName = 'profilename')]
+        [ValidateScript(
+            {
+                if ($OrgID) {
+                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
         [string]$profileName
     )
 
@@ -404,27 +476,70 @@ Set-Alias -name GMOrgAdmins -Value Get-MerakiOrganizationAdmins -Option ReadOnly
 function Get-MerakiOrganizationConfigurationChanges() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(                
-        [Parameter(ParameterSetName = 'orgid')]
-        [Parameter(ParameterSetName = 'orgid2')]
-        [string]$OrgID,        
-        [Parameter(ParameterSetName = 'profilename')]
-        [Parameter(ParameterSetName = 'profilename2')]
+        [ValidateScript(
+            {
+                if ($profileName) {
+                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
+        [string]$OrgID,
+        [ValidateScript(
+            {
+                if ($OrgID) {
+                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
         [string]$profileName,
-        [Parameter(ParameterSetName = 'orgid')]
-        [Parameter(ParameterSetName = 'profilename')]
-        [Parameter(ParameterSetName = 'StartEnd')]
+        [ValidateScript(
+            {
+                if ($Days) {
+                    throw "The StartDate parameter cannot be used with the Days Parameter."
+                } else {
+                    $true
+                }
+                if (-not $EndDate) {
+                    throw "The StartDate parameter must be used with the EndDate parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
         [ValidateScript({$_ -is [DateTime]})]
-        [datetime]$StartTime,
-        [Parameter(ParameterSetName = 'orgid')]
-        [Parameter(ParameterSetName = 'profilename')]
-        [Parameter(ParameterSetName = 'StartEnd')]
+        [Alias('StartTime')]
+        [datetime]$StartDate,
+        [ValidateScript(
+            {
+                if ($Days) {
+                    throw "The EndDate parameter cannot be used with the Days parameter."
+                } else {
+                    $true
+                }
+                if (-not $StartDate) {
+                    throw "The EndDate parameter must be used with the StartDate parameter."
+                }
+            }
+        )]
         [ValidateScript({$_ -is [DateTime]})]
-        [DateTime]$EndTime,        
-        [Parameter(ParameterSetName = 'orgid2')]
-        [Parameter(ParameterSetName = 'profilename2')]
-        [Parameter(ParameterSetName = 'TimeSpan')]
+        [Alias('EndTime')]
+        [DateTime]$EndDate,        
+        [ValidateScript(
+            {
+                if ($StartDate -or $EndDate) {
+                    throw "The Days parameter cannot be used witht he StartDate or EndDate parameters."
+                } else {
+                    $true
+                }
+            }
+        )]
         [ValidateScript({$_ -is [int32]})]
-        [Int]$TimeSpan,
+        [Alias('TimeSpan')]
+        [Int]$Days,
         [ValidateScript({$_ -is [int]})]
         [int]$PerPage,
         [string]$NetworkID,
@@ -518,9 +633,25 @@ Set-Alias -name GMOrgCC -Value Get-MerakiOrganizationConfigurationChanges -Optio
 function Get-MerakiOrganizationThirdPartyVPNPeers() {
     [CmdletBinding(DefaultParameterSetName = 'none')]
     Param(
-        [Parameter(ParameterSetName = 'orgid')]
-        [STRING]$OrgID,
-        [Parameter(ParameterSetName = 'profileName')]
+        [ValidateScript(
+            {
+                if ($profileName) {
+                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
+        [string]$OrgID,
+        [ValidateScript(
+            {
+                if ($OrgID) {
+                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
         [string]$profileName
     )
 
@@ -560,9 +691,25 @@ Set-Alias -Name GMOrg3pVP -Value Get-MerakiOrganizationThirdPartyVPNPeers -Optio
 function Get-MerakiOrganizationInventoryDevices() {
     [CmdletBinding(DefaultParameterSetName = 'none')]
     Param(
-        [Parameter(ParameterSetName = 'orgid')]
+        [ValidateScript(
+            {
+                if ($profileName) {
+                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
         [string]$OrgID,
-        [Parameter(ParameterSetName = 'profilename')]
+        [ValidateScript(
+            {
+                if ($OrgID) {
+                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
         [string]$profileName
     )
 
@@ -597,3 +744,252 @@ function Get-MerakiOrganizationInventoryDevices() {
 }
 
 Set-Alias -Name GMOrgInvDevices -value Get-MerakiOrganizationInventoryDevices -Option ReadOnly
+
+function Get-MerakiOrganizationSecurityEvents() {
+    [CmdLetBinding(DefaultParameterSetName='Default')]
+    Param(
+        [ValidateScript(
+            {
+                if ($profileName) {
+                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
+        [string]$OrgId,
+        [ValidateScript(
+            {
+                if ($OrgId) {
+                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
+        [string]$ProfileName,
+        [ValidateScript(
+            {
+                if ($Days) {
+                    throw "The StartDate parameter cannot be used with the Days parameter."
+                } else {
+                    $true
+                }
+                if (-not $EndDate) {
+                    throw "The EndDate parameter must be sup0lied with the StartDate parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
+        [ValidateScript({$_ -is [datetime]})]
+        [datetime]$StartDate,
+        [ValidateScript(
+            {
+                if ($Days) {
+                    throw "The EndDate parameter cannot be used with the Days parameter."
+                } else {
+                    $true
+                }
+                if (-not $StartDate) {
+                    throw "The EndDate parameter must be supplied with with the StartDate parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
+        [ValidateScript({$_ -is [datetime]})]
+        [datetime]$EndDate,
+        [ValidateScript(
+            {
+                if ($StartDate -or $EndDate) {
+                    throw "The Days parameter cannot be used with the StartDate or EndDate parameter"
+                } else {
+                    $true
+                }
+            }
+        )]
+        [int]$Days,
+        [ValidateRange(3, 1000)]
+        [int]$PerPage
+    )
+
+    $Headers = Get-Headers
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
+
+    $Uri = "{0}/organizations/{1}/appliance/security/events" -f $BaseURI, $OrgId
+
+    Set-Variable -Name Query
+    if ($StartDate) {
+        $_startDate = "{0:s}" -f $StartDate
+        $Query += "t0={0}" -f $_startDate
+    }
+    if ($EndDate) {
+        $_endDate = "{0:s}" -f $EndDate
+        if ($Query) {
+            $Query += "&"
+        }
+        $Query += "t1={0}" -f $_endDate
+    }
+    if ($Days) {
+        $ts = [timespan]::FromDays($Days)
+        if ($Query) {
+            $Query += "&"
+        }
+        $Query += "timestamp={0}" -f ($ts.TotalSeconds)
+    }
+    if ($PerPage) {
+        if ($Query) {
+            $Query += "&"
+        }
+        $Query += "perPage={0}" -f $PerPage
+    }
+
+    if ($Query) {
+        $Uri = "?{0}" -f $Query
+    }
+
+    try {
+        $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers
+        return $response
+    } catch {
+        throw $_
+    }
+    <#
+    .SYNOPSIS
+    Returns security event for the organization.
+    .DESCRIPTION
+    Returns a collection of security event objects for the given organization. Events can be filtered by dates or timespan.
+    .PARAMETER OrgId
+    The Organization ID. If omitted and a profile is not specified the default organization is used. Cannot be used with the profile parameter.
+    .PARAMETER ProfileName
+    Retrieve the Organization Id from the named profile. Cannot be used with the OrgId parameter
+    .PARAMETER StartDate
+    The starting date to retrieve data. Cannot be more than 365 days prior to today.
+    .PARAMETER EndDate
+    The ending date to retrieve data. cannot be more than 365 days after StartDate.
+    .PARAMETER Days
+    The number if days back from today to retrieve data, Cannot be more than 365.
+    .PARAMETER PerPage
+    Number of entries per page to retrieve. Acceptable range is 3-1000. Default is 100. NOTE: Paging is not immplemented. 
+    .OUTPUTS
+    A collection of security event objects.
+    #>
+}
+
+Set-Alias -Name GMNetSecEvents -Value Get-MerakiOrganizationSecurityEvents
+
+function Get-MerakiOrganizationFirmwareUpgrades() {
+    [CmdletBinding()]
+    Param(
+        [ValidateScript(
+            {
+                if ($profileName) {
+                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
+        [string]$OrgId,
+        [ValidateScript(
+            {
+                if ($OrgId) {
+                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
+        [string]$ProfileName,
+        [string]$Status,
+        [string]$ProductType
+    )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
+
+    $Headers = Get-Headers
+
+    Set-Variable -name Query
+
+    if ($Status) {
+        $Query = "status={0}" -f $Status
+    }
+    if ($ProductType) {
+        if ($Query) {
+            $Query += "&"
+        }
+        $Query += "productType={0}" -f $ProductType
+    }
+
+    $Uri = "{0}/organizations/{1}/firmware/upgrades" -f $BaseURI, $OrgId
+    if ($Query) {
+        $URI += "?{0}" -f $Query
+    }
+
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+        return $response
+    } catch {
+        throw $_
+    }
+    <#
+    .SYNOPSIS
+    Get firmware upgrade information.
+    .DESCRIPTION
+    Get firmware upgrade information for an organization
+    .PARAMETER OrgId
+    The Organization Id. If ommitted the retrieved from the default profile.
+    .PARAMETER ProfileName
+    The profile to retrieve the the Organization ID from.
+    .PARAMETER Status
+    Filter by this status.
+    .PARAMETER ProductType
+    Filter by this product type.
+    #>
+}
+
+Set-Alias -name GMOFirmwareUpgrades -Value Get-MerakiOrganizationFirmwareUpgrades
+
+function Get-MerakiOrganizationFirmwareUpgradesByDevice() {
+    [CmdletBinding()]
+    Param(
+        [string[]]$NetworkIds,
+        [string[]]$serials,
+        [string[]]$MACs,
+        [string[]]$FirmwareUpgradeIds,
+        [string[]]$FirwareUpgradeBatchIds,
+    )
+
+    $Headers = Get-Headers
+
+    Set-Variable -Name Query
+
+    if ($NetworkIds) {
+        $_NetIds = $NetworkIds -join ","
+        $Query = "networkIds={0}" -f $_NetIds
+    }
+    if ($serials) {
+        if ($Query)
+    }
+}

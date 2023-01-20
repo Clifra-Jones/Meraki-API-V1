@@ -626,4 +626,139 @@ function Reset-MerakiSwitchPorts() {
     #>
 }
 
-Set-Alias -Name RMSWPorts -Value Reset-MerakiSwitchPorts -Option ReadOnly  
+Set-Alias -Name RMSWPorts -Value Reset-MerakiSwitchPorts -Option ReadOnly 
+
+function Get-MerakiSwitchPortsStatus() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [string]$serial,
+        [ValidateScript(
+            {
+                if ($Days) {
+                    throw "The StartDate parameter cannot be used with the Days parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
+        [ValidateScript({$_ -is [datetime]})]
+        [datetime]$StartDate,
+        [ValidateScript(
+            {
+                if ($StartDate) {
+                    throw "The Days parameter cannot be used with the StartDate parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
+        [ValidateScript({$_ -is [int]})]
+        [int]$Days
+    )
+
+    Begin {
+        $Headers = Get-Headers
+        Set-Variable -Name Query
+
+        if ($StartDate) {
+            $_startDate = "{0:s}" -f $StartDate
+            $Query = "t0={0}" -f $_startDate
+        }
+        if ($Days) {
+            $ts = [timespan]::FromDays($Days)
+            if ($Query) {
+                $Query += "&"
+            }
+            $Query += "timespan" -f ($ts.TotalSeconds)
+        }
+    }
+
+    Process {
+        $Uri = "{0}/devices/{1}/switch/ports/statuses" -f $BaseURI, $serial
+
+        if ($Query) {
+            $Uri += "?{0}" -f $Query
+        }
+        try {
+            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .SYNOPSIS
+    Return the status for all the ports of a switch
+    .DESCRIPTION
+    REturns a collection of switch poe=rt status objects for a switch.
+    .PARAMETER serial
+    Serial Number of the switch.
+    .PARAMETER StartDate
+    The Starting date to retrieve data. Cannot be more than 31 days prior to today.
+    .PARAMETER Days
+    Number of days back from today to retrieve data. Cannot be more than 31 days.
+    .OUTPUTS
+    A collection if port status objects.
+    #>
+}
+
+Set-Alias -name GMSWPortStatus  -Value Get-MerakiSwitchPortsStatus -Option ReadOnly
+
+function Get-MerakiSwitchPortsPacketCounters() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [string]$serial,
+        [ValidateScript({$_ -is [decimal]})]
+        [decimal]$Hours
+    )
+
+    Begin {
+        $Headers = Get-Headers
+
+        Set-Variable -Name Query
+
+        if ($Days) {
+            $ts = [timespan]::FromHours($Hours)
+            if ($Query) {
+                $Query += "&"
+            }
+            $Query += "timespan={0}" -f ($ts.TotalSeconds)
+        }
+    }
+
+    Process {
+        $Uri = "{0}/devices/{1}/switch/ports/statuses/packets" -f $BaseURI, $serial
+        if ($Query) {
+            $Uri += "?{0}" -f $Query
+        }
+
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .SYNOPSIS
+    Return the packet counters for all the ports of a switch
+    .DESCRIPTION
+    Returns packet counter statustics for all ports of a switch.
+    .PARAMETER serial
+    Serial number of the switch.
+    .PARAMETER Hours
+    The number of hours to return the data. The default is 24 hours (1 day). Can be entered as a decimal number. For the last 30 minutes enter .5.
+    .OUTPUTS
+    A collection if packet counter objects.
+    #>
+}
+
+Set-Alias -Name GMSWPortsPacketCntrs -Value Get-MerakiSwitchPortsPacketCounters

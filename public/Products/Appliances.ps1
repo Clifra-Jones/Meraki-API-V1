@@ -73,28 +73,75 @@ function Update-MerakiNetworkApplianceContentFiltering() {
             ValueFromPipelineByPropertyName = $true
         )]
         [string]$id,
-        [Parameter(
-            ParameterSetName = "values",
-            Mandatory = $true
+        [ValidateScript(
+            {
+                if ($ContentFilteringRules) {
+                    throw "The allowedURLPatterns parameter cannot be used with the ContentFilteringRules parameter."
+                } elseif (-not $_) {
+                        throw "The allowedURLPatterns parameter is require if the ContentFilteringRules parameter is omitted."
+                } elseif ((-not $blockedURLPatterns) -or (-not $blockedUrlCategories) -or (-not $urlCategoryListSize)) {
+                    throw "The allowedUrlPatterns parameter requires the blockedURLPatterns and blockedUrlCategories parameters "
+                } else {
+                    $true
+                }
+            }
         )]
         [string[]]$allowedURLPatterns,
         [Parameter(
             Mandatory=$true,
             ParameterSetName = "values"            
         )]
+        [ValidateScript(
+            {
+                if ($ContentFilteringRules) {
+                    throw "The blockedURLPatterns parameter cannot be used with the ContentFilteringRules parameter."
+                } elseif (-not $_) {
+                        throw "The blockedURLPatterns parameter is require if the ContentFilteringRules parameter is omitted."
+                } elseif ((-not $aloowedURLPatterns) -or (-not $blockedUrlCategories) -or (-not $urlCategoryListSize)) {
+                    throw "The blockedUrlPatterns parrameter requires the allowedURLPatterns and blockedUrlCategories parameters "
+                } else {
+                    $true
+                }
+            }
+
+        )]
         [string[]]$blockedURLPatterns,
-        [Parameter(
-            ParameterSetName = "values",
-            Mandatory = $true
+        [ValidateScript(
+            {
+                if ($ContentFilteringRules) {
+                    throw "The blockedUrlCategories parameter cannot be used with the ContentFilteringRules parameter."
+                } elseif(-not $_) {
+                        throw "The blockedUrlCategories parameter is required if the ContentFilteringRules parameter is omitted."
+                } elseif ((-not $allowedURLPatterns) -or (-not $blockedUrlCategories) -or (-not $urlCategoryListSize)) {
+                    throw "The blockedUrlCategories parrameter requires the allowedURLPatterns and blockedURLPatterns parameters "
+                } else {
+                    $true
+                }
+            }
+
         )]
         [string[]]$blockedUrlCategories,
-        [Parameter(
-            Mandatory = $true, ParameterSetName = 'values'
+        [ValidateScript(
+            {
+                if ($ContentFilteringRules) {
+                    throw "The urlCategoryListSize parameter cannot be used with the ContentFilteringRules parameter."
+                } elseif ((-not $allowedURLPatterns) -or (-not $blockedUrlCategories) -or (-not $blockedUrlCategories)) {
+                    throw "The UrlCategoriesListSize parameter requires the allowedURLPatterns, blockedURLPatterns, and blockedUrlCategories parameters "
+                } else {
+                    $true
+                }
+            }            
         )]
         [ValidateSet('topSites','fullList')]
         [string]$urlCategoryListSize,
-        [Parameter(
-            ParameterSetName = "object"
+        [ValidateScript(
+            {
+                if ($allowedURLPatterns -or $blockedURLPatterns -or $blockedUrlCategories -or $urlCategoryListSize) {
+                    throw "The parameter ContentFilteringRules cannot be used with the allowedURLPatterns, blockedURLPatterns, blockedURLCategories -or urlCategoriesList parameters"
+                } else {
+                    $true
+                }
+            }
         )]
         [psObject]$ContentFilteringRules
     )
@@ -128,11 +175,14 @@ function Update-MerakiNetworkApplianceContentFiltering() {
 
     $psBody = [PSCustomObject]$properties
     
-    $body = $psBody | ConvertTo-Json
+    $body = $psBody | ConvertTo-Json -Compress -Depth 6
 
-    $response = Invoke-RestMethod -Method PUT -Uri $Uri -Body $body -Headers $Headers
-
-    return  $response
+    try {
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Body $body -Headers $Headers
+        return  $response
+    } catch {
+        throw $_
+    }
     <#
     .SYNOPSIS
     Update the content filtering rules.
@@ -150,6 +200,7 @@ function Update-MerakiNetworkApplianceContentFiltering() {
     A Meraki content filtering rule object (not supported with other parameters).
     .OUTPUTS
     The updated Meraki content filtering object.
+    .NOTES
     .EXAMPLE
     You must pull the Content Filtering Rules using the function Get-MerakiNetworkApplianceContentFiltering and then modify the properties of that object.
     Adding a new URL to the blocked URL Pattern
@@ -183,7 +234,7 @@ function Add-MerakiNetworkApplianceContentFilteringRules() {
 
     Process {
         if ((-not $allowedURLPatterns) -and (-not $blockedURLPatterns) ) {
-            Write-Host "You must provide al least one fo the content filtering patterns" -ForegroundColor Red
+            Write-Host "You must provide al least one of the content filtering patterns" -ForegroundColor Red
             exit
         }
         $cfr = Get-MerakiNetworkApplianceContentFiltering -Id $Id
@@ -614,3 +665,41 @@ function Get-MerakiNetworkApplianceVpnStats() {
 }
 
 Set-Alias -Name GMAVpnStats -Value Get-MerakiNetworkApplianceVpnStats -Option ReadOnly
+
+function Get-MerakiNetworkApplianceDhcpSubnets() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [string]$serial
+    )
+
+    Begin {
+        $Headers = Get-Headers
+
+    }
+
+    Process {
+        $Url = "{0}/devices/{1}/appliance/dhcp/subnets" -f $BaseURI, $Serial
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Url -Headers $Headers
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .SYNOPSIS
+    Returns DHCP Subnets for an appliance.
+    .DESCRIPTION
+    Returns inforation and statistics for an appliances DHCP subnets. Including used count and free count.
+    .PARAMETER serial
+    The serial number of the appliance.
+    .OUTPUTS
+    A collection of Subnet objects.
+    #>
+}
+
+Set-Alias -Name GMNetAppDhcpSubnet -Value Get-MerakiNetworkApplianceDhcpSubnets -Option ReadOnly

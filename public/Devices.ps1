@@ -110,3 +110,47 @@ function Restart-MerakiDevice() {
 
 Set-Alias -Name RestartMD -Value Restart-MerakiDevice -Option ReadOnly
 
+function Get-MerakiDeviceClients() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipeline = $true,
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [string]$serial,
+        [ValidateScript(
+            {
+                $_ -le 31
+            }
+        )]
+        [int]$Days=31
+    )
+
+    Begin {
+        $Headers = Get-Headers
+        $_body = @{}
+        if ($Days) {
+            $ts = [timespan]::FromDays($Days)
+            $_body.Add("timespan", $ts.TotalSeconds)
+        }
+        $body = $_body | ConvertTo-Json -Compress
+    }
+
+    Process {
+        $Uri = "{0}/devices/{1}/clients" -f $BaseURI, $serial
+        try {
+            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -Body $body
+            $response | ForEach-Object {
+                if ($null -eq $_.description) {
+                    $_.description = $_.mac
+                }
+            }
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+}
+
+Set-Alias -Name GMDevClients -Value Get-MerakiDeviceClients -Option ReadOnly

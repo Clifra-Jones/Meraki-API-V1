@@ -85,3 +85,137 @@ function Get-MerakiWirelessStatus() {
 }
 
 Set-Alias -Name GMWirelessStat -Value Get-MerakiWirelessStatus
+
+function Get-NetworkWirelessClientConnectionStatus() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [string]$Id,
+        [ValidateScript(
+            {
+                if ($Days) {
+                    throw "The StartDate parameter cannot be used with the Days parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
+        [ValidateScript({$_ -is [datetime]})]
+        [datetime]$StartDate,
+        [ValidateScript(
+            {
+                if ($Days) {
+                    throw "The EndDate parameter cannot be used with the Days parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
+        [ValidateScript({$_ -is [datetime]})]
+        [DateTime]$EndDate,
+        [ValidateScript(
+            {
+                if ($StartDate -or $EndDate) {
+                    Throw "The Days parameter cannot be used with the StartDate pr EndDate parameters."
+                }
+            }
+        )]
+        [ValidateScript({$_ -is [int]})]
+        [int]$Days,
+        [ValidateSet('2.5','5','6')]
+        [string]$Band,
+        [string]$SSID,
+        [ValidateScript({$_ -is [int]})]
+        [int]$VLAN,
+        [string]$APTag
+    )
+
+    Begin {
+        $Headers = Get-Headers
+
+        Set-Variable -Name Query
+
+        if ($StartDate) {
+            $_startDate = "{0:s}" -f $StartDate
+            $Query = "t0={0}" -f $_startDate
+        }
+        if ($EndDate) {
+            $_endDate = "{0:s}" -f $EndDate
+            if ($Query) {
+                $Query += "&"
+            }
+            $Query += "t1={0}" -f $_endDate
+        }
+        if ($Days) {
+            $ts = [timespan]::FromDays($Days)
+            if ($Query) {
+                $Query += "&"
+            }
+            $Query += "timespan={0}" -f ($ts.TotalSeconds)
+        }
+        if ($Band) {
+            if ($Query) {
+                $Query += "&"
+            }
+            $Query += "band={0}" -f $Band
+        }
+        if ($SSID) {
+            if ($Query) {
+                $Query += "&"
+            }
+            $Query += "ssid={0}" -f $SSID
+        }
+        if ($VLAN) {
+            if ($Query) {
+                $Query += "&"
+            }
+            $Query += "vlan={0}" -f $VLAN
+        }
+        if ($APTag) {
+            if ($Query) {
+                $Query += "&"
+            }
+            $Query += "apTag={0}" -f $APTag
+        }
+    }
+
+    Process {
+        $Uri = "{0}/network/{1}/wireless/clients/connectionStats" -f $BaseURI, $Id
+        if ($Query) {
+            $Usr += "?{0}" -f $Query
+        }
+        try {
+            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .SYNOPSIS
+    Returns aggregated connectivity info for this network, grouped by clients
+    .DESCRIPTION
+    Returns aggregated connectivity info for this network, grouped by clients for the given time period, band, SSID VLAN of AP Tag.
+    .PARAMETER Id
+    The Network Id.
+    .PARAMETER StartDate
+    The starting date to return data. Must be no more that 7 days before today.
+    .PARAMETER EndDate
+    The ending date to return data. Must be no more than 7 days before today.
+    .PARAMETER Days
+    The number of days prior to today to return data. Must be no more that 7 days before today.
+    .PARAMETER Band
+    Filter results by band (either '2.4', '5' or '6'). Note that data prior to February 2020 will not have band information.
+    .PARAMETER SSID
+    Filter results by SSID.
+    .PARAMETER VLAN
+    Filter results by VLAN.
+    .PARAMETER APTag
+    Filter results by AP Tag.
+    .OUTPUTS
+    A collection of connectivity information objects.
+    #>
+}

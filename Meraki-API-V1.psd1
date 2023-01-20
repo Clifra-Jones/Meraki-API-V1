@@ -133,7 +133,17 @@ FunctionsToExport = @(`
     'Get-MerakiOrganizationInventoryDevices',
     'Add-MerakiNetworkApplianceContentFilteringRules',
     'Remove-MerakiNetworkApplianceContentFilteringRules',
-    'Set-MerakiProfile'
+    'Set-MerakiProfile',
+    'Get-MerakiNetworkClients',
+    'Get-MerakiDeviceClients',
+    'Get-MerakiNetworkApplianceDhcpSubnets',
+    'Get-MerakiOrganizationSecurityEvents',
+    'Get-MerakiNetworkClientApplicationUsage',
+    'Get-MerakiNetworkClientBandwidthUsage',
+    'Get-MerakiOrganizationSecurityEvents'
+    'Get-MerakiSwitchPortsStatus',
+    'Get-MerakiSwitchPortsPacketCounters',
+    'Get-MerakiOrganizationFirmwareUpgrades'
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
@@ -148,7 +158,8 @@ AliasesToExport = @(`
     'GMOrgCC','GMOrg3pVP','GMOrgInv','GMNet','GMNetDevs','GMNetEvents','GMNetET','GMNetAppCFCats', 'GMOrgInvDevices', `
     'GMNetCF','UMNetAppCF','GMAppPorts', 'GMNetAppRoutes', 'GMNetAppVLANs','GMNetAppVLAN', 'GMSwStackRoutInt', 'GMDevSwPort', `
     'GMNetAppSSVpn','GMAppUpStat', 'GMSWRoutInts','GMSWRoutInt','GMSWRoutIntDHCP','GMSWRoutStatic','GMSwStRoutIntsDHCP','GMSwStRoutIntDHCP', 'RemoveMNetAppCfr',
-    'GMNetSWLag','GMNetSWStacks','GMDevSwPorts','RMSWPorts','GMSSIDs','GMSSID','GMWirelessStat','GMNetSWStRoutInts','GMSwStack','GMSwStRoutStatic','GMAVpnStats', 'AddMNetAppCFR'
+    'GMNetSWLag','GMNetSWStacks','GMDevSwPorts','RMSWPorts','GMSSIDs','GMSSID','GMWirelessStat','GMNetSWStRoutInts','GMSwStack','GMSwStRoutStatic','GMAVpnStats', 'AddMNetAppCFR',
+    'GMNetClients','GMDevClients','GMNetAppDhcpSubnet','GMNetClientAppUsage', 'GMNetSecEvents','GMSWPortStatus','GMSWPortsPacketCntrs','GMOFirmwareUpgrades'
 )
 
 # DSC resources to export from this module

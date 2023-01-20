@@ -82,8 +82,11 @@ function Get-MerakiNetworkEvents() {
         [string]$clientMac,
         [string]$smDeviceName,
         [string]$smDeviceMac,
+        [ValidateScript({$_ -is [int]})]
         [int]$perPage,
+        [ValidateScript({$_ -is [datetime]})]
         [datetime]$startingAfter=0,
+        [ValidateScript({$_ -is [datetime]})]
         [datetime]$endingBefore=0,
         [switch]$first,
         [switch]$last,
@@ -287,3 +290,407 @@ function Get-MerakiNetworkEventTypes() {
 
 Set-Alias -Name GMNetET  Get-MerakiNetworkEventTypes -Option ReadOnly
 
+function Get-MerakiNetworkClients () {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipeline = $true,
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [Alias("NetworkId")]
+        [string]$id,
+        [ValidateScript(
+            {
+                if ($Days) {
+                    throw "The StartDate prameter cannot be used with the Days parameter."
+                }
+                if (-not $EndDate) {
+                    throw "The EndDate parameter must be supplied with the StartDate parameter."
+                }
+            }
+        )]
+        [datetime]$StartDate,
+        [ValidateScript(
+            {
+                if ($Days) {
+                    throw "The EndDate parameter cannot be used with the Days parameter."
+                }
+                if (-not $StartDate) {
+                    throw "The StartDate parameter must be supplied with the EndDate parameter."
+                }
+            }
+        )]
+        [datetime]$EndDate,
+        [ValidateScript(
+            {
+                if ($StartDate -or $EndDate) {
+                    throw "The Days parameter cannot be used witht he StartDate or EndDate parameter"
+                }
+            }
+        )]
+        [ValidateSet({$_ -is [int]})]
+        [int]$Days,
+        [string]$Statuses,
+        [string]$Mac,
+        [string]$IP,
+        [string]$OS,
+        [string]$Description,
+        [string]$VLAN,
+        [string[]]$recentDeviceConnections
+    )
+    Begin {
+        $Headers = Get-Headers
+        Set-Variable -Name Query 
+        if ($StartDate) {
+            $_startDate = "{0:s}" -f $StartDate
+            $Query += "t0={0}" -f $_startDate
+        }
+        if ($endDate) {
+            $_endDate = "{0:s}" -f $endDate
+            if ($Query) {
+                $Query += "&"
+            }
+            $Query += "t1={0}" -f $_endDate
+        }
+        if ($Days) {
+            $TS = [Timespan]::FromDays($Days)
+            if ($Query) {
+                $Query += "&"
+            }
+            Query += "timespan={0}" -f ($TS.TotalSeconds)
+        }
+        if ($Statuses) {
+            if ($Query) {
+                $Query += "&"
+            }
+            $Query += "statuses={0}" -f $Statuses
+        }
+        if ($Mac) {
+            if ($Query) {
+                $Query += "&"
+            }
+            $Query += "mac={0}" -f $Mac
+        }
+        if ($IP) {
+            if ($Query) {
+                $Query += "&"
+            }
+            $Query += "ip={0}" -f $IP
+        }
+        if ($OS) {
+            if ($Query) {
+                $Query += "&"
+            }
+            $Query += "os={0}" -f $OS
+        }
+        if ($Description) {
+            if ($Query) {
+                $Query += "&"
+            }
+            $Query += "description={0}" -f $Description
+        }
+        if ($VLAN) {
+            if ($Query) {
+                $Query += "&"
+            }
+            $Query += "vlan={0}" -f $VLAN
+        }
+        if ($recentDeviceConnections) {
+            if ($Query) {
+                $Query += "&"
+            }
+            $Query += "recentDeviceConnections={0}" -f $recentDeviceConnections
+        }
+   }
+
+    
+    Process {
+        $Uri = "{0}/networks/{1}/clients" -f $BaseURI, $Id
+        if ($Query) {
+            $Uri += "?{0}" -f $Query
+        }
+        try {
+            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers
+            $response | ForEach-Object {
+                if ($null -eq $_.description) {
+                    $_.description = $_.mac
+                }
+            }
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .SYNOPSIS 
+    Returns clients connections to the Network.
+    .DESCRIPTION
+    Returns a collection of client objects that are or have connected to the network withing the given time period.
+    .PARAMETER id
+    The network Id.
+    .PARAMETER StartDate
+    The starting date to retrieve client connections (Cannot be more than 31 days from today)
+    .PARAMETER EndDate
+    The ending date to retrieve client connections (cannot be more than 31 days from today)
+    .PARAMETER Days
+    Number of days back from today to retrieve cleint connections. If specified do not specify StartDate or EndDate (cannot be more than 31 days from today)
+    .PARAMETER Statuses
+    Filters clients based on status. Can be one of 'Online' or 'Offline'.
+    .PARAMETER Mac
+    Filters clients based on a partial or full match for the mac address field.
+    .PARAMETER IP
+    Filters clients based on a partial or full match for the ip address field
+    .PARAMETER OS
+    Filters clients based on a partial or full match for the os (operating system) field.
+    .PARAMETER Description
+    Filters clients based on a partial or full match for the description field.
+    .PARAMETER VLAN
+    Filters clients based on the full match for the VLAN field.
+    .PARAMETER recentDeviceConnections
+    Filters clients based on recent connection type. Can be one of 'Wired' or 'Wireless'.
+    .OUTPUTS
+    A collection of client objects.
+    #>
+}
+
+Set-Alias GMNetClients -Value Get-MerakiNetworkClients -Option ReadOnly
+
+function Get-MerakiNetworkClientApplicationUsage() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [string[]]$Clients,
+        [int]$SSIDNumber,
+        [ValidateScript(
+            {
+                if ($Days) {
+                    throw "The StartDate parameter cannot be used with the Days parameter."
+                }
+                if (-not $EndDate) {
+                    throw "The EndDate parameter must be provided with the StartDate parameter."
+                }
+            }
+        )]
+        [DateTime]$StartDate,
+        [ValidateScript(
+            {
+                if ($Days) {
+                    throw "The Days parameter cannot be used with teh EndDate parameter."
+                }
+                if (-not $StartDate) {
+                    throw "The StartDate parameter must be provided with the EndDate parameter"
+                }
+            }
+        )]
+        [DateTime]$EndDate,
+        [ValidateScript({$_ -is [int]})]
+        [int]$Days,
+        [ValidateScript({$_ -is [int]})]
+        [int]$PerPage
+    )
+
+    Begin {
+        $Headers = Get-Headers
+        
+        $Query = $null
+
+        if ($Clients) {
+            $_clients = $Clients -join ","
+            $Query += "clients={0}" -f $_clients
+        } else {
+            $Query += "clients="
+        }
+        if ($SSIDNumber) {
+            if ($Query) {
+                $Query += "&"
+            }
+            $Query += "ssidNumber={0}" -f $SSIDNumber
+        }
+        if ($StartDate) {
+            $_startDate = "{0:s}" -f $StartDate
+            if ($Query) {
+                $Query += "&"
+            }
+            $Query = "t0={0}" -f $_startDate
+        }
+        if ($EndDate) {
+            $_endDate = "{0:s}" -f $EndDate
+            if ($Query) {
+                $Query += "&"
+            }
+            $Query += "t1={0}" -f $_endDate
+        }
+        if ($Days) {
+            $ts = [timespan]::FromDays($Days)
+            if ($Query) {
+                $Query += "&"
+            }
+            $Query += "timespan={0}" -f ($ts.TotalSeconds)
+        }
+        if ($PerPage) {
+            if ($Query) {
+                $Query += "&"
+            }
+            $Query += "perPage={0}" -f $PerPage
+        }
+    }
+
+    Process {
+        $Uri = "{0}/networks/{1}/clients/applicationUsage" -f $BaseURI, $Id
+        if ($Query) {
+            $Uri += "?{0}" -f $Query
+        }
+
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+
+    <#
+    .SYNOPSIS
+    Return the application usage data for clients.
+    .DESCRIPTION
+    Return the application usage data for clients. Usage data is in kilobytes. 
+    Clients can be identified by client keys or either the MACs or IPs depending on whether the network uses Track-by-IP.
+    .PARAMETER Id
+    The Network Id.
+    .PARAMETER Clients
+    A array of client keys, MACs or IPs.
+    .PARAMETER SSIDNumber
+    An SSID number to include. If not specified, eveusage histories application usagents for all SSIDs will be returned.
+    .PARAMETER StartDate
+    The starting date to retrieve date (Cannot be more than 31 days before today).
+    .PARAMETER EndDate
+    The ending date to retrieve data (Cannot ne more than 31 days before today).
+    .PARAMETER Days
+    Number of days before to day to retrieve date. (Cannot be more than 31 days before today). Default is 1 day.
+    .PARAMETER PerPage
+    The number of entries per page returned. Acceptable range is 3 - 1000.
+    .OUTPUTS
+    An array of application usage statistics.
+    #>
+}
+
+Set-Alias -Name GMNetClientAppUsage -Value Get-MerakiNetworkClientApplicationUsage -Option ReadOnly
+
+function Get-MerakiNetworkClientBandwidthUsage() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [Alias('NetworkId')]
+        [string]$id,
+        [ValidateScript(
+            {
+                if ($Days) {
+                    throw "The StartTime parameter cannot be used with the Days parameter."
+                }
+                if (-not $EndTime) {
+                    throw "The EndTime parameter must be used with the StartTime parameter"
+                }
+            }
+        )]
+        [ValidateScript({$_ -is [datetime]})]
+        [datetime]$StartTime,
+        [ValidateScript(
+            {
+                if ($Days) {
+                    throw "The Days paramegter cannot be used with the EndTime parameter."
+                }
+                if (-not $StartTime) {
+                    throw "The StartTime parameter must be used with teh EndTime parameter."
+                }
+            }
+        )]
+        [ValidateScript({$_ -is [datetime]})]
+        [datetime]$EndTime,
+        [ValidateSet(
+            {
+                if ($StartTime -or $EndTime) {
+                    throw "The Days Parameter dannot be used withteh StartTime and EndTime parameters."
+                }
+            }
+        )]
+        [ValidateScript({$_ -is [int]})]
+        [int]$Days,
+        [ValidateScript({$_ -is [int]})]
+        [int]$perPage
+    )
+
+    Begin {
+        $Headers = Get-Headers
+
+        Set-Variable -Name Query
+
+        if ($StartTime) {
+            $_startTime = "{0:s}" -f $StartTime
+            $Query += "t0={0}" -f $_startTime            
+        }
+        if ($EndTime) {
+            $_endTime = "{0:s}" -f $EndTime
+            if ($Query) {
+                $Query += "&"
+            }
+            $Query += "t1={0}" -f $_endTime
+        }
+        if ($Days) {
+            if ($Query) {
+                $Query += "&"
+            }
+            $ts = [timespan]::FromDays($Days)
+            $Query += "timespan={0}" -f ($ts.TotalSeconds)
+        }
+        if ($perPage) {
+            if ($Query) {
+                $Query += "&"
+            }
+            $Query += "perPage={0}" -f $perPage
+        }
+    }
+
+    Process {
+        $Uri = "{0}/networks/{1}/clients/bandwidthUsageHistory" -f $BaseURI, $Id
+
+        if ($Query) {
+            $Uri += "?{0}" -f $Query
+        }
+
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .SYNOPSIS
+    Returns traffic consumption rates for all clients.
+    .DESCRIPTION
+    Returns a timeseries of total traffic consumption rates for all clients on a network within a given timespan, in megabits per second.
+    .PARAMETER id
+    Network Id
+    .PARAMETER StartTime
+    The beginning of the timespan for the data. Must be no more than 31 days from today.
+    .PARAMETER EndTime
+    The end time for the data. Must be nomore than 31 dats after StartTime.
+    .PARAMETER Days
+    Number fo days prior to today to return data.
+    .PARAMETER perPage
+    The number of entries per page returned. Acceptable range is 3 - 1000. Default is 1000.
+    .OUTPUTS
+    Am array of useage statistics.
+    #>
+}
+
+Set-Alias -Name GMNetClientBWUsage -Value Get-MerakiNetworkClientBandwidthUsage -Option ReadOnly
