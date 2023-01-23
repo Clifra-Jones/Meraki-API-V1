@@ -159,7 +159,7 @@ function Add-MerakiSwitchStackRoutingInterface() {
                 }
             }
         )]
-        [bool]$OspfIsPassiveEnabled,
+        [switch]$OspfIsPassiveEnabled,
         [ValidateScript(
             {
                 if ( $_ -and ( (-not $OspfV3Area) -or (-not $OspfV3IsPassiveEnabled) ) ) {
@@ -183,7 +183,7 @@ function Add-MerakiSwitchStackRoutingInterface() {
                 }
             }
         )]
-        [bool]$OspfV3IsPassiveEnabled
+        [switch]$OspfV3IsPassiveEnabled
     )
         $Headers = Get-Headers
 
@@ -200,14 +200,14 @@ function Add-MerakiSwitchStackRoutingInterface() {
             $_Body.Add("ospfSettings", @{
                 "area" = $OspfArea
                 "cost" = $OspfCost
-                "isPassiveEnabled" = $OspfIsPassiveEnabled
+                "isPassiveEnabled" = $OspfIsPassiveEnabled.IsPresent`
             })
         }
         if ($OspfV3Cost) {
             $_Body.Add("ospfV3", @{
                 "area" = $OspfV3Area
                 "cost" = $OspfV3Cost
-                "isPassiveEnabled" = $OspfV3IsPassiveEnabled
+                "isPassiveEnabled" = $OspfV3IsPassiveEnabled.IsPresent
             })
         }
 
@@ -218,6 +218,32 @@ function Add-MerakiSwitchStackRoutingInterface() {
         } catch {
             throw $_
         }
+}
+
+Set-Alias -Name AddMSStackRouteInt -Value Add-MerakiSwitchStackRoutingInterface
+
+Function Remove-MerakiSwitchStackRoutingInterface() {
+    [CmdletBinding(SupportsShouldProcess)]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$StackId
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/switch/stacks/{2}/routing/interfaces" -f $BaseURI, $NetworkId, $StackId
+    $STack = Get-MerakiNetworkSwitchStack -networkId $NetworkId -stackId $StackId
+
+    if ($PSCmdlet.ShouldProcess("Delete","Stack: $($Stack.name)")) {
+        try {
+            $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers
+            return $response
+        } catch {
+            throw $_
+        }
+    }
 }
 
 function Update-MerakiSwitchStackRoutingInterface() {
@@ -353,6 +379,8 @@ function Update-MerakiSwitchStackRoutingInterface() {
     }
 }
 
+Set-Alias -Name UpdateMSStackRouteInt -Value Update-MerakiSwitchStackRoutingInterface
+
 function Get-MerakiSwitchStackRoutingInterfacesDHCP() {
     [CmdletBinding()]
     Param(
@@ -452,6 +480,102 @@ function Get-MerakiSwitchStackRoutingStaticRoutes() {
 
 set-alias GMSwStRoutStatic -Value Get-MerakiSwitchStackRoutingStaticRoutes
 
+function Get-MerakiSwitchStackRoutingStaticRoute() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipeline = $true,
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [Alias("NetworkId")]
+        [string]$Id,
+        [Parameter(Mandatory = $true)]
+        [string]$StackId,
+        [Parameter(Mandatory = $true)]
+        [string]$StaticRouteId
+    )
+
+    Begin {
+        $Headers = $Headers
+    }
+
+    Process {
+        $Uri = "{0}/networks/{1}/switch/stacks/{2}/routing/staticRoutes/{3}" -f $BaseURI, $NetworkId, $StackId, $StaticRouteId
+
+        try {
+            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+}
+
+function Update-MerakiNetworkSwitchStackRoutingStaticRoute() {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$StackId,
+        [Parameter(Mandatory = $true)]
+        [string]$StaticRouteId,
+        [string]$Name,
+        [string]$NextHopIp,
+        [string]$Subnet,
+        [switch]$AdvertiseViaOspf,
+        [switch]$PreferOverOspfRoutes
+    )
+
+    $Header = Get-Header
+
+    $Uri = "{0}/networks/{1}/switch/stacks/{2}/routing/staticRoutes/{3}" -f $BaseURI, $NetworkId, $StackId, $StaticRouteId
+
+    $_Body = @{}
+
+    if ($Name) { $_Body.Add("name", $Name) }
+    if ($NextHopIp) { $_Body.Add("nextHopIp",$NextHopIp) }
+    if ($Subnet) { $_Body.Add("subnet", $Subnet) }
+    if ($AdvertiseViaOspf.IsPresent) { $_Body.Add("advertiseViaOspfEnabled",$true)}
+    if ($PreferOverOspfRoutes) { $_Body.Add("preferOverOspfRoutesEnabled", $true)}
+
+    $body = $_Body | ConvertTo-Json -Depth 5 -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Header -Body $body
+        return $response
+    } catch {
+        throw $_
+    }
+}
+
+function Remove-MerakiSwitchStackRoutingStaticRoute() {
+    [CmdletBinding(SupportsShouldProcess)]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$StackId,
+        [Parameter(Mandatory = $true)]
+        [string]$StaticRouteId
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/switch/stacks/{1}/routing/staticRoutes/{2}" -f $BaseURI, $NetworkId, $StackId, $StaticRouteId
+
+    $StaticRoute = Get-MerakiSwitchStackRoutingStaticRoute -Id $NetworkId -StackId $StackId -StaticRouteId $StaticRouteId
+
+    if ($PSCmdlet.ShouldProcess("Delete","Static Route: $($Staticroute.Name)")) {
+        try {
+            $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+}
+
 function Get-MerakiSwitchStackRoutingInterfaceDHCP() {
     [CmdletBinding()]
     Param(
@@ -493,7 +617,7 @@ function Get-MerakiSwitchStackRoutingInterfaceDHCP() {
             interfaceId = $interfaceid
             interfaceName = $interfaceName
             dhcpMode = $response.dhcpMode
-            dhcpLeastTime = $response.dhcpLeaseTime
+            dhcpLeaseTime = $response.dhcpLeaseTime
             dnsNameServersOption = $response.dnsNameServersOption
             dnsCustomNameServers = $response.dnsCustomNameServers
             dhcpOptions = $response.dhcpOptions
@@ -540,7 +664,7 @@ function Update-MerakiSwitchStackRoutingInterfaceDhcp() {
         [ValidateSet('googlePublicDns', 'openDns', 'custom')]
         [string]$DnsNameServerOption,
         [string[]]$DnsCustomNameServers,
-        [bool]$BootOptionsEnabled,
+        [switch]$BootOptionsEnabled,
         [string]$BootNextServer,
         [string]$BootFilename,
         [hashtable]$DhcpOptions,
@@ -558,7 +682,7 @@ function Update-MerakiSwitchStackRoutingInterfaceDhcp() {
     if ($DhcpLeaseTime) { $_body.Add("dhcpLeaseTime", $DhcpLeaseTime) }
     if ($DnsNameServerOption) { $_body.Add("dnsNameServerOption", $DnsNameServerOption) }
     if ($DnsCustomNameServers) { $_body.Add("dnsCustomNameservers", $DnsCustomNameServers) }
-    if ($BootOptionsEnabled) { $_body.Add("bootOptionsEnabled", $BootOptionsEnabled) }
+    if ($BootOptionsEnabled.IsPresent) { $_body.Add("bootOptionsEnabled", $true) }
     if ($BootNextServer) { $_body.Add("bootNextServer", $BootNextServer) }
     if ($BootFilename) { $_body.Add("bootFilename", $BootFilename) }
     if ($DhcpOptions) { $_body.Add("dhcpOptions", $DhcpOptions) }
@@ -574,6 +698,8 @@ function Update-MerakiSwitchStackRoutingInterfaceDhcp() {
         throw $_
     }
 }
+
+Set-Alias -Name UpdateMSStackRoutIntDhcp -Value Update-MerakiSwitchStackRoutingInterfaceDhcp
 
 function Get-MerakiSwitchRoutingInterfaces() {
     [CmdLetBinding()]
@@ -642,6 +768,223 @@ function Get-MerakiSwitchRoutingInterface() {
 
 Set-Alias -Name GMSWRoutInt -Value Get-MerakiSwitchRoutingInterface -Option ReadOnly
 
+function Add-MerakiSwitchRoutingInterface() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$Serial,
+        [Parameter(Mandatory = $true)]
+        [int]$VlanId,
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+        [string]$Subnet,
+        [string]$DefaultGateway,
+        [string]$InterfaceIp,
+        [ValidateSet('disabled', 'enabled', 'IGMP snooping querier')]
+        [string]$MulticastRouting,
+        [ValidateScript(
+            {
+                if ($_ -and ($Ipv6AssignmentMode -eq 'eui-64')) {
+                    throw "Static Ipv6 address cannot be used with AssignmentMode eui-64"
+                }
+            }
+        )]
+        [string]$Ipv6Address,
+        [ValidateSet('eui-64','static')]
+        [string]$Ipv6AssignmentMode,
+        [string]$Ipv6Gateway,
+        [string]$Ipv6Prefix,
+        [ValidateScript(
+            {
+                if ($_ -and (-not $OspfArea) ) {
+                    throw "Parameter OspfArea must be used with OspfCost."
+                }
+            }
+        )]
+        [int]$OspfCost,
+        [ValidateScript(
+            {
+                if ($_ -and (-not $OspfCost) ) {
+                    throw "Parameter OspfCost must be used with OspfArea"
+                }
+            }
+        )]
+        [string]$OspfArea,
+        [switch]$OspfIsPassive,
+        [ValidateScript(
+            {
+                if ($_ -and (-not $OspfV3Area) ) {
+                    throw "Parameter OspfV3Area must be used with OspfV3Cost"
+                }
+            }
+        )]
+        [int]$OspfV3Cost,
+        [ValidateScript(
+            {
+                if ($_ -and (-not $OspfV3Cost) ) {
+                    throw "Parameter OspfV3Cost must be used with OspfV3Area. If no area is used specify 'disabled'"
+                }
+            }
+        )]
+        [string]$OspfV3Area,
+        [switch]$OspfV3IsPassive
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/devices/{1}/switch/routing/interfaces" -f $BaseURI, $Serial
+
+    $_Body = @{
+        "name" = $Name
+        "vlanId" = $VlanId
+    }
+
+    if ($Sbnet) { $_Body.Add("subnet", $Subnet) }
+    if ($InterfaceIp) { $_Body.Add("interfaceIp", $InterfaceIp) }
+    if ($DefaultGateway) { $_Body.Add("defaultGateway", $DefaultGateway) }
+    if ($InterfaceIp) { $_Body.Add("interfaceIp", $InterfaceIp) }
+    if ($MulticastRouting) { $_Body.Add("multicastRouting", $MulticastRouting) }
+    if ($Ipv6Address) {
+        $_Body.Add("ipv6", @{
+            "assignmentMode" = $Ipv6AssignmentMode
+            "prefix" = $Ipv6Prefix
+            "address" = $Ipv6Address
+            "gateway" = $Ipv6Gateway
+        })
+    }
+    if ($OspfV3Cost) {
+        $_Body.Add("ospfSettings", @{
+            "area" = $OspfArea
+            "cost" = $OspfCost
+            "isPassEnabled" = $OspfIsPassive.IsPresent
+        })
+    }
+    if ($OspfV3Cost) {
+        $_Body.Add("ospfV3", @{
+            "area" = $OspfV3Area
+            "cost" = $OspfV3Cost
+            "isPassiveEnabled" = $OspfV3IsPassive.IsPresent
+        })
+    }
+    
+    $body = $_Body | ConvertTo-Json -Depth 5 -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    } catch {
+        throw $_
+    }
+}
+
+function Update-MerakiSwitchRoutingInterface() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$Serial,
+        [Parameter(Mandatory = $true)]
+        [string]$InterfaceId,
+        [string]$VlanId,
+        [string]$Name,
+        [string]$Subnet,
+        [string]$DefaultGateway,
+        [string]$InterfaceIp,
+        [ValidateSet('disabled', 'enabled', 'IGMP snooping querier')]
+        [string]$MulticastRouting,
+        [ValidateScript(
+            {
+                if ($_ -and ($Ipv6AssignmentMode -eq 'eui-64')) {
+                    throw "Static Ipv6 address cannot be used with AssignmentMode eui-64"
+                }
+            }
+        )]
+        [string]$Ipv6Address,
+        [ValidateSet('eui-64','static')]
+        [string]$Ipv6AssignmentMode,
+        [string]$Ipv6Gateway,
+        [string]$Ipv6Prefix,
+        [ValidateScript(
+            {
+                if ($_ -and (-not $OspfArea) ) {
+                    throw "Parameter OspfArea must be used with OspfCost."
+                }
+            }
+        )]
+        [int]$OspfCost,
+        [ValidateScript(
+            {
+                if ($_ -and (-not $OspfCost) ) {
+                    throw "Parameter OspfCost must be used with OspfArea"
+                }
+            }
+        )]
+        [string]$OspfArea,
+        [switch]$OspfIsPassive,
+        [ValidateScript(
+            {
+                if ($_ -and (-not $OspfV3Area) ) {
+                    throw "Parameter OspfV3Area must be used with OspfV3Cost"
+                }
+            }
+        )]
+        [int]$OspfV3Cost,
+        [ValidateScript(
+            {
+                if ($_ -and (-not $OspfV3Cost) ) {
+                    throw "Parameter OspfV3Cost must be used with OspfV3Area. If no area is used specify 'disabled'"
+                }
+            }
+        )]
+        [string]$OspfV3Area,
+        [switch]$OspfV3IsPassive        
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/devices/{2}/switch/routing/interfaces/{2}" -f $BaseURI, $Serial, $InterfaceId
+
+    $_Body = @{}
+
+    if ($VlanId) { $_Body.Add("vlanId", $VlanId) }
+    if ($Name) { $_Body.Add("name", $Name) }
+    if ($Sbnet) { $_Body.Add("subnet", $Subnet) }
+    if ($InterfaceIp) { $_Body.Add("interfaceIp", $InterfaceIp) }
+    if ($DefaultGateway) { $_Body.Add("defaultGateway", $DefaultGateway) }
+    if ($InterfaceIp) { $_Body.Add("interfaceIp", $InterfaceIp) }
+    if ($MulticastRouting) { $_Body.Add("multicastRouting", $MulticastRouting) }
+    if ($Ipv6Address) {
+        $_Body.Add("ipv6", @{
+            "assignmentMode" = $Ipv6AssignmentMode
+            "prefix" = $Ipv6Prefix
+            "address" = $Ipv6Address
+            "gateway" = $Ipv6Gateway
+        })
+    }
+    if ($OspfV3Cost) {
+        $_Body.Add("ospfSettings", @{
+            "area" = $OspfArea
+            "cost" = $OspfCost
+            "isPassEnabled" = $OspfIsPassive.IsPresent
+        })
+    }
+    if ($OspfV3Cost) {
+        $_Body.Add("ospfV3", @{
+            "area" = $OspfV3Area
+            "cost" = $OspfV3Cost
+            "isPassiveEnabled" = $OspfV3IsPassive.IsPresent
+        })
+    }
+
+    $body = $_Body | ConvertTo-Json -Depth 5 -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    } catch {
+        Throw $_
+    }
+}
+
 function Get-MerakiSwitchRoutingInterfaceDHCP() {
     [CmdletBinding()]
     param (
@@ -673,6 +1016,81 @@ function Get-MerakiSwitchRoutingInterfaceDHCP() {
 }
 
 Set-Alias GMSWRoutIntDHCP -value Get-MerakiSwitchRoutingInterfaceDHCP -option ReadOnly
+
+function Update-MerakiSwitchRoutingInterfaceDhcp() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$Serial,
+        [Parameter(Mandatory)]
+        [string]$InterfaceId,
+        [ValidateSet('dhcpDisabled', 'dhcpRelay', 'dhcpServer')]
+        [string]$DhcpMode,
+        [ValidateScript(
+            {
+                if ($DhcpMode -ne "dhcpRelay") {
+                    "Parameter DhcpRelayServerIps is only valid with DhcpMode 'dhcpRelay'"
+                }
+            }
+        )]
+        [string[]]$DhcpRelayServerIps,
+        [ValidateSet('30 minutes', '1 hour', '4 hours', '12 hours', '1 day', '1 week')]
+        [string]$DhcpLeaseTime,
+        [ValidateSet('googlePublicDns', 'openDns', 'custom')]
+        [string]$DnsNameServerOptions,
+        [string[]]$DnsCustomNameServers,
+        [ValidateScript(
+            {
+                if ($_.isPresent -and ( (-not $BootNextServer) -or (-not $BootFileName) ) ) {
+                        throw "Parameters BootNestServer and BootFileName must be specified with BootOptionEnabled."
+                }
+            }
+        )]
+        [switch]$BootOptionsEnabled,
+        [ValidateScript(
+            {
+                if (-not $BootOptionsEnabled) {
+                    throw "Parameter BootOptionsEnabled must be specified to use parameter BootNextServer."
+                }
+                if (-not $BootFileName) {
+                    throw "Parameter BootFileName must be specified to use parameter BootNextServer."
+                }
+            }
+        )]
+        [string]$BootNextServer,
+        [string]$BootFileName,
+        [hashtable[]]$DhcpOptions,
+        [hashtable[]]$ReservedIpRanges,
+        [hashtable[]]$FixedIpRanges
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/devices/{1}/switch/routing/interface/{2}/dhcp" -f $BaseURI, $Serial, $InterfaceId
+
+    $_Body = @{}
+
+    if ($DhcpMode) { $_Body.Add("dhcpMode", $DhcpMode) }
+    if ($DhcpRelayServerIps) { $_Body.Add("dhcpRelayServerIps", $DhcpRelayServerIps) }
+    if ($DhcpLeaseTime) { $_Body.Add("shcpLeaseTime", $DhcpLeaseTime) } 
+    if ($DnsNameServerOptions) { $_Body.Add("dnsNameserverOptions", $DnsNameServerOptions) }
+    if ($DnsCustomNameServers) { $_Body.Add("dnsCustomNameservers", $DnsCustomNameServers) }
+    if ($BootOptionsEnabled) { $_Body.Add("bootOptionsEnabled", $BootOptionsEnabled.IsPresent) } 
+    if ($BootNextServer) { $_Body.Add("bootNextServer", $BootNextServer) }
+    if ($BootFileName) { $_Body.Add("bootFileName", $BootFileName) }
+    if ($DhcpOptions) { $_Body.Add("dhcpOptions", $DhcpOptions) }
+    if ($ReservedIpRanges) { $_Body.Add("reservedIpRanges", $ReservedIpRanges) }
+    if ($FixedIpRanges) { $_Body.Add("fixedIpRanges",$FixedIpRanges) }
+
+    $body = $_Body | ConvertTo-Json -Depth 5 -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    } catch {
+        throw $_
+    }
+}
 
 function Get-MerakiSwitchRoutingStaticRoutes() {
     [CmdLetBinding()]
@@ -831,6 +1249,62 @@ function Get-MerakiNetworkSwitchStack() {
 
 set-alias GMSwStack -Value Get-MerakiNetworkSwitchStack
 
+function New-MerakiNeworkSwitchStack() {
+    Param(
+        [Parameter(Mandatory = $true)]        
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+        [Parameter(Mandatory = $true)]
+        [string[]]$Serials
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/switch/stacks" -f $BaseURI, $NetworkId
+
+    $_Body = @{
+        "name" = $Name
+        "serials" = $Serials
+    }
+
+    $body = $_Body | ConvertTo-Json -Depth 3 -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    } catch {
+        throw $_
+    }
+}
+
+function Add-MerakiNetworkSwitchStackSwitch() {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$StackId,
+        [Parameter(Mandatory = $true)]
+        [atring]$serial
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/network/{1}/switch/stack/{2}/add" -f $BaseURI, $NetworkId, $StackId
+
+    $_Body = @{
+        "serial" = $serial
+    }
+
+    $body = $_Body | ConvertTo-Json -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    } catch {
+        throw $_
+    }
+}
 function Get-MerakiSwitchPorts() {
     [CmdletBinding()]
     Param(

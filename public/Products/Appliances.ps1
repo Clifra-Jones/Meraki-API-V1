@@ -1,5 +1,5 @@
 #Meraki Appliance Functions
-
+using namespace System.Management
 function Get-MerakiNetworkApplianceContentFilteringCategories() {
     [CmdletBinding()]
     Param(
@@ -704,6 +704,87 @@ function Get-MerakiNetworkApplianceDhcpSubnets() {
 
 Set-Alias -Name GMNetAppDhcpSubnet -Value Get-MerakiNetworkApplianceDhcpSubnets -Option ReadOnly
 
+function Add-MerakiNetworkApplianceVlan() {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$VlanId,
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+        [string]$Subnet,
+        [string]$ApplianceIp,
+        [string]$GroupPolicyId,
+        [ValidateSet('same','unique')]
+        [string]$TemplateVlanType,
+        [string]$CIDR,
+        [int]$Mask,
+        [switch]$Ipv6Enabled,
+        [hashtable]$Ipv6PrefixAssignments,
+        [switch]$MandatoryDHCP
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/appliance/vlans" -f $BaseURI, $NetworkId
+
+    $_Body = @{
+        "id" = $VlanId
+        "name" = $Name
+    }
+    if ($Subnet) { $_Body.Add("subnet", $Subnet) }
+    if ($ApplianceIp) { $_Body.Add("applianceIp", $ApplianceIp) }
+    if ($GroupPolicyId) { $_Body.Add("groupPolicyId", $GroupPolicyId) }
+    if ($TemplateVlanType) { $_Body.Add("templateVlanType", $TemplateVlanType) }
+    if ($CIDR) { $_Body.Add("cidr", $CIDR) }
+    if ($Mask) { $_Body.Add("mask", $Mask ) }
+    if ($Ipv6Enabled.IsPresent) {
+        $_Body.Add("ipv6", @{
+            "enabled" = $true
+            "PrefixAssignments" = $Ipv6PrefixAssignments
+        })        
+    }
+    if ($MandatoryDHCP.IsPresent) {
+        $_Body.Add(
+            @{
+                "enabled" = $true
+            }
+        )
+    }
+
+    $body = $_Body | ConvertTo-Json -Depth 5 -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    } catch {
+        throw $_
+    }
+}
+
+Function Delete-MerakiNetworkApplianceVlan() {
+    [CmdletBinding(SupportsShouldProcess)]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory)]
+        [string]$VlanId
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/appliance/vlans/{2}" -f $BaseURI, $NetworkId, $VlanId
+
+    if ($PSCmdlet.ShouldProcess("Delete", "VLAN ID $VlanId")) {
+        try {
+            $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers
+            return $response
+        } catch {
+            throw $_
+        }           
+    }
+}
+
 function Update-MerakiNetworkApplianceVLAN() {
     [CmdletBinding()]
     Param(
@@ -832,12 +913,33 @@ function Update-MerakiNetworkApplianceVLAN() {
     $body = $_body | ConvertTo-Json -Depth 10 -Compress
 
     Try {
-        #$response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
-        #return $response
-        Write-Host $body
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        return $response
     } catch {
         Throw $_
     }
+    <#
+    .SYNOPSIS
+    "Update Appliance VLAN"
+    .DESCRIPTION
+    "Updates settings for a Meraki Appliance VLAN"
+    .PARAMETER id
+    "Network Id"
+    .PARAMETER VlanId
+    "VLAN ID to be updated"
+    .PARAMETER VlanName
+    "Name of the VLAN"
+    .PARAMETER ApplianceIp
+    "Appliance IP for this VLAN (Default Gateway)"
+    .PARAMETER Subnet
+    "Subnet for this VLAN"
+    .PARAMETER GroupPolicyId
+    .ID of the group policy to apply to this VLAN"
+    .PARAMETER TemplateVlanType
+    "Type of subnetting of the VLAN. Applicable only for template network"
+    .PARAMETER TranslateVPNSubnet
+
+    #>
 }
 
 Set-Alias -Name UpdateMNAppVLAN  -Value Update-MerakiNetworkApplianceVLAN

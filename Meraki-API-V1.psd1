@@ -168,7 +168,8 @@ AliasesToExport = @(`
     'GMNetCF','UMNetAppCF','GMAppPorts', 'GMNetAppRoutes', 'GMNetAppVLANs','GMNetAppVLAN', 'GMSwStackRoutInt', 'GMDevSwPort', `
     'GMNetAppSSVpn','GMAppUpStat', 'GMSWRoutInts','GMSWRoutInt','GMSWRoutIntDHCP','GMSWRoutStatic','GMSwStRoutIntsDHCP','GMSwStRoutIntDHCP', 'RemoveMNetAppCfr',
     'GMNetSWLag','GMNetSWStacks','GMDevSwPorts','RMSWPorts','GMSSIDs','GMSSID','GMWirelessStat','GMNetSWStRoutInts','GMSwStack','GMSwStRoutStatic','GMAVpnStats', 'AddMNetAppCFR',
-    'GMNetClients','GMDevClients','GMNetAppDhcpSubnet','GMNetClientAppUsage', 'GMNetSecEvents','GMSWPortStatus','GMSWPortsPacketCntrs','GMOFirmwareUpgrades','UpdateMNAppVLAN'
+    'GMNetClients','GMDevClients','GMNetAppDhcpSubnet','GMNetClientAppUsage', 'GMNetSecEvents','GMSWPortStatus','GMSWPortsPacketCntrs','GMOFirmwareUpgrades','UpdateMNAppVLAN',
+    'UpdateMSStackRouteInt','UpdateMSStackRoutIntDhcp','AddMSStackRouteInt'
 )
 
 # DSC resources to export from this module
