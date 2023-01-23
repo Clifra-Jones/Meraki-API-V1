@@ -703,3 +703,142 @@ function Get-MerakiNetworkApplianceDhcpSubnets() {
 }
 
 Set-Alias -Name GMNetAppDhcpSubnet -Value Get-MerakiNetworkApplianceDhcpSubnets -Option ReadOnly
+
+function Update-MerakiNetworkApplianceVLAN() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory = $true
+        )]
+        [Alias("NetworkId")]
+        [string]$id,
+        [Parameter(Mandatory = $true)]
+        [string]$VlanId,
+        [string]$VlanName,
+        [String]$ApplianceIp,
+        [string]$Subnet,
+        [string]$GroupPolicyId,
+        [ValidateSet("same","unique")]
+        [string]$TemplateVlanType,
+        [string]$TranslateVPNSubnet,
+        [string]$CIDR,
+        [string]$Mask,
+        [ValidateScript(
+            {
+                if ($_ -isnot [hashtable]) {
+                    Throw "fixedIpAssignments must be a hashtable"
+                }
+            }
+        )]
+        [hashtable]$fixedIpAssignments,
+        [hashtable[]]$ReservedIpRanges,
+        [string]$DnsNameServers,
+        [ValidateSet("Run a DHCP Server","Relay DHCP to another Server","Do not respond to DHCP requests")]
+        [string]$DhcpHandling,
+        [ValidateScript(
+            {
+                If ($DhcpHandling -ne "Relay DHCP to another Server") {
+                    Throw "Parameter DhcpRelayServers is not valid with DhcpHandling = $DhcpHandling"
+                }
+            }
+        )]
+        [string[]]$DhcpRelayServerIPs,
+        [ValidateSet(
+            '30 minutes', '1 hour', '4 hours', '12 hours', '1 day', '1 week'
+        )]
+        [string]$DhcpLeaseTime,
+        [bool]$DhcpBootOptionEnabled,
+        [string]$DhcpBootNextServer,
+        [string]$DhcpBootFilename,
+        [hashtable]$DhcpOptions,
+        [hashtable]$IPv6,
+        [bool]$MandatoryDhcp,
+        [string]$VpnNatSubnet
+    )
+    
+    $Headers = Get-Headers
+
+    # Return the network Info so we can determine is thi snetwork is assinged to a template.
+    $Network = Get-MerakiNetwork -networkID $id
+
+    # check for Template only parameters.
+    if ($mask -or $CIDR -or $TemplateVlanType) {
+        if ($Network.$_isBoundToConfigTemplate -eq $false) {
+            Throw "Parameters 'mask', 'CIDR' and TemplateVLanType are only applicable to template networks."
+        }
+    }
+
+    $Uri = "{0}/networks/{1}/appliance/vlans/{2}" -f $BaseURI, $id, $VlanId
+
+    $_body = {}
+    if ($name) {
+        $_.Body.Add("name", $Name)
+    }
+    if ($ApplianceIp) {
+        $_body.Add("applianceIp", $ApplianceIp)
+    }
+    if ($subnet) {
+        $_body.Add("subnet", $subnet)
+    }
+    if ($GroupPolicyId) {
+        $_body.Add("groupPolicyId", $GroupPolicyId)
+    }
+    if ($TemplateVlanType) {
+        $_body.Add("templateVlanType", $TemplateVlanType)
+    }
+    if ($CIDR) {
+        $_body.Add("cidr", $CIDR)
+    }
+    if ($Mask) {
+        $_body.Add("mask", $Mask)
+    }
+    if ($fixedIpAssignments) {
+        $_body.Add("fixedIpAssignments", $fixedIpAssignments)
+    }
+    if ($ReservedIpRanges) {
+        $_body.Add("ReservedIpRanges", $ReservedIpRanges)
+    }
+    if ($DnsNameServers) {
+        $_body.Add("dnsNameServers", $DnsNameServers)
+    }
+    if ($DhcpHandling) {
+        $_body.Add("dhcpHandling", $DhcpHandling)
+    }
+    if ($DhcpRelayServerIPs) {
+        $_body.Add("dhcpRelayServerIps", $DhcpRelayServerIPs)
+    }
+    if ($DhcpLeaseTime) {
+        $_body.Add("dhcpLeaseTime", $DhcpLeaseTime)
+    }
+    if ($DhcpBootOptionEnabled) {
+        $_body.Add("dhcpBootOptionsEnabled", $DhcpBootOptionEnabled)
+    }
+    if ($DhcpBootNextServer) {
+        $_body.Add("dhcpBootNextServer", $DhcpBootNextServer)
+    }
+    if ($DhcpBootFilename) {
+        $_body.Add("dhcpBoofFilename", $DhcpBootFilename)
+    }
+    if ($IPv6) {
+        $_body.Add("ipv6", $IPv6)
+    }
+    if ($MandatoryDhcp) {
+        $_body.Add("mandatoryDhcp", $MandatoryDhcp)
+    }
+    if ($VpnNatSubnet) {
+        $_body.Add("vpnNatSubnet", $VpnNatSubnet)
+    }
+
+    $body = $_body | ConvertTo-Json -Depth 10 -Compress
+
+    Try {
+        #$response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        #return $response
+        Write-Host $body
+    } catch {
+        Throw $_
+    }
+}
+
+Set-Alias -Name UpdateMNAppVLAN  -Value Update-MerakiNetworkApplianceVLAN
+

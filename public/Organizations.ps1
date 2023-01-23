@@ -970,26 +970,3 @@ function Get-MerakiOrganizationFirmwareUpgrades() {
 }
 
 Set-Alias -name GMOFirmwareUpgrades -Value Get-MerakiOrganizationFirmwareUpgrades
-
-function Get-MerakiOrganizationFirmwareUpgradesByDevice() {
-    [CmdletBinding()]
-    Param(
-        [string[]]$NetworkIds,
-        [string[]]$serials,
-        [string[]]$MACs,
-        [string[]]$FirmwareUpgradeIds,
-        [string[]]$FirwareUpgradeBatchIds,
-    )
-
-    $Headers = Get-Headers
-
-    Set-Variable -Name Query
-
-    if ($NetworkIds) {
-        $_NetIds = $NetworkIds -join ","
-        $Query = "networkIds={0}" -f $_NetIds
-    }
-    if ($serials) {
-        if ($Query)
-    }
-}

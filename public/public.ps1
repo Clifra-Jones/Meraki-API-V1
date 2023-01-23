@@ -28,3 +28,4 @@ if (Test-Path "$home/.meraki/config.json") {
         $newConfig | ConvertTo-Json | Set-Content -Path "$home/.meraki/config.json"
     }
 }
+
