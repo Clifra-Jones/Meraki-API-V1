@@ -88,7 +88,7 @@ function Get-MerakiSwitchStackRoutingInterface() {
     #>
 }
 
-Set-Alias -Name GMSwStackRoutInt -Value Get-MerakiSwitchStackRoutingInterface
+Set-Alias -Name GMSWStackRoutInt -Value Get-MerakiSwitchStackRoutingInterface
 
 function Add-MerakiSwitchStackRoutingInterface() {
     Param(
@@ -185,42 +185,48 @@ function Add-MerakiSwitchStackRoutingInterface() {
         )]
         [switch]$OspfV3IsPassiveEnabled
     )
-        $Headers = Get-Headers
+    $Headers = Get-Headers
 
-        $Uri = "{0}/networks/{1}/switch/stack/{2}/routing/interfaces" -f $BaseURI, $NetworkId, $StackId
+    $Uri = "{0}/networks/{1}/switch/stack/{2}/routing/interfaces" -f $BaseURI, $NetworkId, $StackId
 
-        $_Body = @{
-            "vlanId" = $VlanId
-            "name" = $Name            
-        }
-        if ($Subnet) { $_Body.Add("Subnet", $Subnet) }
-        if ($InterfaceIp) { $_Body.Add("InterfaceIp", $InterfaceIp) }
-        if ($DefaultGateway) { $_Body.Add("defaultGateway", $DefaultGateway) }
-        if ($Ipv6Address) {
-            $_Body.Add("ospfSettings", @{
-                "area" = $OspfArea
-                "cost" = $OspfCost
-                "isPassiveEnabled" = $OspfIsPassiveEnabled.IsPresent`
-            })
-        }
-        if ($OspfV3Cost) {
-            $_Body.Add("ospfV3", @{
-                "area" = $OspfV3Area
-                "cost" = $OspfV3Cost
-                "isPassiveEnabled" = $OspfV3IsPassiveEnabled.IsPresent
-            })
-        }
+    $_Body = @{
+        "vlanId" = $VlanId
+        "name" = $Name            
+    }
+    if ($Subnet) { $_Body.Add("Subnet", $Subnet) }
+    if ($InterfaceIp) { $_Body.Add("InterfaceIp", $InterfaceIp) }
+    if ($DefaultGateway) { $_Body.Add("defaultGateway", $DefaultGateway) }
+    if ($Ipv6Address) {
+        $_Body.Add("ospfSettings", @{
+            "area" = $OspfArea
+            "cost" = $OspfCost
+            "isPassiveEnabled" = $OspfIsPassiveEnabled.IsPresent`
+        })
+    }
+    if ($OspfV3Cost) {
+        $_Body.Add("ospfV3", @{
+            "area" = $OspfV3Area
+            "cost" = $OspfV3Cost
+            "isPassiveEnabled" = $OspfV3IsPassiveEnabled.IsPresent
+        })
+    }
 
-        $body = $_Body | ConvertTo-Json -Depth 5 -Compress
-        try {
-            $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
-            return $response
-        } catch {
-            throw $_
-        }
+    $body = $_Body | ConvertTo-Json -Depth 5 -Compress
+    try {
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    } catch {
+        throw $_
+    }
+    <#
+    .SYNOPSIS
+    Add Meraki Switch stack routing interface
+    .DESCRIPTION
+    Add an interface to a Meraki 
+    #>
 }
 
-Set-Alias -Name AddMSStackRouteInt -Value Add-MerakiSwitchStackRoutingInterface
+Set-Alias -Name AddMSSRteInt -Value Add-MerakiSwitchStackRoutingInterface
 
 Function Remove-MerakiSwitchStackRoutingInterface() {
     [CmdletBinding(SupportsShouldProcess)]
@@ -244,9 +250,23 @@ Function Remove-MerakiSwitchStackRoutingInterface() {
             throw $_
         }
     }
+    <#
+    .SYNOPSIS
+    Remove Meraki switch stack routing interface
+    .DESCRIPTION
+    Remove an interface from a Meraki switch stack
+    .PARAMETER NetworkId
+    Network ID of the network containing the switch stack
+    .PARAMETER StackId
+    The stack ID of the stack to be removed
+    .OUTPUTS
+    Returns HTML status code. Code 204 - Successful.
+    #>
 }
 
-function Update-MerakiSwitchStackRoutingInterface() {
+Set-Alias -Name RemoveMSStackRouteInt -Value Remove-MerakiSwitchStackRoutingInterface
+
+function Set-MerakiSwitchStackRoutingInterface() {
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
@@ -379,7 +399,7 @@ function Update-MerakiSwitchStackRoutingInterface() {
     }
 }
 
-Set-Alias -Name UpdateMSStackRouteInt -Value Update-MerakiSwitchStackRoutingInterface
+Set-Alias -Name SetMSStkRteInt -Value Set-MerakiSwitchStackRoutingInterface
 
 function Get-MerakiSwitchStackRoutingInterfacesDHCP() {
     [CmdletBinding()]
@@ -426,7 +446,7 @@ function Get-MerakiSwitchStackRoutingInterfacesDHCP() {
     #>
 }
 
-Set-Alias GMSwStRoutIntsDHCP -Value Get-MerakiSwitchRoutingInterfaceDHCPs
+Set-Alias GMSwStRteIntsDHCP -Value Get-MerakiSwitchStackRoutingInterfacesDHCP
 
 function Get-MerakiSwitchStackRoutingStaticRoutes() {
     [CmdletBinding()]
@@ -512,7 +532,7 @@ function Get-MerakiSwitchStackRoutingStaticRoute() {
     }
 }
 
-function Update-MerakiNetworkSwitchStackRoutingStaticRoute() {
+function Set-MerakiNetworkSwitchStackRoutingStaticRoute() {
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
@@ -549,6 +569,8 @@ function Update-MerakiNetworkSwitchStackRoutingStaticRoute() {
     }
 }
 
+Set-Alias -name SetMNSSRteStRoute -Value Set-MerakiNetworkSwitchStackRoutingStaticRoute
+
 function Remove-MerakiSwitchStackRoutingStaticRoute() {
     [CmdletBinding(SupportsShouldProcess)]
     Param(
@@ -574,7 +596,23 @@ function Remove-MerakiSwitchStackRoutingStaticRoute() {
             throw $_
         }
     }
+    <#
+    .SYNOPSIS
+    Remove a Meraki switch stack static route.
+    .DESCRIPTION
+    Remove a static route from a Meraki switch stack.
+    .PARAMETER NetworkId
+    Network ID of te network containing the switch
+    .PARAMETER StackId
+    Stack ID to remove the route from.
+    .PARAMETER StaticRouteId
+    Static Route ID to remove.
+    .OUTPUTS
+    Return HTML status code. 204 = Successful.
+    #>
 }
+
+Set-Alias -name RSWStkRteInt -Value Remove-MerakiSwitchStackRoutingStaticRoute -Option ReadOnly
 
 function Get-MerakiSwitchStackRoutingInterfaceDHCP() {
     [CmdletBinding()]
@@ -649,7 +687,7 @@ function Get-MerakiSwitchStackRoutingInterfaceDHCP() {
 
 Set-Alias GMSwStRoutIntDHCP -Value Get-MerakiSwitchStackRoutingInterfaceDHCP
 
-function Update-MerakiSwitchStackRoutingInterfaceDhcp() {
+function Set-MerakiSwitchStackRoutingInterfaceDhcp() {
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
@@ -699,7 +737,7 @@ function Update-MerakiSwitchStackRoutingInterfaceDhcp() {
     }
 }
 
-Set-Alias -Name UpdateMSStackRoutIntDhcp -Value Update-MerakiSwitchStackRoutingInterfaceDhcp
+Set-Alias -Name UMSStkRteIntDhcp -Value Update-MerakiSwitchStackRoutingInterfaceDhcp
 
 function Get-MerakiSwitchRoutingInterfaces() {
     [CmdLetBinding()]
@@ -774,6 +812,7 @@ function Add-MerakiSwitchRoutingInterface() {
         [Parameter(Mandatory = $true)]
         [string]$Serial,
         [Parameter(Mandatory = $true)]
+        [ValidateRange(1,4096)]
         [int]$VlanId,
         [Parameter(Mandatory = $true)]
         [string]$Name,
@@ -800,7 +839,7 @@ function Add-MerakiSwitchRoutingInterface() {
                     throw "Parameter OspfArea must be used with OspfCost."
                 }
             }
-        )]
+        )]        
         [int]$OspfCost,
         [ValidateScript(
             {
@@ -875,16 +914,64 @@ function Add-MerakiSwitchRoutingInterface() {
     } catch {
         throw $_
     }
+    <#
+    .SYNOPSIS
+    Add a routing interface to a switch.
+    .DESCRIPTION
+    Add a VLAN interface to a Meraki switch.
+    .PARAMETER Serial
+    Serial number of the switch.
+    .PARAMETER VlanId
+    The VLAN this routed interface is on. VLAN must be between 1 and 4094.
+    .PARAMETER Name
+    A friendly name or description for the interface or VLAN.
+    .PARAMETER Subnet
+    The network that this routed interface is on, in CIDR notation (ex. 10.1.1.0/24
+    .PARAMETER DefaultGateway
+    The next hop for any traffic that isn't going to a directly connected subnet or over a static route. 
+    This IP address must exist in a subnet with a routed interface. Required if this is the first IPv4 interface.
+    .PARAMETER InterfaceIp
+    The IP address this switch will use for layer 3 routing on this VLAN or subnet. This cannot be the same as the switch's management IP.
+    .PARAMETER MulticastRouting
+    Enable multicast support if, multicast routing between VLANs is required. 
+    Options are: 'disabled', 'enabled' or 'IGMP snooping querier'. Default is 'disabled'.
+    .PARAMETER Ipv6Address
+    The IPv6 address of the interface. Required if assignmentMode is 'static'. Must not be included if assignmentMode is 'eui-64'.
+    .PARAMETER Ipv6AssignmentMode
+    The IPv6 assignment mode for the interface. Can be either 'eui-64' or 'static'.
+    .PARAMETER Ipv6Gateway
+    The IPv6 default gateway of the interface. Required if prefix is defined and this is the first interface with IPv6 configured for the switch.
+    .PARAMETER Ipv6Prefix
+    The IPv6 prefix of the interface. Required if IPv6 object is included.
+    .PARAMETER OspfCost
+    The path cost for this interface. Defaults to 1, but can be increased up to 65535 to give lower priority.
+    .PARAMETER OspfArea
+    The OSPF area to which this interface should belong. Can be either 'disabled' or the identifier of an existing OSPF area. Defaults to 'disabled'.
+    .PARAMETER OspfIsPassive
+    When enabled, OSPF will not run on the interface, but the subnet will still be advertised.
+    .PARAMETER OspfV3Cost
+    The path cost for this interface. Defaults to 1, but can be increased up to 65535 to give lower priority.
+    .PARAMETER OspfV3Area
+    The OSPFv3 area to which this interface should belong. 
+    Can be either 'disabled' or the identifier of an existing OSPFv3 area. Defaults to 'disabled'.
+    .PARAMETER OspfV3IsPassive
+    When enabled, OSPFv3 will not run on the interface, but the subnet will still be advertised.
+    .OUTPUTS
+    "Interface Object"    
+    #>
 }
 
-function Update-MerakiSwitchRoutingInterface() {
+Set-Alias -name AddMSRouteInt -Value Add-MerakiSwitchRoutingInterface
+
+function Set-MerakiSwitchRoutingInterface() {
     [CmdletBinding()]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$Serial,
         [Parameter(Mandatory = $true)]
         [string]$InterfaceId,
-        [string]$VlanId,
+        [ValidateRange(1,4096)]
+        [int]$VlanId,
         [string]$Name,
         [string]$Subnet,
         [string]$DefaultGateway,
@@ -983,7 +1070,55 @@ function Update-MerakiSwitchRoutingInterface() {
     } catch {
         Throw $_
     }
+    <#
+    .SYNOPSIS
+    Set Meraki Switch Interface.
+    .DESCRIPTION
+    Set a Meraki switch routing interface.
+    .PARAMETER Serial
+    Switch serial number.
+    .PARAMETER InterfaceId
+    Interface ID to be updates.
+    .PARAMETER VlanId
+    The VLAN this routed interface is on. VLAN must be between 1 and 4094.
+    .PARAMETER Name
+    A friendly name or description for the interface or VLAN.
+    .PARAMETER Subnet
+    The network that this routed interface is on, in CIDR notation (ex. 10.1.1.0/24).
+    .PARAMETER DefaultGateway
+    The next hop for any traffic that isn't going to a directly connected subnet or over a static route. 
+    This IP address must exist in a subnet with a routed interface. Required if this is the first IPv4 interface.
+    .PARAMETER InterfaceIp
+    The IP address this switch will use for layer 3 routing on this VLAN or subnet. This cannot be the same as the switch's management IP.
+    .PARAMETER MulticastRouting
+    Enable multicast support if, multicast routing between VLANs is required. 
+    Options are: 'disabled', 'enabled' or 'IGMP snooping querier'. Default is 'disabled'.
+    .PARAMETER Ipv6Address
+    The IPv6 address of the interface. Required if assignmentMode is 'static'. Must not be included if assignmentMode is 'eui-64'.
+    .PARAMETER Ipv6AssignmentMode
+    The IPv6 assignment mode for the interface. Can be either 'eui-64' or 'static'.
+    .PARAMETER Ipv6Gateway
+    The IPv6 default gateway of the interface. Required if prefix is defined and this is the first interface with IPv6 configured for the switch.
+    .PARAMETER Ipv6Prefix
+    The IPv6 prefix of the interface. Required if IPv6 object is included.
+    .PARAMETER OspfCost
+    The path cost for this interface. Defaults to 1, but can be increased up to 65535 to give lower priority.
+    .PARAMETER OspfArea
+    The OSPF area to which this interface should belong. Can be either 'disabled' or the identifier of an existing OSPF area. Defaults to 'disabled'.
+    .PARAMETER OspfIsPassive
+    When enabled, OSPF will not run on the interface, but the subnet will still be advertised.
+    .PARAMETER OspfV3Cost
+    The path cost for this interface. Defaults to 1, but can be increased up to 65535 to give lower priority.
+    .PARAMETER OspfV3Area
+    The OSPFv3 area to which this interface should belong. Can be either 'disabled' or the identifier of an existing OSPFv3 area. Defaults to 'disabled'.
+    .PARAMETER OspfV3IsPassive
+    When enabled, OSPFv3 will not run on the interface, but the subnet will still be advertised.
+    .OUTPUTS
+    Interface object.
+    #>
 }
+
+Set-Alias -name SetMSRteInt -Value Set-MerakiSwitchRoutingInterface
 
 function Get-MerakiSwitchRoutingInterfaceDHCP() {
     [CmdletBinding()]
@@ -1017,7 +1152,7 @@ function Get-MerakiSwitchRoutingInterfaceDHCP() {
 
 Set-Alias GMSWRoutIntDHCP -value Get-MerakiSwitchRoutingInterfaceDHCP -option ReadOnly
 
-function Update-MerakiSwitchRoutingInterfaceDhcp() {
+function Set-MerakiSwitchRoutingInterfaceDhcp() {
     [CmdletBinding()]
     Param(
         [Parameter(Mandatory = $true)]
@@ -1090,7 +1225,55 @@ function Update-MerakiSwitchRoutingInterfaceDhcp() {
     } catch {
         throw $_
     }
+    <#
+    .SYNOPSIS
+    Update Meraki switch routing interface DHCP Settings
+    .DESCRIPTION
+    Add or update the Meraki switch routing interface DHCP settings.
+    Use this method to configure DHCP setting for a new interface.
+    .PARAMETER Serial
+    Device serial number
+    .PARAMETER InterfaceId
+    Interface Id of the interface to be updated.
+    .PARAMETER DhcpMode
+    The DHCP mode options for the switch interface ('dhcpDisabled', 'dhcpRelay' or 'dhcpServer')
+    .PARAMETER DhcpRelayServerIps
+    The DHCP relay server IPs to which DHCP packets would get relayed for the switch interface
+    .PARAMETER DhcpLeaseTime
+    The DHCP lease time config for the dhcp server running on switch interface 
+    ('30 minutes', '1 hour', '4 hours', '12 hours', '1 day' or '1 week')
+    .PARAMETER DnsNameServerOptions
+    The DHCP name server option for the dhcp server running on the switch interface ('googlePublicDns', 'openDns' or 'custom')
+    .PARAMETER DnsCustomNameServers
+    The DHCP name server IPs when DHCP name server option is 'custom'
+    .PARAMETER BootOptionsEnabled
+    Enable DHCP boot options to provide PXE boot options configs for the dhcp server running on the switch interface
+    .PARAMETER BootNextServer
+    The PXE boot server IP for the DHCP server running on the switch interface
+    .PARAMETER BootFileName
+    The PXE boot server filename for the DHCP server running on the switch interface
+    .PARAMETER DhcpOptions
+    Array of DHCP options consisting of code, type and value for the DHCP server running on the switch interface
+    DHCP option objects consist of the following fields.
+    code:string - The code for DHCP option which should be from 2 to 254
+    type:string - The type of the DHCP option which should be one of ('text', 'ip', 'integer' or 'hex')
+    value:string - The value of the DHCP option
+    .PARAMETER FixedIpRanges
+    Array of DHCP fixed IP assignments for the DHCP server running on the switch interface
+    Fixed Ip Range objects consist of the following fields.
+    ip*:string - The IP address of the client which has fixed IP address assigned to it
+    mac*: string - The MAC address of the client which has fixed IP address
+    name*: string - The name of the client which has fixed IP address
+    .PARAMETER ReservedIpRanges
+    Array of DHCP reserved IP assignments for the DHCP server running on the switch interface
+    Reserved Ip Range objects consist of the following fields
+    comment:string - The comment for the reserved IP range
+    end:string - The ending IP address of the reserved IP range
+    start:string - The starting IP address of the reserved IP range
+    #>    
 }
+
+Set-Alias -Name SetMSRteIntDHCP -Value Set-MerakiSwitchRoutingInterfaceDhcp
 
 function Get-MerakiSwitchRoutingStaticRoutes() {
     [CmdLetBinding()]
@@ -1178,6 +1361,82 @@ function Get-MerakiNetworkSwitchLAG() {
 
 Set-Alias -Name GMNetSWLag -value Get-MerakiNetworkSwitchLAG -Option ReadOnly
 
+function Add-MerakiNetworkSwitchLag() {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [hashtable[]]$SwitchPorts
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/switch/LinkAggregations"
+
+    $Aggregations = @{
+        "switchPorts" = $SwitchPorts
+    }
+
+    $body = $Aggregations | ConvertTo-Json -Depth 5 -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    } catch {
+        throw $_
+    }
+    
+}
+
+function Set-MerakiNetworkSwitchLAG() {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$LinkAggregationId,
+        [hashtable[]]$SwitchPorts
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/switch/linkAggregations/{2}" -f $BaseURI. $NetworkId, $LinkAggregationId
+
+    $Aggregations = @{
+        "id" = $LinkAggregationId
+        "switchPorts" = $SwitchPorts
+    }
+
+    $body = $Aggregations | ConvertTo-Json -Depth 5 -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    } catch {
+        throw $_
+    }
+}
+
+function Remove-MerakiNetworkSwitchLAG() {
+    [CmdletBinding(SupportsShouldProcess)]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$LinkAggregationId
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/switch/linkAggregations/{2}" -f $BaseURI, $NetworkId, $LinkAggregationId
+
+    if ($PSCmdlet.ShouldProcess("Delete","LAG ID:$LinkAggregationId")) {
+        try {
+            Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers
+        } catch {
+            throw $_
+        }
+    }
+}
 function Get-MerakiNetworkSwitchStacks() {
     [CmdLetBinding()]
     Param(
@@ -1278,7 +1537,7 @@ function New-MerakiNeworkSwitchStack() {
     }
 }
 
-function Add-MerakiNetworkSwitchStackSwitch() {
+function Add-MerakiSwitchStackSwitch() {
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
@@ -1305,6 +1564,8 @@ function Add-MerakiNetworkSwitchStackSwitch() {
         throw $_
     }
 }
+
+Set-Alias -Name AMSSSwitch -Value Add-MerakiSwitchStackSwitch
 function Get-MerakiSwitchPorts() {
     [CmdletBinding()]
     Param(

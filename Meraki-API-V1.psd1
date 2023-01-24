@@ -144,15 +144,22 @@ FunctionsToExport = @(`
     'Get-MerakiSwitchPortsStatus',
     'Get-MerakiSwitchPortsPacketCounters',
     'Get-MerakiOrganizationFirmwareUpgrades',
-    'Update-MerakiNetworkApplianceVLAN'
+    'Set-MerakiNetworkApplianceVLAN'
     'New-fixedIpAssignment',
     'New-ReservedIpRange',
     'New-DhcpOption',
     'New-IPv6',
     'New-IPv6PrefixAssignment',
     'Add-MerakiSwitchStackRoutingInterface',
-    'Update-MerakiSwitchStackRoutingInterface',
-    'Update-MerakiSwitchStackRoutingInterfaceDhcp'
+    'Set-MerakiSwitchStackRoutingInterface',
+    'Set-MerakiSwitchStackRoutingInterfaceDhcp',
+    'Add-MerakiSwitchRoutingInterface',
+    'Set-MerakiSwitchRoutingInterface',
+    'Set-MerakiSwitchRoutingInterfaceDhcp',
+    'Get-MerakiSwitchStackRoutingStaticRoutes',
+    'Remove-MerakiSwitchStackRoutingStaticRoute',
+    'Remove-MerakiSwitchStackRoutingInterface',
+    'Set-MerakiNetworkSwitchStackRoutingStaticRoute'
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
@@ -166,10 +173,13 @@ AliasesToExport = @(`
     'StartMDevBlink','GMDev','GMOrgs','GMOrg','GMNets','GMOrgTemplates','GMOrgDevs','GMOrgAdmins', `
     'GMOrgCC','GMOrg3pVP','GMOrgInv','GMNet','GMNetDevs','GMNetEvents','GMNetET','GMNetAppCFCats', 'GMOrgInvDevices', `
     'GMNetCF','UMNetAppCF','GMAppPorts', 'GMNetAppRoutes', 'GMNetAppVLANs','GMNetAppVLAN', 'GMSwStackRoutInt', 'GMDevSwPort', `
-    'GMNetAppSSVpn','GMAppUpStat', 'GMSWRoutInts','GMSWRoutInt','GMSWRoutIntDHCP','GMSWRoutStatic','GMSwStRoutIntsDHCP','GMSwStRoutIntDHCP', 'RemoveMNetAppCfr',
-    'GMNetSWLag','GMNetSWStacks','GMDevSwPorts','RMSWPorts','GMSSIDs','GMSSID','GMWirelessStat','GMNetSWStRoutInts','GMSwStack','GMSwStRoutStatic','GMAVpnStats', 'AddMNetAppCFR',
-    'GMNetClients','GMDevClients','GMNetAppDhcpSubnet','GMNetClientAppUsage', 'GMNetSecEvents','GMSWPortStatus','GMSWPortsPacketCntrs','GMOFirmwareUpgrades','UpdateMNAppVLAN',
-    'UpdateMSStackRouteInt','UpdateMSStackRoutIntDhcp','AddMSStackRouteInt'
+    'GMNetAppSSVpn','GMAppUpStat', 'GMSWRoutInts','GMSWRoutInt','GMSWRoutIntDHCP','GMSWRoutStatic','GMSwStRteIntsDHCP',
+    'GMSwStRoutIntDHCP', 'RemoveMNetAppCfr','GMNetSWLag','GMNetSWStacks','GMDevSwPorts','RMSWPorts','GMSSIDs','GMSSID',
+    'GMWirelessStat','GMNetSWStRoutInts','GMSwStack','GMSWStRoutStatic','GMAVpnStats', 'AddMNetAppCFR',
+    'GMNetClients','GMDevClients','GMNetAppDhcpSubnet','GMNetClientAppUsage', 'GMNetSecEvents','GMSWPortStatus',
+    'GMSWPortsPacketCntrs','GMOFirmwareUpgrades','SetMNAppVLAN', 'AddMSSRteInt','SetMNSSRteStRoute'
+    'SetMSStkRteInt','GMSWStackRoutInt','RemoveMSStackRouteInt', 'GMNetCltBWUsage','RSWStkRteInt'
+    'UMSRteInt','SetMSRteIntDHCP','AddMSRouteInt', 'AMSSSwitch', 'UMNSSRteStRoute', 'UMSStkRteIntDhcp'
 )
 
 # DSC resources to export from this module

@@ -27,7 +27,7 @@ function Get-MerakiDevice() {
     #>
 }
 
-Set-Alias -Name GMNetDev -Value Get-MerakiNetworkDevice -Option ReadOnly
+Set-Alias -Name GMNetDev -Value Get-MerakiDevice -Option ReadOnly
 
 function Start-MerakiDeviceBlink() {
     [CmdletBinding()]

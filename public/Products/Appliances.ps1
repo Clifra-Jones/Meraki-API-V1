@@ -30,7 +30,7 @@ function Get-MerakiNetworkApplianceContentFilteringCategories() {
     #>
 }
 
-Set-Alias GMNetAppCFCats -Value Get-MerakiNetworkContentFilteringCategories -Option ReadOnly
+Set-Alias GMNetAppCFCats -Value Get-MerakiNetworkApplianceContentFilteringCategories -Option ReadOnly
 
 <#
 .Description
@@ -62,7 +62,7 @@ function Get-MerakiNetworkApplianceContentFiltering() {
     #>
 }
 
-Set-Alias GMNetCF -Value Get-MerakiNetworkContentFilteringRules -Option ReadOnly
+Set-Alias GMNetCF -Value Get-MerakiNetworkApplianceContentFiltering -Option ReadOnly
 
 function Update-MerakiNetworkApplianceContentFiltering() {
     [CmdletBinding()]
@@ -218,7 +218,7 @@ function Update-MerakiNetworkApplianceContentFiltering() {
     #>
 }
 
-Set-Alias -Name UMNetAppCF -value Update-MerakiNetworkContentFiltering -Option ReadOnly
+Set-Alias -Name UMNetAppCF -value Update-MerakiNetworkApplianceContentFiltering -Option ReadOnly
 
 function Add-MerakiNetworkApplianceContentFilteringRules() {
     Param (
@@ -785,7 +785,7 @@ Function Delete-MerakiNetworkApplianceVlan() {
     }
 }
 
-function Update-MerakiNetworkApplianceVLAN() {
+function Set-MerakiNetworkApplianceVLAN() {
     [CmdletBinding()]
     Param(
         [Parameter(
@@ -942,5 +942,5 @@ function Update-MerakiNetworkApplianceVLAN() {
     #>
 }
 
-Set-Alias -Name UpdateMNAppVLAN  -Value Update-MerakiNetworkApplianceVLAN
+Set-Alias -Name SetMNAppVLAN  -Value Set-MerakiNetworkApplianceVLAN
 
