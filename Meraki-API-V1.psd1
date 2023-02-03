@@ -126,9 +126,9 @@ FunctionsToExport = @(`
     'Get-MerakiSwitchStackRoutingInterfaceDHCP', 
     'Get-MerakiSwitchStackRoutingInterfacesDHCP', 
     'Get-MerakiSwitchStackRoutingInterfacesDHCP',
-    'Get-MerakiNetworkSwitchStack', 
+    'Get-MerakiSwitchStack', 
     'Get-MerakiSwitchStackRoutingStaticRoutes', 
-    'Get-MerakiDeviceSwitchPort',
+    'Get-MerakiSwitchPort',
     'Get-MerakiNetworkApplianceVpnStats',
     'Get-MerakiOrganizationInventoryDevices',
     'Add-MerakiNetworkApplianceContentFilteringRules',
@@ -159,7 +159,26 @@ FunctionsToExport = @(`
     'Get-MerakiSwitchStackRoutingStaticRoutes',
     'Remove-MerakiSwitchStackRoutingStaticRoute',
     'Remove-MerakiSwitchStackRoutingInterface',
-    'Set-MerakiNetworkSwitchStackRoutingStaticRoute'
+    'Set-MerakiNetworkSwitchStackRoutingStaticRoute',
+    'Add-MerakiNetworkSwitchLAG'
+    'Set-MerakiNetworkSwitchLAG',
+    'Remove-MerakiNetworkSwitchLAG',
+    'Get-MerakiSwitchPortSchedules',
+    'Add-MerakiSwitchPortSchedule',
+    'Set-MerakiSwitchPortSchedule',
+    'Remove-MerakiSwitchPortSchedule',
+    'Set-MerakiSwitchPort',
+    'Get-MerakiSwitchQosRules',
+    'Get-MerakiSwitchQosRule',
+    'Add-MerakiSwitchQosRule',
+    'Set-MerakiSwitchQosRule',
+    'Remove-MerakiSwitchQosRule',
+    'Get-MerakiSwitchQosRulesOrder',
+    'Set-MerakiSwitchQosruleOrder',
+    'Add-MerakiSwitchRoutingStaticRoute',
+    'Set-MerakiSwitchRoutingStaticRoute',
+    'Remove-MerakiSwitchStaticRoute',
+    'New-MerakiSwitchStack'
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
@@ -177,8 +196,8 @@ AliasesToExport = @(`
     'GMSwStRoutIntDHCP', 'RemoveMNetAppCfr','GMNetSWLag','GMNetSWStacks','GMDevSwPorts','RMSWPorts','GMSSIDs','GMSSID',
     'GMWirelessStat','GMNetSWStRoutInts','GMSwStack','GMSWStRoutStatic','GMAVpnStats', 'AddMNetAppCFR',
     'GMNetClients','GMDevClients','GMNetAppDhcpSubnet','GMNetClientAppUsage', 'GMNetSecEvents','GMSWPortStatus',
-    'GMSWPortsPacketCntrs','GMOFirmwareUpgrades','SetMNAppVLAN', 'AddMSSRteInt','SetMNSSRteStRoute'
-    'SetMSStkRteInt','GMSWStackRoutInt','RemoveMSStackRouteInt', 'GMNetCltBWUsage','RSWStkRteInt'
+    'GMSWPortsPacketCntrs','GMOFirmwareUpgrades','SetMNAppVLAN', 'AddMSSRteInt','SetMNSSRteStRoute','New-MerakiNeworkSwitchStack',
+    'SetMSStkRteInt','GMSWStackRoutInt','RemoveMSStackRouteInt', 'GMNetCltBWUsage','RSWStkRteInt','Get-MerakiNetworkSwitchStack',
     'UMSRteInt','SetMSRteIntDHCP','AddMSRouteInt', 'AMSSSwitch', 'UMNSSRteStRoute', 'UMSStkRteIntDhcp'
 )
 
