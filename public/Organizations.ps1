@@ -238,7 +238,7 @@ function Get-MerakiOrganization() {
 
 Set-Alias -Name GMOrg -value Get-MerakiOrganization -Option ReadOnly
 
-
+#region Organization Networks
 function Get-MerakiNetworks() {
     [CmdletBinding(DefaultParameterSetName = 'none')]
     Param(
@@ -295,6 +295,158 @@ function Get-MerakiNetworks() {
 }
 
 Set-Alias -Name GMNets -Value Get-MerakiNetworks -Option ReadOnly
+
+function Add-MerakiNetwork() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+        [Parameter(Mandatory = $true)]
+        [string[]]$ProductTypes,
+        [string]$TimeZone,
+        [string]$Notes,
+        [string[]]$Tags,
+        [string]$CopyFromNetworkId,
+        [ValidateScript(
+            {
+                if ($profileName) {
+                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
+        [string]$OrgID,
+        [ValidateScript(
+            {
+                if ($OrgID) {
+                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
+        [string]$profileName
+    )
+
+    if (-not $orgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $orgID = $config.profiles.$profileName
+            if (-not $orgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $orgID = $config.profiles.default
+        }
+    }
+
+    $Headers = Get-Headers
+    $Uri = "{0}/organizations/{1}/networks"
+
+    $_Body = @{
+        name = $Name
+        productTypes = $ProductTypes
+    }
+    if ($TimeZone) { $_Body.Add("timeZone", $TimeZone) }
+    if ($Notes) { $_Body.Add("notes", $Notes) }
+    if ($Tags) { $_Body.Add("tags", $Tags) }
+    if ($CopyFromNetworkId) { $_Body.Add("copyFromNetworkId", $CopyFromNetworkId) }
+
+    $body = $_Body | ConvertTo-Json -Depth 5 -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body
+        return $response        
+    } catch {
+        throw $_
+    }
+    <#
+    .SYNOPSIS 
+    Create a network
+    .DESCRIPTION
+    Create a network in an organization
+    .PARAMETER Name
+    The name of the network
+    .PARAMETER ProductTypes
+    The product type(s) of the new network. If more than one type is included, the network will be a combined network.
+    .PARAMETER TimeZone
+    Time zone name from the ICANN tz database
+    .PARAMETER Notes
+    Add any notes or additional information about this network here.
+    .PARAMETER Tags
+    A list of tags to be applied to the network
+    .PARAMETER CopyFromNetworkId
+    The ID of the network to copy configuration from. Other provided parameters will override the copied configuration, except type which must match this network's type exactly.
+    .PARAMETER OrgId
+    Optional Organizational ID. if this parameter is notprovided the default Organization ID will be retrieved from the settings file.
+    If this prameter is provided it will override the default Organization ID in the settings file.
+    .OUTPUTS
+    An object containing thenew network.
+    #>
+}
+
+function Merge-MerakiNetworks() {
+    [CmdletBinding()]
+    Param(
+        [ValidateScript(
+            {
+                if ($profileName) {
+                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
+        [string]$OrgID,
+        [ValidateScript(
+            {
+                if ($OrgID) {
+                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
+        [string]$profileName,
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+        [Parameter(Mandatory = $true)]
+        [string[]]$NetworkIds,
+        [string]$EnrollmentString
+    )
+
+    if (-not $orgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $orgID = $config.profiles.$profileName
+            if (-not $orgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $orgID = $config.profiles.default
+        }
+    }
+    $Uri = "{0}/organizations/{1}/networks" -f $BaseURI, $orgID
+    $Headers = Get-Headers
+
+    $_Body = @{
+        name = $Name
+        networkIds = $NetworkIds
+    }
+
+    if ($EnrollmentString) { $_Body.Add("enrollmentString", $EnrollmentString) }
+
+    $body = $_Body | ConvertTo-Json -Depth 4 -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers -$Headers -Body $body
+        return $response
+    } catch {
+        throw $_
+    }
+}
+#endregion
 
 function Get-MerakiOrganizationConfigTemplates() {
     [CmdletBinding(DefaultParameterSetName = 'none')]
@@ -355,6 +507,58 @@ function Get-MerakiOrganizationConfigTemplates() {
 
 Set-Alias -Name GMOrgTemplates -value Get-MerakiOrganizationConfigTemplates -Option ReadOnly
 
+function Get-MerakiOganizationConfigTemplate () {
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$configTemplateId,
+        [ValidateScript(
+            {
+                if ($profileName) {
+                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
+        [string]$OrgID,
+        [ValidateScript(
+            {
+                if ($OrgID) {
+                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
+        [string]$profileName
+    )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }
+    }
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/organizations/{1}/configTemplates/{2}" -f $BaseURI, $OrgID
+
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+        return $response
+    }
+    catch {
+        throw $_
+    }
+
+}
 
 function Get-MerakiOrganizationDevices() {
     [CmdletBinding(DefaultParameterSetName = 'none')]

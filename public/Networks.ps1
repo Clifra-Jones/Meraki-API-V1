@@ -1,5 +1,6 @@
 #Meraki Network Functions
 
+#region Networks
 function Get-MerakiNetwork() {
     Param(
         [Parameter(
@@ -25,6 +26,185 @@ function Get-MerakiNetwork() {
 
 Set-Alias -Name GMNet -Value Get-MerakiNetwork -Option:ReadOnly
 
+function Set-MerakiNetwork() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+        [string]$TimeZone,
+        [string]$Notes,
+        [string[]]$Tags,
+        [string]$EnrollmentString
+    )
+
+    $Headers = Get-Headers
+    
+    $Uri = "{0}/networks/{1}" -f $BaseURI, $NetworkId
+
+    $_body = @{}
+    if ($Name) { $_body.Add("name", $Name) }
+    if ($TimeZone) { $_body.Add("timeZone", $TimeZone) }
+    if ($Notes) { $_body.Add("notes", $Notes) }
+    if ($Tags) { $_body.Add("tags", $Tags) }
+    if ($EnrollmentString) { $_body.Add("enrollmentString", $EnrollmentString) }
+
+    $body = $_body | ConvertTo-Json -Depth 5 -Compress
+    try {
+        $response = Invoke-RestMethod -Method Put -Uri $Uri -Headers $Headers -Body $body
+        return $response        
+    }
+    catch {
+        throw $_
+    }
+}
+
+function Connect-MerakiNetworkToTemplate() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$ConfigTemplateId,
+        [switch]$AutoBind
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = $"{0}/networks/{1}/bind" -f $NetworkId
+
+    $Template = Get-MerakiOrganizationConfigTemplate -ConfigTemplateId $ConfigTemplateId
+
+    if (-not $Template) {
+        throw "Invalue ConfigTemplateId"
+    }
+
+    $_Body = @{
+        "configTemplateId" = $ConfigTemplateId
+        "autoBind" = $AutoBind.IsPresent
+    }
+    $body = $_Body | ConvertTo-Json -Compress
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    }
+    catch {
+        throw $_
+    }
+}
+
+function Disconnect-MerakiNetworkFromTemplate() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [switch]$RetainConfigs
+    )
+
+    $Header = Get-Headers
+
+    $Uri = "{0}/networks/{1}/unbind" -f $BaseURI, $NetworkId
+    $body = @{"retainConfigs" = $RetainConfigs.IsPresent} | ConvertTo-Json -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Header -Body $body
+        return $response
+    } catch {
+        throw $_
+    }
+}
+
+function Merge-MerakiNetworks() {
+    [CmdletBinding(SupportsShouldProcess)]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+        [Parameter(Mandatory = $true)]
+        [strng[]]$NetworkIds,
+        [string]$enrollmentString,
+        [ValidateScript(
+            {
+                if ($profileName) {
+                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
+        [string]$OrgID,
+        [ValidateScript(
+            {
+                if ($OrgID) {
+                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
+        [string]$profileName
+    )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }
+    }
+
+    $Header = Get-Headers
+
+    $Uri = "{0}/organizations/{1}/networks/combine" -f $BaseURI, $OrgID
+
+    $_Body = @{
+        "name" = $Name
+        "networkIds" = $NetworkIds
+    }
+    if ($enrollmentString) { $_Body.Add("enrollmentString", $enrollmentString) }
+
+    $body = $_Body | ConvertTo-Json -Compress
+
+    if ($PSCmdlet.ShouldProcess('Merge',"Networks $($Networks -join ',')")) {
+        try {
+            $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Header -Body $Body
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+}
+
+function Split-MerakiNetwork() {
+    [CmdletBinding(SupportsShouldProcess)]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId
+    )
+
+    $Header = Get-Headers
+
+    $Uri = "{0}/networks/{1}/split" -f $BaseURI, $NetworkId
+
+    $Network = Get-MerakiNetwork -networkID $NetworkId
+
+    if ($PSCmdlet.ShouldProcess('Split',"Network $($Network.NAme)")) {
+        try {
+            $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Header 
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+
+}
+
+
+#endregion
 function Get-MerakiNetworkDevices () {
     [cmdletbinding()]
     Param (
@@ -570,7 +750,7 @@ function Get-MerakiNetworkClientApplicationUsage() {
     .PARAMETER StartDate
     The starting date to retrieve date (Cannot be more than 31 days before today).
     .PARAMETER EndDate
-    The ending date to retrieve data (Cannot ne more than 31 days before today).
+    The ending date to retrieve data (Cann<#Do this if a terminating exception happens#>ot ne more than 31 days before today).
     .PARAMETER Days
     Number of days before to day to retrieve date. (Cannot be more than 31 days before today). Default is 1 day.
     .PARAMETER PerPage
