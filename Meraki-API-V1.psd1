@@ -81,7 +81,7 @@ FunctionsToExport = @(`
     'Get-MerakiOrganization', 
     'Get-MerakiNetworks', 
     'Get-MerakiOrganizationConfigTemplates',
-    'Get-MerakiOganizationConfigTemplate',
+    'Get-MerakiOrganizationConfigTemplate',
     'Get-MerakiOrganizationDevices', 
     'Get-MerakiOrganizationAdmins', 
     'Get-MerakiOrganizationConfigurationChanges',

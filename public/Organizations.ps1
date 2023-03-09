@@ -652,7 +652,7 @@ function Get-MerakiOrganizationConfigTemplates() {
 
 Set-Alias -Name GMOrgTemplates -value Get-MerakiOrganizationConfigTemplates -Option ReadOnly
 
-function Get-MerakiOganizationConfigTemplate () {
+function Get-MerakiOrganizationConfigTemplate () {
     [CmdletBinding()]
     Param(
         [Parameter(Mandatory = $true)]
