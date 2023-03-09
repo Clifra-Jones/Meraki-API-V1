@@ -109,6 +109,7 @@ FunctionsToExport = @(`
     'Get-MerakiNetworkApplianceVLANS', 
     'Get-MerakiNetworkApplianceVLAN', 
     'Get-MerakiNetworkApplianceSiteToSiteVPN', 
+    'Set-MerakiNetworkApplianceSiteToSiteVpn',
     'Get-MerakiApplianceUplinkStatuses', 
     'Get-MerakiSwitchRoutingInterfaces',
     'Get-MerakiSwitchRoutingInterface', 
