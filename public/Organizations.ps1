@@ -656,7 +656,7 @@ function Get-MerakiOrganizationConfigTemplate () {
     [CmdletBinding()]
     Param(
         [Parameter(Mandatory = $true)]
-        [string]$configTemplateId,
+        [string]$TemplateId,
         [ValidateScript(
             {
                 if ($profileName) {
@@ -693,7 +693,7 @@ function Get-MerakiOrganizationConfigTemplate () {
 
     $Headers = Get-Headers
 
-    $Uri = "{0}/organizations/{1}/configTemplates/{2}" -f $BaseURI, $OrgID
+    $Uri = "{0}/organizations/{1}/configTemplates/{2}" -f $BaseURI, $OrgID, $TemplateId
 
     try {
         $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
