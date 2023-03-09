@@ -437,40 +437,7 @@ function Get-MerakiNetworkEvents() {
             $paging.next = $response.pageEndAt
         } else {
             $paging.first = $startingAfter
-            if ($endingBefore) {
-                $paging.last = $endingBefore
-            } else {
-                $paging.last = Get-Date
-            }
-            $paging.next = $response.pageEndAt
-            $paging.prev = $response.pageStartAt
-        }
-
-        return $response.events | Sort-Object occurredAt
-
-        
-    }
-    <#
-    .SYNOPSIS
-    Returns Network Event.
-    .Description
-    Returns network events for this network.
-    .PARAMETER id
-    The network Id.
-    .PARAMETER ProductType
-    The product type to pull events for.
-    .PARAMETER IncludedEventTypes
-    An array of event types to include.*
-    .PARAMETER excludedEventTypes
-    An array of event types to exclude.*
-    .PARAMETER deviceMac
-    Filter results by Mac Address
-    .PARAMETER deviceName
-    Filter results by device name.
-    .PARAMETER deviceSerial
-    Filter results by device serial number.
-    .PARAMETER clientName
-    Filter results bu client name.
+            if ($ss bu client name.
     .PARAMETER clientIP
     Filter results by client IP.
     .PARAMETER clientMac
@@ -829,7 +796,7 @@ function Get-MerakiNetworkClientApplicationUsage() {
     .PARAMETER StartDate
     The starting date to retrieve date (Cannot be more than 31 days before today).
     .PARAMETER EndDate
-    The ending date to retrieve data (Cann<#Do this if a terminating exception happens#>ot ne more than 31 days before today).
+    The ending date to retrieve data (Cannot be more than 31 days after today).
     .PARAMETER Days
     Number of days before to day to retrieve date. (Cannot be more than 31 days before today). Default is 1 day.
     .PARAMETER PerPage
@@ -865,7 +832,7 @@ function Get-MerakiNetworkClientBandwidthUsage() {
         [ValidateScript(
             {
                 if ($Days) {
-                    throw "The Days paramegter cannot be used with the EndTime parameter."
+                    throw "The Days parameter cannot be used with the EndTime parameter."
                 }
                 if (-not $StartTime) {
                     throw "The StartTime parameter must be used with teh EndTime parameter."

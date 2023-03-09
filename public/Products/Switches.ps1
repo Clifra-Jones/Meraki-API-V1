@@ -2020,7 +2020,8 @@ function Get-MerakiSwitchPort() {
 }
 
 Set-Alias -Name GMSwPort -Value Get-MerakiSwitchPort
-Set-Alieas -Name GMDevSwPort -Value Get-MerakiDeviceSwitchPort
+Set-Alias -Name GMDevSwPort -Value Get-MerakiDeviceSwitchPort
+Set-Alias -Name Get-MerakiDeviceSwitchPort -Value Get-MerakiSwitchPort
 
 function Set-MerakiSwitchPort() {
     Param(
