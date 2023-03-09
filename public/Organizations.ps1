@@ -238,6 +238,151 @@ function Get-MerakiOrganization() {
 
 Set-Alias -Name GMOrg -value Get-MerakiOrganization -Option ReadOnly
 
+function New-MerakiOrganization() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+        [string]$ManagementName,
+        [string]$ManagementValue
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/organizations" -f $BaseURI
+
+    $_Body = @{
+        name = $Name
+    }
+
+    If ($ManagementName) {
+        $_Body.Add("management", @{
+            details = @(
+                @{
+                    "name" = $ManagementName
+                    "value" = $
+                }
+            )
+        })
+    }
+    $body = $_Body | ConvertTo-Json -Depth 5 -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    }
+    catch {
+        throw $_
+    }
+    <#
+    .SYNOPSIS
+    Create an organization
+    .DESCRIPTION 
+    Create a new Meraki Organization
+    .PARAMETER Name
+    The name of the organization
+    .PARAMETER ManagementName
+    Name of the management system
+    .PARAMETER ManagementValue
+    Value of the management system
+    #>
+}
+
+function Set-MerakiOrganization() {
+    [CmdletBinding()]
+    Param(
+        [ValidateScript(
+            {
+                if ($profileName) {
+                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
+        [string]$OrgID,
+        [ValidateScript(
+            {
+                if ($OrgID) {
+                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
+        [string]$profileName,
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+        [string]$ManagementName,
+        [string]$ManagementValue,
+        [switch]$ApiEnabled        
+    )
+    
+    if (-not $orgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $orgID = $config.profiles.$profileName
+            if (-not $orgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $orgID = $config.profiles.default
+        }
+    }
+    $Uri = "{0}/organizations/{1}" -f $BaseURI, $orgID
+
+    $Headers = Get-Headers
+
+    $_Body = @{
+        name = $Name        
+    }
+    if ($ManagementName) {
+        $_Body.Add("management", @{
+            details = @(
+                @{
+                    name = $ManagementName
+                    value = $ManagementValue
+                }
+            )
+        })        
+    }
+    if ($ApiEnabled) {
+        $_Body.Add("api", @{
+            "enabled" = $ApiEnabled.IsPresent
+        })
+    }
+
+    $body = $_Body | ConvertTo-Json -Depth 5 -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    }
+    catch {
+        throw $_
+    }
+    <#
+    .SYNOPSIS
+    Update an organization
+    .DESCRIPTION
+    Update a erwki Organization
+    .PARAMETER OrgID
+    The organization Id
+    .PARAMETER profileName
+    The saved profile name
+    .PARAMETER Name
+    The name of the organization
+    .PARAMETER ManagementName
+    Name of the management data
+    .PARAMETER ManagementValue
+    Value of the management data
+    .PARAMETER ApiEnabled
+    If present, enable the access to the Cisco Meraki Dashboard API
+    .OUTPUTS
+    A Meraki organization object
+    #>
+}
+
 #region Organization Networks
 function Get-MerakiNetworks() {
     [CmdletBinding(DefaultParameterSetName = 'none')]

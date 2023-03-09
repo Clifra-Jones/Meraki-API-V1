@@ -58,6 +58,27 @@ function Set-MerakiNetwork() {
     catch {
         throw $_
     }
+    <#
+    .SYNOPSIS
+    Modify a network
+    .DESCRIPTION
+    Modify settings on a Meraki Network
+    .PARAMETER NetworkId
+    The ID of the network
+    .PARAMETER Name
+    The name of the network
+    .PARAMETER TimeZone
+    The timezone of the network. For a list of allowed timezones
+    .PARAMETER Notes
+    Add any notes or additional information about this network here
+    .PARAMETER Tags
+    A list of tags to be applied to the network
+    .PARAMETER EnrollmentString
+    A unique identifier which can be used for device enrollment or easy access through the Meraki SM Registration page or the Self Service Portal. 
+    Please note that changing this field may cause existing bookmarks to break.
+    .OUTPUTS
+    A network object
+    #>
 }
 
 function Connect-MerakiNetworkToTemplate() {
@@ -92,6 +113,22 @@ function Connect-MerakiNetworkToTemplate() {
     catch {
         throw $_
     }
+    <#
+    .SYNOPSIS
+    Connect a template to a network
+    .DESCRIPTION
+    Connect a Meraki network to a configuration template
+    .PARAMETER NetworkId
+    The Id of the network to connect
+    .PARAMETER ConfigTemplateId
+    The Id of the configuration template
+    .PARAMETER AutoBind
+    Optional boolean indicating whether the network's switches should automatically bind to profiles of the same model. 
+    Defaults to false if left unspecified. This option only affects switch networks and switch templates. 
+    Auto-bind is not valid unless the switch template has at least one profile and has at most one profile per switch model.
+    .OUTPUTS
+    A network object
+    #>
 }
 
 function Disconnect-MerakiNetworkFromTemplate() {
@@ -113,6 +150,18 @@ function Disconnect-MerakiNetworkFromTemplate() {
     } catch {
         throw $_
     }
+    <#
+    .SYNOPSIS
+    Disconnect a network from a template
+    .DESCRIPTION 
+    Disconnect a Meraki Network from a configuration template
+    .PARAMETER NetworkId
+    The ID of the network
+    .PARAMETER RetainConfigs
+    Optional boolean to retain all the current configs given by the template
+    .OUTPUTS
+    A network object
+    #>
 }
 
 function Merge-MerakiNetworks() {
@@ -122,7 +171,7 @@ function Merge-MerakiNetworks() {
         [string]$Name,
         [Parameter(Mandatory = $true)]
         [strng[]]$NetworkIds,
-        [string]$enrollmentString,
+        [string]$EnrollmentString,
         [ValidateScript(
             {
                 if ($profileName) {
@@ -165,7 +214,7 @@ function Merge-MerakiNetworks() {
         "name" = $Name
         "networkIds" = $NetworkIds
     }
-    if ($enrollmentString) { $_Body.Add("enrollmentString", $enrollmentString) }
+    if ($EnrollmentString) { $_Body.Add("enrollmentString", $EnrollmentString) }
 
     $body = $_Body | ConvertTo-Json -Compress
 
@@ -177,6 +226,27 @@ function Merge-MerakiNetworks() {
             throw $_
         }
     }
+    <#
+    .SYNOPSIS
+    Combine multiple networks into a single network.
+    .DESCRIPTION
+    Combine multipl Meraki networks into a single network.
+    .PARAMETER Name
+    The name of the combined network.
+    .PARAMETER NetworkIds
+    A list of the network IDs that will be combined. 
+    If an ID of a combined network is included in this list, the other networks in the list will be grouped into that network.
+    .PARAMETER EnrollmentString
+    A unique identifier which can be used for device enrollment or easy access through the Meraki SM Registration page or the Self Service Portal. 
+    Please note that changing this field may cause existing bookmarks to break. All networks that are part of this combined network will have their enrollment string appended by '-network_type'. 
+    If left empty, all exisitng enrollment strings will be deleted.
+    .PARAMETER OrgID
+    The Organization ID
+    .PARAMETER profileName
+    The saved Profile name.
+    .OUTPUTS
+    A network object
+    #>
 }
 
 function Split-MerakiNetwork() {
@@ -200,7 +270,16 @@ function Split-MerakiNetwork() {
             throw $_
         }
     }
-
+    <#
+    .SYNOPSIS
+    Split network into individual networks
+    .DESCRIPTION
+    Split a combined network into individual networks for each type of device
+    .PARAMETER NetworkId
+    The Id of then network
+    .OUTPUTS
+    An array of network objects
+    #>
 }
 
 

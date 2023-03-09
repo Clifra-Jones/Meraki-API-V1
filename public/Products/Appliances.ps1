@@ -770,6 +770,59 @@ function Get-MerakiNetworkApplianceSiteToSiteVPN() {
 
 Set-Alias -Name GMNetAppSSVpn -Value Get-MerakiNetworkApplianceSiteToSiteVPN -Option ReadOnly
 
+function Set-MerakiNetworkApplianceSiteToSiteVpn() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory = $true)]        
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$Mode,
+        [ValidateScript(
+            {
+                if ( (-not $_) -and $mode -eq 'spoke') {
+                    throw "Parameter Hubs is required if Parameter Mode is set to 'spoke'"
+                }
+            }
+        )]
+        [psobject[]]$Hubs,
+        [psobject[]]$Subnets
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/appliance/vpn/siteToSiteVpn" -f $BaseURI, $NetworkId
+
+    $_.Body = [PSCustomObject]@{
+        mode = $mode
+    }
+
+    if ($Hubs) {
+        foreach ($Hub in $hubs) {
+            if (-not $Hub.hubid) {
+                throw "Property hubId is required for all Hubs"
+            }
+        }
+        $_.Body.Add("hubs", $Hubs)
+    }
+
+    if ($Subnets) {
+        foreach($Subnet in $Subnets) {
+            if (-not $Subnet.localSubnet) {
+                throw "Property localSubnet is requored for all Subnets"
+            }
+        }
+        $_.Body.Add("subnets", $Subnets)
+    }
+
+    try {
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $Body
+        return $response
+    }
+    catch {
+        throw $_
+    }
+}
+
 
 function Get-MerakiApplianceUplinkStatuses() {
     [CmdletBinding()]
