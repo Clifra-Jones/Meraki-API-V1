@@ -341,11 +341,8 @@ function Get-MerakiNetworkEvents() {
         [string]$clientMac,
         [string]$smDeviceName,
         [string]$smDeviceMac,
-        [ValidateScript({$_ -is [int]})]
         [int]$perPage,
-        [ValidateScript({$_ -is [datetime]})]
         [datetime]$startingAfter=0,
-        [ValidateScript({$_ -is [datetime]})]
         [datetime]$endingBefore=0,
         [switch]$first,
         [switch]$last,
@@ -437,7 +434,40 @@ function Get-MerakiNetworkEvents() {
             $paging.next = $response.pageEndAt
         } else {
             $paging.first = $startingAfter
-            if ($ss bu client name.
+            if ($endingBefore) {
+                $paging.last = $endingBefore
+            } else {
+                $paging.last = Get-Date
+            }
+            $paging.next = $response.pageEndAt
+            $paging.prev = $response.pageStartAt
+        }
+
+        return $response.events | Sort-Object occurredAt
+
+        
+    }
+    <#
+    .SYNOPSIS
+    Returns Network Event.
+    .Description
+    Returns network events for this network.
+    .PARAMETER id
+    The network Id.
+    .PARAMETER ProductType
+    The product type to pull events for.
+    .PARAMETER IncludedEventTypes
+    An array of event types to include.*
+    .PARAMETER excludedEventTypes
+    An array of event types to exclude.*
+    .PARAMETER deviceMac
+    Filter results by Mac Address
+    .PARAMETER deviceName
+    Filter results by device name.
+    .PARAMETER deviceSerial
+    Filter results by device serial number.
+    .PARAMETER clientName
+    Filter results bu client name.
     .PARAMETER clientIP
     Filter results by client IP.
     .PARAMETER clientMac
