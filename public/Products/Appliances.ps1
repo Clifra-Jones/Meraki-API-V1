@@ -775,7 +775,16 @@ function Set-MerakiNetworkApplianceSiteToSiteVpn() {
     Param(
         [Parameter(Mandatory = $true)]        
         [string]$NetworkId,
-        [Parameter(Mandatory = $true)]
+        [ValidateScript(
+            {
+                if ($_) {
+                    if ($mode -or $hubs -or $Subnets) {
+                        Throw "Parameter VpnSetting must be used without other parameters except Networkid"
+                    }
+                }
+            }
+        )]
+        [PSObject]$VpnSettings,
         [string]$Mode,
         [ValidateScript(
             {
