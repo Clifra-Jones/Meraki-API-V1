@@ -1,5 +1,5 @@
 #Meraki Switch Functions
-
+using namespace System.Collections.Generic
 function Get-MerakiSwitchStackRoutingInterfaces() {
     [CmdletBinding()]
     Param(
@@ -88,7 +88,318 @@ function Get-MerakiSwitchStackRoutingInterface() {
     #>
 }
 
-Set-Alias -Name GMSwStackRoutInt -Value Get-MerakiSwitchStackRoutingInterface
+Set-Alias -Name GMSWStackRoutInt -Value Get-MerakiSwitchStackRoutingInterface
+
+function Add-MerakiSwitchStackRoutingInterface() {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$StackId,
+        [Parameter(Mandatory = $true)]
+        [int]$VlanId,
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+        [string]$Subnet,
+        [string]$InterfaceIp,
+        [string]$DefaultGateway,
+        [ValidateScript(
+            {
+                if ( $_ -and ( (-not $Ipv6AssignmentMode) -or (-not $Ipv6Gateway) -or (-not $Ipv6Prefix) ) ) {
+                    Throw "All Ipv6 parameters must be specified."
+                }
+            }
+        )]
+
+        [string]$Ipv6Address,
+        [ValidateScript(
+            {
+                if ( $_ -and ( (-not $Ipv6Address) -or (-not $Ipv6Gateway) -or (-not $Ipv6Prefix) ) ) {
+                    Throw "All Ipv6 parameters must be specified."
+                }
+            }
+        )]
+        [string]$Ipv6AssignmentMode,
+        [ValidateScript(
+            {
+                if ( $_ -and ( (-not $Ipv6Address) -or (-not $Ipv6AssignmentMode) -or (-not $Ipv6Prefix) ) ) {
+                    Throw "All Ipv6 parameters must be specified."
+                }
+            }
+        )]
+        [string]$Ipv6Gateway,
+        [ValidateScript(
+            {
+                if ( $_ -and ( (-not $Ipv6Address) -or (-not $Ipv6Gateway) -or (-not $Ipv6AssignmentMode) ) ) {
+                    Throw "All Ipv6 parameters must be specified."
+                }
+            }
+        )]
+        [string]$Ipv6Prefix,
+        [ValidateScript(
+            {
+                if ( $_ -and ( (-not $OspfArea) -or (-not $OspfIsPassiveEnabled) ) ) {
+                    Throw "All OSPF parameters must be specified."
+                }
+            }
+        )]
+        [int]$OspfCost,
+        [ValidateScript(
+            {
+                if ( $_ -and ( (-not $OspfCost) -or (-not $OspfIsPassiveEnabled) ) ) {
+                    Throw "All OSPF parameters must be specified."
+                }
+            }
+        )]
+        [string]$OspfArea,
+        [ValidateScript(
+            {
+                if ( $_ -and ( (-not $OspfCost) -or (-not $OspfArea) ) ) {
+                    throw "All OSPF parameters must be specified."
+                }
+            }
+        )]
+        [switch]$OspfIsPassiveEnabled,
+        [ValidateScript(
+            {
+                if ( $_ -and ( (-not $OspfV3Area) -or (-not $OspfV3IsPassiveEnabled) ) ) {
+                    Throw "All OSPF parameters must be specified."
+                }
+            }
+        )]
+        [int]$OspfV3Cost,
+        [ValidateScript(
+            {
+                if ( $_ -and ( (-not $Ospv3fCost) -or (-not $OspfV3IsPassiveEnabled) ) ) {
+                    Throw "All OSPF parameters must be specified."
+                }
+            }
+        )]
+        [string]$OspfV3Area,
+        [ValidateScript(
+            {
+                if ( $_ -and ( (-not $OspfV3Cost) -or (-not $OspfV3Area) ) ) {
+                    throw "All OSPF parameters must be specified."
+                }
+            }
+        )]
+        [switch]$OspfV3IsPassiveEnabled
+    )
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/switch/stack/{2}/routing/interfaces" -f $BaseURI, $NetworkId, $StackId
+
+    $_Body = @{
+        "vlanId" = $VlanId
+        "name" = $Name            
+    }
+    if ($Subnet) { $_Body.Add("Subnet", $Subnet) }
+    if ($InterfaceIp) { $_Body.Add("InterfaceIp", $InterfaceIp) }
+    if ($DefaultGateway) { $_Body.Add("defaultGateway", $DefaultGateway) }
+    if ($Ipv6Address) {
+        $_Body.Add("ospfSettings", @{
+            "area" = $OspfArea
+            "cost" = $OspfCost
+            "isPassiveEnabled" = $OspfIsPassiveEnabled.IsPresent`
+        })
+    }
+    if ($OspfV3Cost) {
+        $_Body.Add("ospfV3", @{
+            "area" = $OspfV3Area
+            "cost" = $OspfV3Cost
+            "isPassiveEnabled" = $OspfV3IsPassiveEnabled.IsPresent
+        })
+    }
+
+    $body = $_Body | ConvertTo-Json -Depth 5 -Compress
+    try {
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    } catch {
+        throw $_
+    }
+    <#
+    .SYNOPSIS
+    Add Meraki Switch stack routing interface
+    .DESCRIPTION
+    Add an interface to a Meraki 
+    #>
+}
+
+Set-Alias -Name AddMSSRteInt -Value Add-MerakiSwitchStackRoutingInterface
+
+Function Remove-MerakiSwitchStackRoutingInterface() {
+    [CmdletBinding(SupportsShouldProcess)]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$StackId
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/switch/stacks/{2}/routing/interfaces" -f $BaseURI, $NetworkId, $StackId
+    $STack = Get-MerakiNetworkSwitchStack -networkId $NetworkId -stackId $StackId
+
+    if ($PSCmdlet.ShouldProcess("Delete","Stack: $($Stack.name)")) {
+        try {
+            $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .SYNOPSIS
+    Remove Meraki switch stack routing interface
+    .DESCRIPTION
+    Remove an interface from a Meraki switch stack
+    .PARAMETER NetworkId
+    Network ID of the network containing the switch stack
+    .PARAMETER StackId
+    The stack ID of the stack to be removed
+    .OUTPUTS
+    Returns HTML status code. Code 204 - Successful.
+    #>
+}
+
+Set-Alias -Name RemoveMSStackRouteInt -Value Remove-MerakiSwitchStackRoutingInterface
+
+function Set-MerakiSwitchStackRoutingInterface() {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$StackId,
+        [Parameter(Mandatory = $true)]
+        [string]$InterfaceId,
+        [Parameter(Mandatory = $true)]
+        [int]$VlanId,
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+        [string]$Subnet,
+        [string]$InterfaceIp,
+        [string]$DefaultGateway,
+        [ValidateScript(
+            {
+                if ( $_ -and ( (-not $Ipv6AssignmentMode) -or (-not $Ipv6Gateway) -or (-not $Ipv6Prefix) ) ) {
+                    Throw "All Ipv6 parameters must be specified."
+                }
+            }
+        )]
+
+        [string]$Ipv6Address,
+        [ValidateScript(
+            {
+                if ( $_ -and ( (-not $Ipv6Address) -or (-not $Ipv6Gateway) -or (-not $Ipv6Prefix) ) ) {
+                    Throw "All Ipv6 parameters must be specified."
+                }
+            }
+        )]
+        [string]$Ipv6AssignmentMode,
+        [ValidateScript(
+            {
+                if ( $_ -and ( (-not $Ipv6Address) -or (-not $Ipv6AssignmentMode) -or (-not $Ipv6Prefix) ) ) {
+                    Throw "All Ipv6 parameters must be specified."
+                }
+            }
+        )]
+        [string]$Ipv6Gateway,
+        [ValidateScript(
+            {
+                if ( $_ -and ( (-not $Ipv6Address) -or (-not $Ipv6Gateway) -or (-not $Ipv6AssignmentMode) ) ) {
+                    Throw "All Ipv6 parameters must be specified."
+                }
+            }
+        )]
+        [string]$Ipv6Prefix,
+        [ValidateScript(
+            {
+                if ( $_ -and ( (-not $OspfArea) -or (-not $OspfIsPassiveEnabled) ) ) {
+                    Throw "All OSPF parameters must be specified."
+                }
+            }
+        )]
+        [int]$OspfCost,
+        [ValidateScript(
+            {
+                if ( $_ -and ( (-not $OspfCost) -or (-not $OspfIsPassiveEnabled) ) ) {
+                    Throw "All OSPF parameters must be specified."
+                }
+            }
+        )]
+        [string]$OspfArea,
+        [ValidateScript(
+            {
+                if ( $_ -and ( (-not $OspfCost) -or (-not $OspfArea) ) ) {
+                    throw "All OSPF parameters must be specified."
+                }
+            }
+        )]
+        [bool]$OspfIsPassiveEnabled,
+        [ValidateScript(
+            {
+                if ( $_ -and ( (-not $OspfV3Area) -or (-not $OspfV3IsPassiveEnabled) ) ) {
+                    Throw "All OSPF parameters must be specified."
+                }
+            }
+        )]
+        [int]$OspfV3Cost,
+        [ValidateScript(
+            {
+                if ( $_ -and ( (-not $Ospv3fCost) -or (-not $OspfV3IsPassiveEnabled) ) ) {
+                    Throw "All OSPF parameters must be specified."
+                }
+            }
+        )]
+        [string]$OspfV3Area,
+        [ValidateScript(
+            {
+                if ( $_ -and ( (-not $OspfV3Cost) -or (-not $OspfV3Area) ) ) {
+                    throw "All OSPF parameters must be specified."
+                }
+            }
+        )]
+        [bool]$OspfV3IsPassiveEnabled
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/switch/stacks/{2}/routing/interfaces/{3}" -f $BaseURI, $NetworkId, $StackId, $InterfaceId
+
+    $_Body = @{
+        "vlanId" = $VlanId
+        "name" = $Name            
+    }
+    if ($Subnet) { $_Body.Add("Subnet", $Subnet) }
+    if ($InterfaceIp) { $_Body.Add("InterfaceIp", $InterfaceIp) }
+    if ($DefaultGateway) { $_Body.Add("defaultGateway", $DefaultGateway) }
+    if ($Ipv6Address) {
+        $_Body.Add("ospfSettings", @{
+            "area" = $OspfArea
+            "cost" = $OspfCost
+            "isPassiveEnabled" = $OspfIsPassiveEnabled
+        })
+    }
+    if ($OspfV3Cost) {
+        $_Body.Add("ospfV3", @{
+            "area" = $OspfV3Area
+            "cost" = $OspfV3Cost
+            "isPassiveEnabled" = $OspfV3IsPassiveEnabled
+        })
+    }
+
+    $body = $_Body | ConvertTo-Json -Depth 5 -Compress
+    try {
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    } catch {
+        throw $_
+    }
+}
+
+Set-Alias -Name SetMSStkRteInt -Value Set-MerakiSwitchStackRoutingInterface
 
 function Get-MerakiSwitchStackRoutingInterfacesDHCP() {
     [CmdletBinding()]
@@ -135,7 +446,7 @@ function Get-MerakiSwitchStackRoutingInterfacesDHCP() {
     #>
 }
 
-Set-Alias GMSwStRoutIntsDHCP -Value Get-MerakiSwitchRoutingInterfaceDHCPs
+Set-Alias GMSwStRteIntsDHCP -Value Get-MerakiSwitchStackRoutingInterfacesDHCP
 
 function Get-MerakiSwitchStackRoutingStaticRoutes() {
     [CmdletBinding()]
@@ -189,6 +500,120 @@ function Get-MerakiSwitchStackRoutingStaticRoutes() {
 
 set-alias GMSwStRoutStatic -Value Get-MerakiSwitchStackRoutingStaticRoutes
 
+function Get-MerakiSwitchStackRoutingStaticRoute() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipeline = $true,
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [Alias("NetworkId")]
+        [string]$Id,
+        [Parameter(Mandatory = $true)]
+        [string]$StackId,
+        [Parameter(Mandatory = $true)]
+        [string]$StaticRouteId
+    )
+
+    Begin {
+        $Headers = $Headers
+    }
+
+    Process {
+        $Uri = "{0}/networks/{1}/switch/stacks/{2}/routing/staticRoutes/{3}" -f $BaseURI, $NetworkId, $StackId, $StaticRouteId
+
+        try {
+            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+}
+
+function Set-MerakiNetworkSwitchStackRoutingStaticRoute() {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$StackId,
+        [Parameter(Mandatory = $true)]
+        [string]$StaticRouteId,
+        [string]$Name,
+        [string]$NextHopIp,
+        [string]$Subnet,
+        [switch]$AdvertiseViaOspf,
+        [switch]$PreferOverOspfRoutes
+    )
+
+    $Header = Get-Header
+
+    $Uri = "{0}/networks/{1}/switch/stacks/{2}/routing/staticRoutes/{3}" -f $BaseURI, $NetworkId, $StackId, $StaticRouteId
+
+    $_Body = @{}
+
+    if ($Name) { $_Body.Add("name", $Name) }
+    if ($NextHopIp) { $_Body.Add("nextHopIp",$NextHopIp) }
+    if ($Subnet) { $_Body.Add("subnet", $Subnet) }
+    if ($AdvertiseViaOspf.IsPresent) { $_Body.Add("advertiseViaOspfEnabled",$true)}
+    if ($PreferOverOspfRoutes) { $_Body.Add("preferOverOspfRoutesEnabled", $true)}
+
+    $body = $_Body | ConvertTo-Json -Depth 5 -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Header -Body $body
+        return $response
+    } catch {
+        throw $_
+    }
+}
+
+Set-Alias -name SetMNSSRteStRoute -Value Set-MerakiNetworkSwitchStackRoutingStaticRoute
+
+function Remove-MerakiSwitchStackRoutingStaticRoute() {
+    [CmdletBinding(SupportsShouldProcess)]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$StackId,
+        [Parameter(Mandatory = $true)]
+        [string]$StaticRouteId
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/switch/stacks/{1}/routing/staticRoutes/{2}" -f $BaseURI, $NetworkId, $StackId, $StaticRouteId
+
+    $StaticRoute = Get-MerakiSwitchStackRoutingStaticRoute -Id $NetworkId -StackId $StackId -StaticRouteId $StaticRouteId
+
+    if ($PSCmdlet.ShouldProcess("Delete","Static Route: $($Staticroute.Name)")) {
+        try {
+            $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .SYNOPSIS
+    Remove a Meraki switch stack static route.
+    .DESCRIPTION
+    Remove a static route from a Meraki switch stack.
+    .PARAMETER NetworkId
+    Network ID of te network containing the switch
+    .PARAMETER StackId
+    Stack ID to remove the route from.
+    .PARAMETER StaticRouteId
+    Static Route ID to remove.
+    .OUTPUTS
+    Return HTML status code. 204 = Successful.
+    #>
+}
+
+Set-Alias -name RSWStkRteInt -Value Remove-MerakiSwitchStackRoutingStaticRoute -Option ReadOnly
+
 function Get-MerakiSwitchStackRoutingInterfaceDHCP() {
     [CmdletBinding()]
     Param(
@@ -230,7 +655,7 @@ function Get-MerakiSwitchStackRoutingInterfaceDHCP() {
             interfaceId = $interfaceid
             interfaceName = $interfaceName
             dhcpMode = $response.dhcpMode
-            dhcpLeastTime = $response.dhcpLeaseTime
+            dhcpLeaseTime = $response.dhcpLeaseTime
             dnsNameServersOption = $response.dnsNameServersOption
             dnsCustomNameServers = $response.dnsCustomNameServers
             dhcpOptions = $response.dhcpOptions
@@ -260,7 +685,59 @@ function Get-MerakiSwitchStackRoutingInterfaceDHCP() {
     #>
 }
 
-Set-Alias GMSwStRoutIntDHCP -Value Get-MerakiSwitchRouting
+Set-Alias GMSwStRoutIntDHCP -Value Get-MerakiSwitchStackRoutingInterfaceDHCP
+
+function Set-MerakiSwitchStackRoutingInterfaceDhcp() {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$Stackid,
+        [Parameter(Mandatory = $true)]
+        [string]$interfaceId,
+        [ValidateSet('dhcpDisabled', 'dhcpRelay', 'dhcpServer')]
+        [string]$DhcpMode,
+        [ValidateSet('30 minutes', '1 hour', '4 hours', '12 hours', '1 day', '1 week')]
+        [string]$DhcpLeaseTime,
+        [ValidateSet('googlePublicDns', 'openDns', 'custom')]
+        [string]$DnsNameServerOption,
+        [string[]]$DnsCustomNameServers,
+        [switch]$BootOptionsEnabled,
+        [string]$BootNextServer,
+        [string]$BootFilename,
+        [hashtable]$DhcpOptions,
+        [hashtable[]]$ReservedIpRanges,
+        [hashtable[]]$fixedIpAssignments
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/switch/stacks/{2}/routing/interfaces{3}/dhcp" -f $BaseURI, $NetworkId, $Stackid, $interfaceId
+
+    $_body = @{}
+
+    if ($DhcpMode) { $_body.Add("dhcpMode", $DhcpMode) }
+    if ($DhcpLeaseTime) { $_body.Add("dhcpLeaseTime", $DhcpLeaseTime) }
+    if ($DnsNameServerOption) { $_body.Add("dnsNameServerOption", $DnsNameServerOption) }
+    if ($DnsCustomNameServers) { $_body.Add("dnsCustomNameservers", $DnsCustomNameServers) }
+    if ($BootOptionsEnabled.IsPresent) { $_body.Add("bootOptionsEnabled", $true) }
+    if ($BootNextServer) { $_body.Add("bootNextServer", $BootNextServer) }
+    if ($BootFilename) { $_body.Add("bootFilename", $BootFilename) }
+    if ($DhcpOptions) { $_body.Add("dhcpOptions", $DhcpOptions) }
+    if ($ReservedIpRanges) { $_body.Add("reservedIpRanges", $ReservedIpRanges) }
+    if ($fixedIpAssignments) { $_body.Add("fixedIpAssignments",$fixedIpAssignments) }
+
+    $body = $_body | ConvertTo-Json -Depth 10 -Compress
+     
+    try{
+        $result = Invoke-RestMethod -Method PUT -Headers $Headers -Uri $Uri -Body $body
+        return $result
+    } catch {
+        throw $_
+    }
+}
+
+Set-Alias -Name UMSStkRteIntDhcp -Value Update-MerakiSwitchStackRoutingInterfaceDhcp
 
 function Get-MerakiSwitchRoutingInterfaces() {
     [CmdLetBinding()]
@@ -329,6 +806,357 @@ function Get-MerakiSwitchRoutingInterface() {
 
 Set-Alias -Name GMSWRoutInt -Value Get-MerakiSwitchRoutingInterface -Option ReadOnly
 
+function Add-MerakiSwitchRoutingInterface() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$Serial,
+        [Parameter(Mandatory = $true)]
+        [ValidateRange(1,4096)]
+        [int]$VlanId,
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+        [string]$Subnet,
+        [string]$DefaultGateway,
+        [string]$InterfaceIp,
+        [ValidateSet('disabled', 'enabled', 'IGMP snooping querier')]
+        [string]$MulticastRouting,
+        [ValidateScript(
+            {
+                if ($_ -and ($Ipv6AssignmentMode -eq 'eui-64')) {
+                    throw "Static Ipv6 address cannot be used with AssignmentMode eui-64"
+                }
+            }
+        )]
+        [string]$Ipv6Address,
+        [ValidateSet('eui-64','static')]
+        [string]$Ipv6AssignmentMode,
+        [string]$Ipv6Gateway,
+        [string]$Ipv6Prefix,
+        [ValidateScript(
+            {
+                if ($_ -and (-not $OspfArea) ) {
+                    throw "Parameter OspfArea must be used with OspfCost."
+                }
+            }
+        )]        
+        [int]$OspfCost,
+        [ValidateScript(
+            {
+                if ($_ -and (-not $OspfCost) ) {
+                    throw "Parameter OspfCost must be used with OspfArea"
+                }
+            }
+        )]
+        [string]$OspfArea,
+        [switch]$OspfIsPassive,
+        [ValidateScript(
+            {
+                if ($_ -and (-not $OspfV3Area) ) {
+                    throw "Parameter OspfV3Area must be used with OspfV3Cost"
+                }
+            }
+        )]
+        [int]$OspfV3Cost,
+        [ValidateScript(
+            {
+                if ($_ -and (-not $OspfV3Cost) ) {
+                    throw "Parameter OspfV3Cost must be used with OspfV3Area. If no area is used specify 'disabled'"
+                }
+            }
+        )]
+        [string]$OspfV3Area,
+        [switch]$OspfV3IsPassive
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/devices/{1}/switch/routing/interfaces" -f $BaseURI, $Serial
+
+    $_Body = @{
+        "name" = $Name
+        "vlanId" = $VlanId
+    }
+
+    if ($Sbnet) { $_Body.Add("subnet", $Subnet) }
+    if ($InterfaceIp) { $_Body.Add("interfaceIp", $InterfaceIp) }
+    if ($DefaultGateway) { $_Body.Add("defaultGateway", $DefaultGateway) }
+    if ($InterfaceIp) { $_Body.Add("interfaceIp", $InterfaceIp) }
+    if ($MulticastRouting) { $_Body.Add("multicastRouting", $MulticastRouting) }
+    if ($Ipv6Address) {
+        $_Body.Add("ipv6", @{
+            "assignmentMode" = $Ipv6AssignmentMode
+            "prefix" = $Ipv6Prefix
+            "address" = $Ipv6Address
+            "gateway" = $Ipv6Gateway
+        })
+    }
+    if ($OspfV3Cost) {
+        $_Body.Add("ospfSettings", @{
+            "area" = $OspfArea
+            "cost" = $OspfCost
+            "isPassEnabled" = $OspfIsPassive.IsPresent
+        })
+    }
+    if ($OspfV3Cost) {
+        $_Body.Add("ospfV3", @{
+            "area" = $OspfV3Area
+            "cost" = $OspfV3Cost
+            "isPassiveEnabled" = $OspfV3IsPassive.IsPresent
+        })
+    }
+    
+    $body = $_Body | ConvertTo-Json -Depth 5 -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    } catch {
+        throw $_
+    }
+    <#
+    .SYNOPSIS
+    Add a routing interface to a switch.
+    .DESCRIPTION
+    Add a VLAN interface to a Meraki switch.
+    .PARAMETER Serial
+    Serial number of the switch.
+    .PARAMETER VlanId
+    The VLAN this routed interface is on. VLAN must be between 1 and 4094.
+    .PARAMETER Name
+    A friendly name or description for the interface or VLAN.
+    .PARAMETER Subnet
+    The network that this routed interface is on, in CIDR notation (ex. 10.1.1.0/24
+    .PARAMETER DefaultGateway
+    The next hop for any traffic that isn't going to a directly connected subnet or over a static route. 
+    This IP address must exist in a subnet with a routed interface. Required if this is the first IPv4 interface.
+    .PARAMETER InterfaceIp
+    The IP address this switch will use for layer 3 routing on this VLAN or subnet. This cannot be the same as the switch's management IP.
+    .PARAMETER MulticastRouting
+    Enable multicast support if, multicast routing between VLANs is required. 
+    Options are: 'disabled', 'enabled' or 'IGMP snooping querier'. Default is 'disabled'.
+    .PARAMETER Ipv6Address
+    The IPv6 address of the interface. Required if assignmentMode is 'static'. Must not be included if assignmentMode is 'eui-64'.
+    .PARAMETER Ipv6AssignmentMode
+    The IPv6 assignment mode for the interface. Can be either 'eui-64' or 'static'.
+    .PARAMETER Ipv6Gateway
+    The IPv6 default gateway of the interface. Required if prefix is defined and this is the first interface with IPv6 configured for the switch.
+    .PARAMETER Ipv6Prefix
+    The IPv6 prefix of the interface. Required if IPv6 object is included.
+    .PARAMETER OspfCost
+    The path cost for this interface. Defaults to 1, but can be increased up to 65535 to give lower priority.
+    .PARAMETER OspfArea
+    The OSPF area to which this interface should belong. Can be either 'disabled' or the identifier of an existing OSPF area. Defaults to 'disabled'.
+    .PARAMETER OspfIsPassive
+    When enabled, OSPF will not run on the interface, but the subnet will still be advertised.
+    .PARAMETER OspfV3Cost
+    The path cost for this interface. Defaults to 1, but can be increased up to 65535 to give lower priority.
+    .PARAMETER OspfV3Area
+    The OSPFv3 area to which this interface should belong. 
+    Can be either 'disabled' or the identifier of an existing OSPFv3 area. Defaults to 'disabled'.
+    .PARAMETER OspfV3IsPassive
+    When enabled, OSPFv3 will not run on the interface, but the subnet will still be advertised.
+    .OUTPUTS
+    "Interface Object"    
+    #>
+}
+
+Set-Alias -name AddMSRouteInt -Value Add-MerakiSwitchRoutingInterface
+
+function Set-MerakiSwitchRoutingInterface() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$Serial,
+        [Parameter(Mandatory = $true)]
+        [string]$InterfaceId,
+        [ValidateRange(1,4096)]
+        [int]$VlanId,
+        [string]$Name,
+        [string]$Subnet,
+        [string]$DefaultGateway,
+        [string]$InterfaceIp,
+        [ValidateSet('disabled', 'enabled', 'IGMP snooping querier')]
+        [string]$MulticastRouting,
+        [ValidateScript(
+            {
+                if ($_ -and ($Ipv6AssignmentMode -eq 'eui-64')) {
+                    throw "Static Ipv6 address cannot be used with AssignmentMode eui-64"
+                }
+            }
+        )]
+        [string]$Ipv6Address,
+        [ValidateSet('eui-64','static')]
+        [string]$Ipv6AssignmentMode,
+        [string]$Ipv6Gateway,
+        [string]$Ipv6Prefix,
+        [ValidateScript(
+            {
+                if ($_ -and (-not $OspfArea) ) {
+                    throw "Parameter OspfArea must be used with OspfCost."
+                }
+            }
+        )]
+        [int]$OspfCost,
+        [ValidateScript(
+            {
+                if ($_ -and (-not $OspfCost) ) {
+                    throw "Parameter OspfCost must be used with OspfArea"
+                }
+            }
+        )]
+        [string]$OspfArea,
+        [switch]$OspfIsPassive,
+        [ValidateScript(
+            {
+                if ($_ -and (-not $OspfV3Area) ) {
+                    throw "Parameter OspfV3Area must be used with OspfV3Cost"
+                }
+            }
+        )]
+        [int]$OspfV3Cost,
+        [ValidateScript(
+            {
+                if ($_ -and (-not $OspfV3Cost) ) {
+                    throw "Parameter OspfV3Cost must be used with OspfV3Area. If no area is used specify 'disabled'"
+                }
+            }
+        )]
+        [string]$OspfV3Area,
+        [switch]$OspfV3IsPassive        
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/devices/{2}/switch/routing/interfaces/{2}" -f $BaseURI, $Serial, $InterfaceId
+
+    $_Body = @{}
+
+    if ($VlanId) { $_Body.Add("vlanId", $VlanId) }
+    if ($Name) { $_Body.Add("name", $Name) }
+    if ($Sbnet) { $_Body.Add("subnet", $Subnet) }
+    if ($InterfaceIp) { $_Body.Add("interfaceIp", $InterfaceIp) }
+    if ($DefaultGateway) { $_Body.Add("defaultGateway", $DefaultGateway) }
+    if ($InterfaceIp) { $_Body.Add("interfaceIp", $InterfaceIp) }
+    if ($MulticastRouting) { $_Body.Add("multicastRouting", $MulticastRouting) }
+    if ($Ipv6Address) {
+        $_Body.Add("ipv6", @{
+            "assignmentMode" = $Ipv6AssignmentMode
+            "prefix" = $Ipv6Prefix
+            "address" = $Ipv6Address
+            "gateway" = $Ipv6Gateway
+        })
+    }
+    if ($OspfV3Cost) {
+        $_Body.Add("ospfSettings", @{
+            "area" = $OspfArea
+            "cost" = $OspfCost
+            "isPassEnabled" = $OspfIsPassive.IsPresent
+        })
+    }
+    if ($OspfV3Cost) {
+        $_Body.Add("ospfV3", @{
+            "area" = $OspfV3Area
+            "cost" = $OspfV3Cost
+            "isPassiveEnabled" = $OspfV3IsPassive.IsPresent
+        })
+    }
+
+    $body = $_Body | ConvertTo-Json -Depth 5 -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    } catch {
+        Throw $_
+    }
+    <#
+    .SYNOPSIS
+    Set Meraki Switch Interface.
+    .DESCRIPTION
+    Set a Meraki switch routing interface.
+    .PARAMETER Serial
+    Switch serial number.
+    .PARAMETER InterfaceId
+    Interface ID to be updates.
+    .PARAMETER VlanId
+    The VLAN this routed interface is on. VLAN must be between 1 and 4094.
+    .PARAMETER Name
+    A friendly name or description for the interface or VLAN.
+    .PARAMETER Subnet
+    The network that this routed interface is on, in CIDR notation (ex. 10.1.1.0/24).
+    .PARAMETER DefaultGateway
+    The next hop for any traffic that isn't going to a directly connected subnet or over a static route. 
+    This IP address must exist in a subnet with a routed interface. Required if this is the first IPv4 interface.
+    .PARAMETER InterfaceIp
+    The IP address this switch will use for layer 3 routing on this VLAN or subnet. This cannot be the same as the switch's management IP.
+    .PARAMETER MulticastRouting
+    Enable multicast support if, multicast routing between VLANs is required. 
+    Options are: 'disabled', 'enabled' or 'IGMP snooping querier'. Default is 'disabled'.
+    .PARAMETER Ipv6Address
+    The IPv6 address of the interface. Required if assignmentMode is 'static'. Must not be included if assignmentMode is 'eui-64'.
+    .PARAMETER Ipv6AssignmentMode
+    The IPv6 assignment mode for the interface. Can be either 'eui-64' or 'static'.
+    .PARAMETER Ipv6Gateway
+    The IPv6 default gateway of the interface. Required if prefix is defined and this is the first interface with IPv6 configured for the switch.
+    .PARAMETER Ipv6Prefix
+    The IPv6 prefix of the interface. Required if IPv6 object is included.
+    .PARAMETER OspfCost
+    The path cost for this interface. Defaults to 1, but can be increased up to 65535 to give lower priority.
+    .PARAMETER OspfArea
+    The OSPF area to which this interface should belong. Can be either 'disabled' or the identifier of an existing OSPF area. Defaults to 'disabled'.
+    .PARAMETER OspfIsPassive
+    When enabled, OSPF will not run on the interface, but the subnet will still be advertised.
+    .PARAMETER OspfV3Cost
+    The path cost for this interface. Defaults to 1, but can be increased up to 65535 to give lower priority.
+    .PARAMETER OspfV3Area
+    The OSPFv3 area to which this interface should belong. Can be either 'disabled' or the identifier of an existing OSPFv3 area. Defaults to 'disabled'.
+    .PARAMETER OspfV3IsPassive
+    When enabled, OSPFv3 will not run on the interface, but the subnet will still be advertised.
+    .OUTPUTS
+    Interface object.
+    #>
+}
+
+Set-Alias -name SetMSRteInt -Value Set-MerakiSwitchRoutingInterface
+
+function Remove-MerakiSwitchRoutingInterface() {
+    [CmdletBinding(SupportsShouldProcess)]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$Serial,
+        [Parameter(Mandatory = $true)]
+        [stirng]$InterfaceId
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/devices/{1}/switch/routing/interfaces/{2}" -f $BaseURI, $Serial, $InterfaceId
+
+    $Interface = Get-MerakiSwitchRoutingInterface -serial $Serial -interfaceId $InterfaceId
+
+    if ($PSCmdlet.ShouldProcess('Delete', "Interface $($interface.name)")) {
+        try {
+            $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .SYNOPSIS
+    Remove a routing interface
+    .DESCRIPTION
+    Remove a Meraki switch routing interface.
+    .PARAMETER Serial
+    Serial number of the switch
+    .PARAMETER InterfaceId
+    Id of the interface
+    .OUTPUTS
+    An HTML status code. Code 204 = success.
+    #>
+}
+
 function Get-MerakiSwitchRoutingInterfaceDHCP() {
     [CmdletBinding()]
     param (
@@ -361,6 +1189,130 @@ function Get-MerakiSwitchRoutingInterfaceDHCP() {
 
 Set-Alias GMSWRoutIntDHCP -value Get-MerakiSwitchRoutingInterfaceDHCP -option ReadOnly
 
+function Set-MerakiSwitchRoutingInterfaceDhcp() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$Serial,
+        [Parameter(Mandatory)]
+        [string]$InterfaceId,
+        [ValidateSet('dhcpDisabled', 'dhcpRelay', 'dhcpServer')]
+        [string]$DhcpMode,
+        [ValidateScript(
+            {
+                if ($DhcpMode -ne "dhcpRelay") {
+                    "Parameter DhcpRelayServerIps is only valid with DhcpMode 'dhcpRelay'"
+                }
+            }
+        )]
+        [string[]]$DhcpRelayServerIps,
+        [ValidateSet('30 minutes', '1 hour', '4 hours', '12 hours', '1 day', '1 week')]
+        [string]$DhcpLeaseTime,
+        [ValidateSet('googlePublicDns', 'openDns', 'custom')]
+        [string]$DnsNameServerOptions,
+        [string[]]$DnsCustomNameServers,
+        [ValidateScript(
+            {
+                if ($_.isPresent -and ( (-not $BootNextServer) -or (-not $BootFileName) ) ) {
+                        throw "Parameters BootNestServer and BootFileName must be specified with BootOptionEnabled."
+                }
+            }
+        )]
+        [switch]$BootOptionsEnabled,
+        [ValidateScript(
+            {
+                if (-not $BootOptionsEnabled) {
+                    throw "Parameter BootOptionsEnabled must be specified to use parameter BootNextServer."
+                }
+                if (-not $BootFileName) {
+                    throw "Parameter BootFileName must be specified to use parameter BootNextServer."
+                }
+            }
+        )]
+        [string]$BootNextServer,
+        [string]$BootFileName,
+        [hashtable[]]$DhcpOptions,
+        [hashtable[]]$ReservedIpRanges,
+        [hashtable[]]$FixedIpRanges
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/devices/{1}/switch/routing/interface/{2}/dhcp" -f $BaseURI, $Serial, $InterfaceId
+
+    $_Body = @{}
+
+    if ($DhcpMode) { $_Body.Add("dhcpMode", $DhcpMode) }
+    if ($DhcpRelayServerIps) { $_Body.Add("dhcpRelayServerIps", $DhcpRelayServerIps) }
+    if ($DhcpLeaseTime) { $_Body.Add("shcpLeaseTime", $DhcpLeaseTime) } 
+    if ($DnsNameServerOptions) { $_Body.Add("dnsNameserverOptions", $DnsNameServerOptions) }
+    if ($DnsCustomNameServers) { $_Body.Add("dnsCustomNameservers", $DnsCustomNameServers) }
+    if ($BootOptionsEnabled) { $_Body.Add("bootOptionsEnabled", $BootOptionsEnabled.IsPresent) } 
+    if ($BootNextServer) { $_Body.Add("bootNextServer", $BootNextServer) }
+    if ($BootFileName) { $_Body.Add("bootFileName", $BootFileName) }
+    if ($DhcpOptions) { $_Body.Add("dhcpOptions", $DhcpOptions) }
+    if ($ReservedIpRanges) { $_Body.Add("reservedIpRanges", $ReservedIpRanges) }
+    if ($FixedIpRanges) { $_Body.Add("fixedIpRanges",$FixedIpRanges) }
+
+    $body = $_Body | ConvertTo-Json -Depth 5 -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    } catch {
+        throw $_
+    }
+    <#
+    .SYNOPSIS
+    Update Meraki switch routing interface DHCP Settings
+    .DESCRIPTION
+    Add or update the Meraki switch routing interface DHCP settings.
+    Use this method to configure DHCP setting for a new interface.
+    .PARAMETER Serial
+    Device serial number
+    .PARAMETER InterfaceId
+    Interface Id of the interface to be updated.
+    .PARAMETER DhcpMode
+    The DHCP mode options for the switch interface ('dhcpDisabled', 'dhcpRelay' or 'dhcpServer')
+    .PARAMETER DhcpRelayServerIps
+    The DHCP relay server IPs to which DHCP packets would get relayed for the switch interface
+    .PARAMETER DhcpLeaseTime
+    The DHCP lease time config for the dhcp server running on switch interface 
+    ('30 minutes', '1 hour', '4 hours', '12 hours', '1 day' or '1 week')
+    .PARAMETER DnsNameServerOptions
+    The DHCP name server option for the dhcp server running on the switch interface ('googlePublicDns', 'openDns' or 'custom')
+    .PARAMETER DnsCustomNameServers
+    The DHCP name server IPs when DHCP name server option is 'custom'
+    .PARAMETER BootOptionsEnabled
+    Enable DHCP boot options to provide PXE boot options configs for the dhcp server running on the switch interface
+    .PARAMETER BootNextServer
+    The PXE boot server IP for the DHCP server running on the switch interface
+    .PARAMETER BootFileName
+    The PXE boot server filename for the DHCP server running on the switch interface
+    .PARAMETER DhcpOptions
+    Array of DHCP options consisting of code, type and value for the DHCP server running on the switch interface
+    DHCP option objects consist of the following fields.
+    code:string - The code for DHCP option which should be from 2 to 254
+    type:string - The type of the DHCP option which should be one of ('text', 'ip', 'integer' or 'hex')
+    value:string - The value of the DHCP option
+    .PARAMETER FixedIpRanges
+    Array of DHCP fixed IP assignments for the DHCP server running on the switch interface
+    Fixed Ip Range objects consist of the following fields.
+    ip*:string - The IP address of the client which has fixed IP address assigned to it
+    mac*: string - The MAC address of the client which has fixed IP address
+    name*: string - The name of the client which has fixed IP address
+    .PARAMETER ReservedIpRanges
+    Array of DHCP reserved IP assignments for the DHCP server running on the switch interface
+    Reserved Ip Range objects consist of the following fields
+    comment:string - The comment for the reserved IP range
+    end:string - The ending IP address of the reserved IP range
+    start:string - The starting IP address of the reserved IP range
+    #>    
+}
+
+Set-Alias -Name SetMSRteIntDHCP -Value Set-MerakiSwitchRoutingInterfaceDhcp
+
+#region Switch Static Routes
 function Get-MerakiSwitchRoutingStaticRoutes() {
     [CmdLetBinding()]
     Param(
@@ -393,6 +1345,188 @@ function Get-MerakiSwitchRoutingStaticRoutes() {
 }
 
 Set-Alias -Name GMSWRoutStatic -value Get-MerakiSwitchRoutingStaticRoutes -Option ReadOnly
+
+function Get-MerakiSwitchRoutingStaticRoute() {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$Serial,
+        [Parameter(Mandatory = $true)]
+        [string]$StaticRouteId
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/devices/{1}/switch/routing/staticRoutes/{2}" -f $BaseURI, $Serial, $StaticRouteId
+
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+        return $response
+    } catch {
+        throw $_
+    }
+    <#
+    .SYNOPSIS
+    Retrieve a Static Route
+    .DESCRIPTION
+    Retrieve a Meraki Switch Static Route
+    .PARAMETER Serial
+    The serial number of the switch.
+    .PARAMETER StaticRouteId
+    The ID of the Static Route
+    .OUTPUTS
+    A Static route object
+    #>
+}
+
+function Add-MerakiSwitchRoutingStaticRoute() {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$Serial,
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+        [Parameter(Mandatory = $true)]
+        [string]$NextHopIp,
+        [Parameter(Mandatory = $true)]
+        [string]$Subnet,
+        [switch]$AdvertiseViaOspfEnabled,
+        [switch]$PreferOverOspfRoutesEnabled
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/devices/{1}/switch/routing/staticRoutes/{2}" -f $BaseURI, $Serial
+
+    $_Body = @{
+        "name" = $Name
+        "netxHopIp" = $NextHopIp
+        "subnet" = $Subnet
+    }
+    if ($AdvertiseViaOspfEnabled.IsPresent) { $_Body.Add("advertiseViaOspfEnabled", $AdvertiseViaOspfEnabled.IsPresent) }
+    if ($PreferOverOspfRoutesEnabled.IsPresent) { $_Body.Add("preferOverOspfRoutesEnabled", $PreferOverOspfRoutesEnabled) } 
+    
+    $body = $_Body | ConvertTo-Json -Depth 5 -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    } catch {
+        throw $_
+    }
+    <#
+    .SYNOPSIS
+    Create a Static Route
+    .DESCRIPTION
+    Create a Static route on a Meraki switch
+    .PARAMETER Serial
+    The serial number of the switch
+    .PARAMETER Name
+    The name of the static route
+    .PARAMETER NextHopIp
+    IP address of the next hop device to which the device sends its traffic for the subnet
+    .PARAMETER Subnet
+    The subnet which is routed via this static route and should be specified in CIDR notation (ex. 1.2.3.0/24)
+    .PARAMETER AdvertiseViaOspfEnabled
+    Option to advertise static route via OSPF
+    .PARAMETER PreferOverOspfRoutesEnabled
+    Option to prefer static route over OSPF routes
+    .OUTPUTS
+    An object containing the newly created static route
+    #>
+}
+
+function Set-MerakiSwitchRoutingStaticRoute() {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$Serial,
+        [Parameter(Mandatory = $true)]
+        [string]$StaticRouteId,
+        [string]$Name,
+        [string]$NextHopIp,
+        [string]$Subnet,
+        [switch]$AdvertiseViaOspfEnabled,
+        [switch]$PreferOverOspfRoutesEnabled
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/devices/{1}/switch/routing/staticRoutes/{2}" -f $BaseUri, $Serial, $StaticRouteId
+
+    if ($Name) { $_Body.Add("name", $Name) }
+    if ($NextHopIp) { $_Body.Add("nextHopIp", $NextHopIp) }
+    if ($Subnet) { $_Body.Add("subnet", $Subnet) }
+    if ($AdvertiseViaOspfEnabled.IsPresent) { $_Body.Add("advertiseViaOspfEnabled", $AdvertiseViaOspfEnabled.IsPresent) }
+    if ($PreferOverOspfRoutesEnabled.IsPresent) { $_Body.Add("preferOverOspfRoutesEnabled", $PreferOverOspfRoutesEnabled) } 
+    
+    $body = $_Body | ConvertTo-Json -Depth 5 -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    } catch {
+        throw $_
+    }
+    <#
+    .SYNOPSIS
+    Update a static route
+    .DESCRIPTION
+    Update a Meraki switch static route
+    .PARAMETER Serial
+    Serial number of the switch
+    .PARAMETER StaticRouteId
+    The statis route Id
+    .PARAMETER Name
+    Name or description for layer 3 static route
+    .PARAMETER NextHopIp
+    IP address of the next hop device to which the device sends its traffic for the subnet
+    .PARAMETER Subnet
+    The subnet which is routed via this static route and should be specified in CIDR notation (ex. 1.2.3.0/24)
+    .PARAMETER AdvertiseViaOspfEnabled
+    Option to advertise static route via OSPF
+    .PARAMETER PreferOverOspfRoutesEnabled
+    Option to prefer static route over OSPF routes
+    .OUTPUTS
+    An object containing the updated static route
+    #>
+}
+
+function Remove-MerakiSwitchStaticRoute() {
+    [CmdletBinding(SupportsShouldProcess)]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$Serial,
+        [Parameter(Mandatory = $true)]
+        [string]$StaticRouteId
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/devices/{1}/switch/routing/staticRoute/{2}" -f $BaseURI, $Serial, $StaticRouteId
+
+    $StaticRoute = Get-MerakiSwitchStaticRoute -Serial $Serial -StaticRouteId $StaticRouteId
+
+    if ($PSCmdlet.ShouldProcess('Delete', "StaticRoute $($StaticRoute.Name)") ) {
+        try {
+            $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers -Body $body
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .SYNOPSIS
+    Remove a static route
+    .DESCRIPTION
+    Remove a Meraki switch static route
+    .PARAMETER Serial
+    The serial number of the switch
+    .PARAMETER StaticRouteId
+    The ID of the statis Route
+    .OUTPUTS
+    An html status code. Code 204 = success
+    #>
+}
+
+#endregion
 
 function Get-MerakiNetworkSwitchLAG() {
     [CmdLetBinding()]
@@ -447,6 +1581,130 @@ function Get-MerakiNetworkSwitchLAG() {
 
 Set-Alias -Name GMNetSWLag -value Get-MerakiNetworkSwitchLAG -Option ReadOnly
 
+function Add-MerakiNetworkSwitchLAG() {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [hashtable[]]$SwitchPorts
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/switch/LinkAggregations"
+
+    $Aggregations = @{
+        "switchPorts" = $SwitchPorts
+    }
+
+    $body = $Aggregations | ConvertTo-Json -Depth 5 -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    } catch {
+        throw $_
+    }
+    <#
+    .SYNOPSIS
+    Create a Link Aggregation Port
+    .DESCRIPTION
+    Create a Link Aggregation Port on Meraki Switches.
+    .PARAMETER NetworkId
+    Network ID to add the LAG to.
+    .PARAMETER SwitchPorts
+    Switch Ports to use in the LAG.
+    SwitchPorts is a an array of hashtable objects. These objects are either switch ports or switch profile ports. Defined as below.
+
+        switchPorts: array[] - Array of switch or stack ports for creating aggregation group. Minimum 2 and maximum 8 ports are supported.
+            portId*:string - Port identifier of switch port. For modules, the identifier is "SlotNumber_ModuleType_PortNumber" (Ex: "1_8X10G_1"), otherwise it is just the port number (Ex: "8").
+            serial*:string - Serial number of the switch.
+
+        switchProfilePorts: array[] - Array of switch profile ports for creating aggregation group. Minimum 2 and maximum 8 ports are supported.
+            portId*:string - Port identifier of switch port. For modules, the identifier is "SlotNumber_ModuleType_PortNumber" (Ex: "1_8X10G_1"), otherwise it is just the port number (Ex: "8").
+            profile*:string - Profile identifier.
+    .OUTPUTS 
+    A LAG object.
+    #>
+}
+
+function Set-MerakiNetworkSwitchLAG() {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$LinkAggregationId,
+        [hashtable[]]$SwitchPorts
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/switch/linkAggregations/{2}" -f $BaseURI. $NetworkId, $LinkAggregationId
+
+    $Aggregations = @{
+        "id" = $LinkAggregationId
+        "switchPorts" = $SwitchPorts
+    }
+
+    $body = $Aggregations | ConvertTo-Json -Depth 5 -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    } catch {
+        throw $_
+    }
+    <#
+    .SYNOPSIS
+    MOdify a Link Aggregation Port
+    .DESCRIPTION
+    Modify a Link Aggregation Port on Meraki Switches.
+    .PARAMETER NetworkId
+    Network ID to add the LAG to.
+    .PARAMETER LinkAggregationId
+    The ID of the LAG (Use Get-MerakiNetworkSwitchLAG to get the ID)
+    .PARAMETER SwitchPorts
+    Switch Ports to modify in the LAG.
+    You must provide all ports in the LAG
+    .OUTPUTS 
+    A LAG object.
+    #>
+}
+
+function Remove-MerakiNetworkSwitchLAG() {
+    [CmdletBinding(SupportsShouldProcess)]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$LinkAggregationId
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/switch/linkAggregations/{2}" -f $BaseURI, $NetworkId, $LinkAggregationId
+
+    if ($PSCmdlet.ShouldProcess("Delete","LAG ID:$LinkAggregationId")) {
+        try {
+            Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .SYNOPSIS
+    Create a Link Aggregation Port
+    .DESCRIPTION
+    Craete a Link Aggregation Port on Meraki Switches.
+    .PARAMETER NetworkId
+    Network ID to add the LAG to.
+    .PARAMETER LinkAggregationId
+    ID of the LAG to remove.
+    .OUTPUTS 
+    HTML response code. Code 204 = Success.
+    #>
+}
+
 function Get-MerakiNetworkSwitchStacks() {
     [CmdLetBinding()]
     Param(
@@ -455,13 +1713,16 @@ function Get-MerakiNetworkSwitchStacks() {
             ValueFromPipeline = $true,
             ValueFromPipelineByPropertyName = $true
         )]
+        [Alias("NetworkId")]
         [String]$id
     )
 
-    $Uri = "{0}/networks/{1}/switch/stacks" -f $BaseURI, $id
     $Headers = Get-Headers
 
+    $Uri = "{0}/networks/{1}/switch/stacks" -f $BaseURI, $id
+
     $Network = Get-MerakiNetwork -networkID $id
+
     if ($network.productTypes -contains "switch") {
 
         $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
@@ -482,7 +1743,7 @@ function Get-MerakiNetworkSwitchStacks() {
 
 Set-Alias -Name GMNetSWStacks -Value Get-MerakiNetworkSwitchStacks -Option ReadOnly
 
-function Get-MerakiNetworkSwitchStack() {
+function Get-MerakiSwitchStack() {
     [CmdLetBinding()]
     Param(
         [Parameter(
@@ -512,9 +1773,181 @@ function Get-MerakiNetworkSwitchStack() {
     A Meraki switch stack object.
     #>
 }
+Set-Alias Get-MerakiNetworkSwitchStack -Value Get-MerakiSwitchStack
+set-alias GMSwStack -Value Get-MerakiSwitchStack
 
-set-alias GMSwStack -Value Get-MerakiNetworkSwitchStack
+function New-MerakiSwitchStack() {
+    Param(
+        [Parameter(Mandatory = $true)]        
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+        [Parameter(Mandatory = $true)]
+        [string[]]$Serials
+    )
 
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/switch/stacks" -f $BaseURI, $NetworkId
+
+    $_Body = @{
+        "name" = $Name
+        "serials" = $Serials
+    }
+
+    $body = $_Body | ConvertTo-Json -Depth 3 -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    } catch {
+        throw $_
+    }
+    <#
+    .SYNOPSIS
+    Create a new Switch Stack.
+    .DESCRIPTION
+    Create a new switch stack in a Meraki network
+    .PARAMETER NetworkId
+    The Id of the network to create the stack in
+    .PARAMETER Name
+    The name of the stack
+    .PARAMETER Serials
+    an array of switch serial numbers to add tothe stack.
+    .OUTPUTS
+    An object containing the newly created stack
+    #>
+}
+
+Set-Alias -Name New-MerakiSwitchStack -Value New-MerakiNeworkSwitchStack
+
+function Add-MerakiSwitchStackSwitch() {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$StackId,
+        [Parameter(Mandatory = $true)]
+        [atring]$serial
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/switch/stack/{2}/add" -f $BaseURI, $NetworkId, $StackId
+
+    $_Body = @{
+        "serial" = $serial
+    }
+
+    $body = $_Body | ConvertTo-Json -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    } catch {
+        throw $_
+    }
+    <#
+    .SYNOPSIS 
+    Add a switch to a stack.
+    .DESCRIPTION
+    Add a new switch to an existing Meraki switch stack
+    .PARAMETER NetworkId
+    The Id of the network
+    .PARAMETER StackId
+    The ID of the stack
+    .PARAMETER serial
+    The serial number of the new switch
+    .OUTPUTS
+    An object containing the stack.
+    #>
+}
+
+Set-Alias -Name AMSSSwitch -Value Add-MerakiSwitchStackSwitch
+
+function Remove-MerakiSwitchStackSwitch() {
+    [CmdletBinding(SupportsShouldProcess)]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$SwitchStackId,
+        [Parameter(Mandatory = $true)]
+        [string]$Serial
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/switch/stacks/{2}/remove" -f $BaseURI, $SwitchStackId
+
+    $_Body = @{
+        "serial" = $Serial
+    }
+
+    $body = $_Body | ConvertTo-Json -Compress
+
+    if ($PSCmdlet.ShouldProcess('Remove', "Stack member switch $Serial") ) {
+        try {
+            $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .SYNOPSIS
+    Remove a switch from a stack
+    .DESCRIPTION
+    Remove a switch from a Meraki switch stack
+    .PARAMETER NetworkId
+    The id o ftghe network
+    .PARAMETER SwitchStackId
+    The ID of the switch stack
+    .PARAMETER Serial
+    The serial number of the switch to remove
+    .OUTPUTS
+    An object containing the modified stack
+    #>
+}
+
+function Remove-MerakiSwitchStack() {
+    [CmdletBinding(SupportsShouldProcess)]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$SwitchStackId
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/switch/stacks/{2}" -f $BaseURI, $NetworkId, $SwitchStackId
+    
+    $Stack = Get-MerakiSwitchStack -networkId $NetworkId -SwitchStackId $SwitchStackId
+
+    if ($PSCmdlet.ShouldProcess('Delete',"Switch stack $($stack.name)") ) {
+        try {
+            $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers 
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .SYNOPSIS
+    Remove a switch stack
+    .DESCRIPTION
+    Remove a switch stack from a Meraki network
+    .PARAMETER NetworkId
+    The network ID.
+    .PARAMETER SwitchStackId
+    The switch stack Id.
+    .OUTPUTS
+    AN HTML response code. REsponse code of 204 = success
+    #>
+}
+
+#region Switch Ports
 function Get-MerakiSwitchPorts() {
     [CmdletBinding()]
     Param(
@@ -555,7 +1988,7 @@ function Get-MerakiSwitchPorts() {
 
 Set-Alias GMSwPorts -Value Get-MerakiSwitchPorts -Option ReadOnly
 
-function Get-MerakiDeviceSwitchPort() {
+function Get-MerakiSwitchPort() {
     [CmdLetBinding()]
     Param(
         [Parameter(
@@ -586,7 +2019,177 @@ function Get-MerakiDeviceSwitchPort() {
     #>
 }
 
+Set-Alias -Name GMSwPort -Value Get-MerakiSwitchPort
 Set-Alias -Name GMDevSwPort -Value Get-MerakiDeviceSwitchPort
+Set-Alias -Name Get-MerakiDeviceSwitchPort -Value Get-MerakiSwitchPort
+
+function Set-MerakiSwitchPort() {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$Serial,
+        [Parameter(Mandatory = $true)]
+        [string]$PortId,
+        [string]$Name,
+        [string[]]$Tags,
+        [switch]$Enabled,
+        [switch]$PoeEnabled,
+        [ValidateSet('trunk', 'access')]
+        [string]$Type,
+        [ValidateRange(1,4096)]
+        [int]$Vlan,
+        [ValidateRange(1,4096)]
+        [int]$VoiceVlan,
+        [string]$AllowedVlans,
+        [switch]$IsolationEnabled,
+        [switch]$rstpEnabled,
+        [ValidateSet('disabled', 'root guard', 'bpdu guard', 'loop guard')]
+        [string]$stpGuard,
+        [string]$LinkNegotiation,
+        [string]$PortScheduleId,
+        [ValidateSet('Alert only', 'Enforce')]
+        [string]$udld,
+        [ValidateSet('Open', 'Custom access policy', 'MAC allow list', 'Sticky MAC allow list')]
+        [string]$AccessPolicyType,
+        [ValidateScript(
+            {
+                if ($AccessPolicyType -ne 'Custom access policy') {
+                    throw "Parameter AccessPolicynumber can only be used when parameter AccessPolicyType is 'Custom access policy'."
+                }
+            }
+        )]
+        [int]$AccessPolicyNumber,
+        [ValidateScript(
+            {
+                if ($AccessPolicyType -ne 'MAC allow list') {
+                    throw "Parameter MacAllowList can only be use when parameter AccessPolicyType is 'MAC allow list'."
+                }
+            }
+        )]
+        [string[]]$MacAllowList,
+        [ValidateScript(
+            {
+                if ($AccessPolicyType -ne 'Sticky MAC allow list') {
+                    throw "Parameter StickyMacAllowList can only be used when parameter AccessPolicyType is 'Sticky MAC allow list'"
+                }
+            }
+        )]
+        [string[]]$StickyMacAllowList,
+        [ValidateScript(
+            {
+                if ($AccessPolicyType -ne 'Sticky MAC allow list') {
+                    throw "Policy StickyMacAllowListLimit can only be used when parameter AccessPolicyType is 'Sticky MAC allow list'."
+                }
+            }
+        )]
+        [int]$StickyMacAllowListLimit,
+        [switch]$StormControlEnabled,
+        [string]$AdaptivePolicyGroupId,
+        [switch]$PeerStgCapable,
+        [switch]$FlexibleStackingEnabled,
+        [switch]$DaiTrusted
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/devices/{1}/switch/ports/{2}" -f $BaseURI, $Serial, $PortId
+
+    $_Body = @{}
+
+    if ($Name) { $_Body.Add("name", $Name) }
+    if ($Tags) { $_Body.Add("tags", $Tags) }
+    if ($Enabled.IsPresent) { $_Body.Add("enabled", $Enabled.IsPresent) }
+    if ($PoeEnabled.IsPresent) { $_Body.Add("poeEnabled", $PoeEnabled.IsPresent) }
+    if ($Type) { $_Body.Add("type", $Type) }
+    if ($Vlan) { $_Body.Add("vlan", $Vlan) }
+    if ($VoiceVlan) { $_Body.Add("voiceVlan", $VoiceVlan) }
+    if ($AllowedVlans) { $_Body.Add("allowedVlans", $AllowedVlans) }
+    if ($IsolationEnabled.IsPresent) { $_Body.add("isolationEnabled", $IsolationEnabled.IsPresent) }
+    if ($rstpEnabled.IsPresent) { $_Body.Add("rstpEnabled", $PoeEnabled.IsPresent)}
+    if ($stpGuard) { $_Body.Add("stpGuard", $stpGuard) }
+    if ($LinkNegotiation) { $_Body.Add("linkNegotiation", $LinkNegotiation) }
+    if ($PortScheduleId) { $_Body.Add("portScheduleId", $PortScheduleId) }
+    if ($udld) { $_Body.Add("udld", $udld) }
+    if ($AccessPolicyType) { $_Body.Add("AccessPolicyType", $AccessPolicyType) }
+    if ($AccessPolicyNumber) { $_Body.Add("accessPolicyNumber", $AccessPolicyNumber) }
+    if ($MacAllowList) { $_Body.Add("macAllowList", $MacAllowList) }
+    if ($StickyMacAllowList) { $_Body.Add("stickyMacAllowList", $StickyMacAllowList) }
+    if ($StickyMacAllowListLimit) { $_Body.Add("stickyMacAllowListLimit", $StickyMacAllowListLimit) }
+    if ($StormControlEnabled) { $_Body.Add("stormControlenabled", $StormControlEnabled) }
+    if ($AdaptivePolicyGroupId) { $_Body.Add("adaptivePolicyGroupId", $AdaptivePolicyGroupId) }
+    if ($PeerStgCapable) { $_Body.Add("peerStgCapable", $PeerStgCapable) }
+    if ($FlexibleStackingEnabled) { $_Body.Add("flexibleStackingEnabled", $FlexibleStackingEnabled) }
+    if ($DaiTrusted) { $_Body.Add("daiTrusted", $DaiTrusted) }
+
+    $body = $_Body | ConvertTo-Json -Depth 5 -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    } catch {
+        throw $_
+    }
+
+    <#
+    .SYNOPSIS 
+    Modify a switch port
+    .DESCRIPTION
+    Modify a Meraki Switch port configuration
+    .PARAMETER Serial
+    Serial number of the switch
+    .PARAMETER PortId
+    ID of the port to modify
+    .PARAMETER Name
+    Name for the switch port
+    .PARAMETER Tags
+    The list of tags of the switch port
+    .PARAMETER Enabled
+    The status of the switch port
+    .PARAMETER PoeEnabled
+    The PoE status of the switch port
+    .PARAMETER Type
+    The type of the switch port ('trunk' or 'access')
+    .PARAMETER Vlan
+    The VLAN of the switch port. A null value will clear the value set for trunk ports
+    .PARAMETER VoiceVlan
+    The voice VLAN of the switch port. Only applicable to access ports
+    .PARAMETER AllowedVlans
+    The VLANs allowed on the switch port. Only applicable to trunk ports
+    .PARAMETER IsolationEnabled
+    The isolation status of the switch port
+    .PARAMETER rstpEnabled
+    The rapid spanning tree protocol status
+    .PARAMETER stpGuard
+    The state of the STP guard ('disabled', 'root guard', 'bpdu guard' or 'loop guard'
+    .PARAMETER LinkNegotiation
+    The link speed for the switch port
+    .PARAMETER PortScheduleId
+    The ID of the port schedule. A value of null will clear the port schedule
+    .PARAMETER udld
+    The action to take when Unidirectional Link is detected (Alert only, Enforce). Default configuration is Alert only
+    .PARAMETER AccessPolicyType
+    The type of the access policy of the switch port. Only applicable to access ports. Can be one of 'Open', 'Custom access policy', 'MAC allow list' or 'Sticky MAC allow list'
+    .PARAMETER AccessPolicyNumber
+    The number of a custom access policy to configure on the switch port. Only applicable when 'accessPolicyType' is 'Custom access policy'
+    .PARAMETER MacAllowList
+    Only devices with MAC addresses specified in this list will have access to this port. Up to 20 MAC addresses can be defined. Only applicable when 'accessPolicyType' is 'MAC allow list'
+    .PARAMETER StickyMacAllowList
+    The initial list of MAC addresses for sticky Mac allow list. Only applicable when 'accessPolicyType' is 'Sticky MAC allow list'
+    .PARAMETER StickyMacAllowListLimit
+    The maximum number of MAC addresses for sticky MAC allow list. Only applicable when 'accessPolicyType' is 'Sticky MAC allow list'
+    .PARAMETER StormControlEnabled
+    The storm control status of the switch port
+    .PARAMETER AdaptivePolicyGroupId
+    The adaptive policy group ID that will be used to tag traffic through this switch port. This ID must pre-exist during the configuration, else needs to be created using adaptivePolicy/groups API. Cannot be applied to a port on a switch bound to profile.
+    .PARAMETER PeerStgCapable
+    If true, Peer SGT is enabled for traffic through this switch port. Applicable to trunk port only, not access port. Cannot be applied to a port on a switch bound to profile.
+    .PARAMETER FlexibleStackingEnabled
+    For supported switches (e.g. MS420/MS425), whether or not the port has flexible stacking enabled.
+    .PARAMETER DaiTrusted
+    If true, ARP packets for this port will be considered trusted, and Dynamic ARP Inspection will allow the traffic.
+    .OUTPUTS
+    A port object.
+    #>
+}
 
 function Reset-MerakiSwitchPorts() {
     [CmdLetBinding()]
@@ -626,4 +2229,1496 @@ function Reset-MerakiSwitchPorts() {
     #>
 }
 
-Set-Alias -Name RMSWPorts -Value Reset-MerakiSwitchPorts -Option ReadOnly  
+Set-Alias -Name RMSWPorts -Value Reset-MerakiSwitchPorts -Option ReadOnly 
+
+function Get-MerakiSwitchPortsStatus() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [string]$serial,
+        [ValidateScript(
+            {
+                if ($Days) {
+                    throw "The StartDate parameter cannot be used with the Days parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
+        [ValidateScript({$_ -is [datetime]})]
+        [datetime]$StartDate,
+        [ValidateScript(
+            {
+                if ($StartDate) {
+                    throw "The Days parameter cannot be used with the StartDate parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
+        [ValidateScript({$_ -is [int]})]
+        [int]$Days
+    )
+
+    Begin {
+        $Headers = Get-Headers
+        Set-Variable -Name Query
+
+        if ($StartDate) {
+            $_startDate = "{0:s}" -f $StartDate
+            $Query = "t0={0}" -f $_startDate
+        }
+        if ($Days) {
+            $ts = [timespan]::FromDays($Days)
+            if ($Query) {
+                $Query += "&"
+            }
+            $Query += "timespan" -f ($ts.TotalSeconds)
+        }
+    }
+
+    Process {
+        $Uri = "{0}/devices/{1}/switch/ports/statuses" -f $BaseURI, $serial
+
+        if ($Query) {
+            $Uri += "?{0}" -f $Query
+        }
+        try {
+            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .SYNOPSIS
+    Return the status for all the ports of a switch
+    .DESCRIPTION
+    REturns a collection of switch poe=rt status objects for a switch.
+    .PARAMETER serial
+    Serial Number of the switch.
+    .PARAMETER StartDate
+    The Starting date to retrieve data. Cannot be more than 31 days prior to today.
+    .PARAMETER Days
+    Number of days back from today to retrieve data. Cannot be more than 31 days.
+    .OUTPUTS
+    A collection if port status objects.
+    #>
+}
+
+Set-Alias -name GMSWPortStatus  -Value Get-MerakiSwitchPortsStatus -Option ReadOnly
+
+#endregion
+
+function Get-MerakiSwitchPortsPacketCounters() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [string]$serial,
+        [ValidateScript({$_ -is [decimal]})]
+        [decimal]$Hours
+    )
+
+    Begin {
+        $Headers = Get-Headers
+
+        Set-Variable -Name Query
+
+        if ($Days) {
+            $ts = [timespan]::FromHours($Hours)
+            if ($Query) {
+                $Query += "&"
+            }
+            $Query += "timespan={0}" -f ($ts.TotalSeconds)
+        }
+    }
+
+    Process {
+        $Uri = "{0}/devices/{1}/switch/ports/statuses/packets" -f $BaseURI, $serial
+        if ($Query) {
+            $Uri += "?{0}" -f $Query
+        }
+
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .SYNOPSIS
+    Return the packet counters for all the ports of a switch
+    .DESCRIPTION
+    Returns packet counter statustics for all ports of a switch.
+    .PARAMETER serial
+    Serial number of the switch.
+    .PARAMETER Hours
+    The number of hours to return the data. The default is 24 hours (1 day). Can be entered as a decimal number. For the last 30 minutes enter .5.
+    .OUTPUTS
+    A collection if packet counter objects.
+    #>
+}
+
+Set-Alias -Name GMSWPortsPacketCntrs -Value Get-MerakiSwitchPortsPacketCounters
+
+#region Port Schedules
+function Get-MerakiSwitchPortSchedules() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipeline = $true,
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [Alias('NetworkId')]
+        [string]$Id        
+    )
+
+    Begin {
+        $Headers = Get-Headers
+    }
+
+    Process {
+        $Uri = "{0}/networks/{1}/switch/portSchedules" -f $BaseURI, $Id
+
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .SYNOPSIS
+    Retrieve switch port schedules.
+    .DESCRIPTION
+    Retrieve Meraki switch port schedule for a network.
+    .PARAMETER Id
+    Network ID to retrive port schedules
+    .OUTPUTS
+    A port schedules object
+    #>
+}
+
+function Add-MerakiSwitchPortSchedule(){
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+        [hashtable]$PortSchedule
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/switch/portSchedules" -f $BaseURI, $NetworkId
+    
+    $_Body = @{
+        "name" = $Name
+        "portSchedule" = $PortSchedule
+    }
+
+    $body = $_Body | ConvertTo-Json -Depth 5 -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    } catch {
+        throw $_
+    }
+    <#
+    .SYNOPSIS
+    Create a port schedule
+    .DESCRIPTION
+    Create a Meraki Switch port schedule
+    .PARAMETER NetworkId
+    Network to apply the port schedule to
+    .PARAMETER Name
+    The name of the port schedule
+    .PARAMETER PortSchedule
+    The schedule for switch port scheduling. Schedules are applied to days of the week. 
+    When it's empty, default schedule with all days of a week are configured. 
+    Any unspecified day in the schedule is added as a default schedule configuration of the day.
+
+    An object of port schedules. Schedulee consist of:
+    Day of week (Monday, Teusday, etc)
+        Active: boolean - Whether the schedule is active (true) or inactive (false) during the time specified between 'from' and 'to'. Defaults to true.
+        from:string - The time, from '00:00' to '24:00'. Must be less than the time specified in 'to'. Defaults to '00:00'. Only 30 minute increments are allowed.
+        to: string - The time, from '00:00' to '24:00'. Must be greater than the time specified in 'from'. Defaults to '24:00'. Only 30 minute increments are allowed.
+    (see examples)
+
+    .OUTPUTS
+    A port schedule object.
+    .EXAMPLE
+    The following example show how to create a port schedule.
+
+    $portSchedule = @{
+        monday = @{
+            active = "true"
+            from = "08:00"
+            to = "17:00"
+        },
+        tuesday = @{
+            active = "true"
+            from = "08:00"
+            to = "17:00"
+        },
+        wednesday = @{
+            active = "true"
+            from = "08:00"
+            to = "17:00"
+        },
+        thursday = @{
+            active = "true"
+            from = "08:00"
+            to = "17:00"
+        },
+        friday = @{
+            active = "true"
+            from = "08:00"
+            to = "17:00"
+        },
+        saturday = @{
+            active = "true"
+            from = "00:00"
+            to = "24:00"
+        },
+        sunday = @{
+            active = "true"
+            from = "00:00"
+            to = "24:00"
+        },
+    }
+    $result = Add-MerakiSwitchPortSchedule -NetworkId $NetworkId -Name "Weekday Schedule" -PortSchedule $PortSchedule
+    #>
+}
+
+function Set-MerakiSwitchPortSchedule() {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$PortScheduleId,
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+        [Parameter(Mandatory = $true)]
+        [hashtable]$PortSchedule
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/switch/portSchedules/{2}" -f $BaseURI, $NetworkId, $PortScheduleId
+
+    $_body = @{
+        name = $Name
+        portSchedule = $PortSchedule
+    }
+
+    $body = $_body | ConvertTo-Json -Depth 5 -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    } catch {
+        return $response
+    }
+    <#
+    .SYNOPSIS
+    Modify a port schedule
+    .DESCRIPTION
+    Modify a Meraki switch port Schedule
+    .PARAMETER NetworkId
+    Network ID of the network to modify
+    .PARAMETER PortScheduleId
+    ID of the port schedule to modify. (To get the ID ise Get-MerakiSwitchPortSchedule)
+    .PARAMETER Name
+    The name of the port schedule
+    .PARAMETER PortSchedule
+    Hash table of daily schedules.
+    .OUTPUTS
+    A port scheduler object
+    #>
+}
+
+function Remove-MerakiSwitchPortSchedule() {
+    [CmdletBinding(SupportsShouldProcess)]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$PortScheduleId
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/switch/portSchedules/{2}" -f $BaseURI, $NetworkId, $PortScheduleId
+
+    $PortSchedule = (Get-MerakiSwitchPortSchedules -NetworkId $NetworkId).Where({$_.id -eq $PortScheduleId})
+    
+    if ($PSCmdlet.ShouldProcess('Delete',"Port Schedule $($PortSchedule.Name)")) {
+        try {
+            $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .SYNOPSIS
+    Delete a port schedule
+    .DESCRIPTION
+    Delete a Meraki switch port schedule
+    .PARAMETER NetworkId
+    Network ID of the network to remove the port schedule
+    .PARAMETER PortScheduleId
+    ID of the port schedule to remove.
+    .OUTPUTS
+    HTML status code. Code 204 = Successfull
+    #>
+}
+#endregion
+
+#region QOS Rules
+function Get-MerakiSwitchQosRules() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipeline = $true,
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [Alias('NetworkId')]
+        [string]$Id
+    )
+
+    Begin {
+        $Headers = Get-Headers
+    }
+
+    Process {
+        $Uri = "{0}/networks/{1}/switch/qosRules" -f $BaseURI, $id
+
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers 
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .SYNOPSIS 
+    Retrieve QOS rules for switches
+    .DESCRIPTION
+    Retrieve the QOS rules for a Meraki network switches
+    .PARAMETER Id
+    The network Id to get the QOS rules from.
+    .OUTPUTS
+    Am array QOS rules objects.
+    #>    
+}
+
+function Get-MerakiSwitchQosRule() {
+    Param(
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipeline = $true,
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [Parameter(Mandatory = $true)]
+        [string]$QosRuleId
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/switch/qosRules/{2}" -f $BaseURI, $Id, $QosRuleId
+
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+        return $response
+    } catch {
+        throw $_
+    }
+
+    <#
+    .SYNOPSIS
+    Retrieve switch QOS rule.
+    .DESCRIPTION
+    Retrieve a Meraki switch QOS rule.
+    .PARAMETER Id
+    Network ID to retrieve the rules from.
+    .PARAMETER QosRuleId
+    ID of the QOS rule to retrieve.
+    .OUTPUTS
+    A QOS rule object.
+    #>
+}
+
+function Add-MerakiSwitchQosRule() {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [ValidateRange(1,4096)]
+        [int]$Vlan,
+        [ValidateSet("ANY", "TCP", "UDP")]
+        [string]$Protocol = "ANY",
+        [ValidateScript(
+            {
+                if ($_ -and ($Protocol -ne 'ANY') ) {
+                    Throw "SourcePort cannot be use when parameter Protocol is 'ANY'."
+                }
+            }
+        )]        
+        [Alias('srcPort')]
+        [int]$SourcePort,
+        [ValidateScript(
+            {
+                if ($_ -and ($Protocol -ne "ANY") ) {
+                    throw "Parameter SourcePortRange cannot be use when parameter Protocol is 'ANY'."
+                }
+            }
+        )]        
+        [Alias('srcPortRange')]
+        [string]$SourcePortRange,        
+        [ValidateScript(
+            {
+                if ($_ -and ($Protocol -ne "ANY") ) {
+                    throw "Parameter DestinationPort cannot be use when parameter Protocol is 'ANY'."
+                }
+            }
+        )]        
+        [Alias('dstPort')]        
+        [int]$DestinationPort,
+        [ValidateScript(
+            {
+                if ($_ -and ($Protocol -ne "ANY") ) {
+                    throw "Parameter DestinationPortRange cannot be use when parameter Protocol is 'ANY'."
+                }
+            }
+        )]        
+        [Alias('dstPortRange')]
+        [string]$DestinationPortRange,
+        [ValidateRange(-1,0)]
+        [int]$dscp
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/switch/qosRules" -f $BaseURI, $NetworkId
+
+    $_Body = @{
+        vlan = $Vlan
+    }
+
+    if ($SourcePort) { $_Body.Add("srcPort", $SourcePort) }
+    if ($SourcePortRange) { $_Body.Add("srcPortRange", $SourcePortRange) }
+    if ($Protocol) { $_Body.Add("protocol", $Protocol) }
+    if ($DestinationPort) { $_Body.Add("dstPort", $DestinationPort) }
+    if ($DestinationPortRange) {$_Body.Add("dstPortRange", $DestinationPortRange) }
+    if ($dscp) {$_Body.Add("dscp", $dscp) }
+
+    $body = $_Body | ConvertTo-Json -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    } catch {
+        throw $_
+    }
+    <#
+    .SYNOPSIS
+    Create a QOS rule.
+    .DESCRIPTION
+    Create a QOS rule for Meraki network switches.
+    .PARAMETER NetworkId
+    Network ID fo the network.
+    .PARAMETER Vlan
+    The VLAN of the incoming packet. A null value will match any VLAN.
+    .PARAMETER Protocol
+    The protocol of the incoming packet. Can be one of "ANY", "TCP" or "UDP". Default value is "ANY"
+    .PARAMETER SourcePort
+    The source port of the incoming packet. Applicable only if protocol is TCP or UDP.
+    .PARAMETER SourcePortRange
+    The source port range of the incoming packet. Applicable only if protocol is set to TCP or UDP. Example: 70-80
+    .PARAMETER DestinationPort
+    The destination port of the incoming packet. Applicable only if protocol is TCP or UDP.
+    .PARAMETER DestinationPortRange
+    The destination port range of the incoming packet. Applicable only if protocol is set to TCP or UDP. Example: 70-80
+    .PARAMETER dscp
+    DSCP tag. Set this to -1 to trust incoming DSCP. Default value is 0
+    .OUTPUTS
+    A QOS Rule Object
+    #>
+}
+
+function Set-MerakiSwitchQosRule() {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$QosRuleId,
+        [int]$Vlan,
+        [ValidateSet("ANY", "TCP", "UDP")]
+        [string]$Protocol = "ANY",
+        [ValidateScript(
+            {
+                if ($_ -and ($Protocol -ne "ANY") ) {
+                    throw "Parameter SourcePort cannot be use when parameter Protocol is 'ANY'."
+                }
+            }
+        )]        
+        [Alias('srcPort')]
+        [int]$SourcePort,
+        [ValidateScript(
+            {
+                if ($_ -and ($Protocol -ne "ANY") ) {
+                    throw "Parameter SourcePortRange cannot be use when parameter Protocol is 'ANY'."
+                }
+            }
+        )]        
+        [Alias('srcPortRange')]
+        [string]$SourcePortRange,        
+        [ValidateScript(
+            {
+                if ($_ -and ($Protocol -ne "ANY") ) {
+                    throw "Parameter DestinationPort cannot be use when parameter Protocol is 'ANY'."
+                }
+            }
+        )]        
+        [Alias('dstPort')]        
+        [int]$DestinationPort,
+        [ValidateScript(
+            {
+                if ($_ -and ($Protocol -ne "ANY") ) {
+                    throw "Parameter DestinationPortRange cannot be use when parameter Protocol is 'ANY'."
+                }
+            }
+        )]        
+        [Alias('dstPortRange')]
+        [string]$DestinationPortRange,
+        [ValidateRange(-1,0)]
+        [int]$dscp
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/switch/qosRules{2}" -f $BaseURI, $NetworkId, $QosRuleId
+
+    $_Body = @{
+        vlan = $Vlan
+    }
+
+    if ($SourcePort) { $_Body.Add("srcPort", $SourcePort) }
+    if ($SourcePortRange) { $_Body.Add("srcPortRange", $SourcePortRange) }
+    if ($Protocol) { $_Body.Add("protocol", $Protocol) }
+    if ($DestinationPort) { $_Body.Add("dstPort", $DestinationPort) }
+    if ($DestinationPortRange) {$_Body.Add("dstPortRange", $DestinationPortRange) }
+    if ($dscp) {$_Body.Add("dscp", $dscp) }
+
+    $body = $_Body | ConvertTo-Json -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method Put -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    } catch {
+        throw $_
+    }
+    <#
+    .SYNOPSIS
+    Update a QOS rule.
+    .DESCRIPTION
+    Update a QOS rule for Meraki network switches.
+    .PARAMETER NetworkId
+    Network ID fo the network.
+    .PARAMETER QosRuleId
+    ID of the QQOS Rule to be updated.
+    .PARAMETER Vlan
+    The VLAN of the incoming packet. A null value will match any VLAN.
+    .PARAMETER Protocol
+    The protocol of the incoming packet. Can be one of "ANY", "TCP" or "UDP". Default value is "ANY"
+    .PARAMETER SourcePort
+    The source port of the incoming packet. Applicable only if protocol is TCP or UDP.
+    .PARAMETER SourcePortRange
+    The source port range of the incoming packet. Applicable only if protocol is set to TCP or UDP. Example: 70-80
+    .PARAMETER DestinationPort
+    The destination port of the incoming packet. Applicable only if protocol is TCP or UDP.
+    .PARAMETER DestinationPortRange
+    The destination port range of the incoming packet. Applicable only if protocol is set to TCP or UDP. Example: 70-80
+    .PARAMETER dscp
+    DSCP tag. Set this to -1 to trust incoming DSCP. Default value is 0
+    .OUTPUTS
+    A QOS Rule Object
+    #>
+}
+
+function Remove-MerakiSwitchQosRule() {
+    [CmdletBinding(SupportsShouldProcess)]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$QosRuleId
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/switch/qosRules/{2}" -f $BaseURI, $NetworkId, $QosRuleId
+
+    if ($PSCmdlet.ShouldProcess('Delete',"QOS Rule: $QosRuleId")) {
+        try {
+            $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .SYNOPSIS
+    Remove a QOS rule.
+    .DESCRIPTION
+    Remove a QOS rule from Meraki Network Switches
+    .PARAMETER NetworkId
+    The Network Id
+    .PARAMETER QosRuleId
+    The QOS Rule Id.
+    .OUTPUTS
+    HTML status code. Code 204 = success
+    #>
+}
+
+function Get-MerakiSwitchQosRulesOrder() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipeline = $true,
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [string]$NetworkId
+    )
+
+    Begin {
+        $Headers = Get-Headers
+
+        $Rules = [List]::New()
+    }
+
+    Process {
+        $Uri = "{0}/networks/{1}/switch/qosRules/order" -f $BaseURI, $NetworkId
+
+        $Network = Get-MerakiNetwork -networkID $NetworkId
+
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+            $response | Add-Member -MemberType NoteProperty -Name "NetworkId" -Value $Network.ID
+            $response | Add-Member -MemberType NoteProperty -Name "NetworkName" -Value $Network.Name
+            $Rules.Add($response)
+        } catch {
+            throw $_
+        }
+    }
+
+    End {
+        return $Rules.ToArray()
+    }
+    <#
+    .SYNOPSIS
+    Return QOS rules order.
+    .DESCRIPTION
+    Return the quality of service rule IDs by order in which they will be processed by the switch
+    .PARAMETER NetworkId
+    The Netowrk Id
+    .OUTPUTS
+    An object containing an array of QOS rule IDs in order of processing
+    #>
+}
+
+function Set-MerakiSwitchQosruleOrder() {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string[]]$RuleIds
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/switch/qosRules/order" -f $BaseURI, $NetworkId
+
+    $_Body = @{
+        ruleIds = $RuleIds
+    }
+
+    $body = $_Body | ConvertTo-Json -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    } catch {
+        throw $_
+    }
+    <#
+    .SYNOPSIS
+    Update the QOS rules order
+    .DESCRIPTION
+    Update the order in which the rules should be processed by the switch
+    .PARAMETER NetworkId
+    The network Id
+    .PARAMETER RuleIds
+    An array of RuleIds
+    .OUTPUTS
+    Am object containing an array of QOS rule IDs in order of processing
+    #>
+}
+
+#endregion
+
+#region Access Policies
+function Get-MerakiSwitchAccessPolicies() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipeline = $true,
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [Alias('NetworkId')]
+        [string]$Id
+    )
+
+    Begin {
+        $Headers = Get-Headers
+
+        $policies = [List]::New()
+    }
+
+    Process {
+        $Uri = "{0}/networks/{1}/switch/accessPolicies"
+
+        $Network = Get-MerakiNetwork -networkID $Id
+
+        try {
+            $policyid = 1
+            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers
+            $response | ForEach-Object {
+                $_ | Add-Member -MemberType NoteProperty -Name "policyId" -Value $pid
+                $policyid += 1
+            }
+
+            $policy = [PSCustomObject]@{
+                NetworkId = $Network.Id
+                NetworkName = $Network.Name
+                policies = $response
+            }
+            $policies.Add($policy)            
+        } catch {
+            throw $_
+        }
+    }
+
+    End {
+        return $policies.ToArray()
+    }
+    <#
+    .SYNOPSIS
+    Return the access policies for a network
+    .DESCRIPTION
+    Return the switch access policies for a Meraki network.
+    .PARAMETER Id
+    The ID of the network.
+    .OUTPUTS
+    an object containing the Access policies
+    #>
+}
+
+function Get-MerakiSwitchAccessPolicy() {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$AccessPolicyNumber
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/network/{1}/switch/accessPolicies/{2}" -f $BaseURI, $NetworkId, $AccessPolicyNumber
+
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+        return $response
+    } catch {
+        throw $_
+    }
+    <#
+    .SYNOPSIS
+    Return an access policy
+    .DESCRIPTION
+    Return a specific access policyt from a network
+    .PARAMETER NetworkId
+    The Id of the network
+    .PARAMETER AccessPolicyNumber
+    The access policy number to return
+    .OUTPUTS
+    An object containing the access policy
+    #>
+}
+
+function Add-MerakiSwitchAccessPolicy() {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('Single-Host','Multi-Host','Multi-Domain','Multi-Auth')]
+        [string]$HostMode,
+        [Parameter(Mandatory = $true)]
+        [PSObject[]]$RadiusServers,
+        [ValidateRange(1,4096)]
+        [int]$GuestVlanId,
+        [ValidateSet('Hybrid authentication','802.1x','AC authentication bypass')]
+        [string]$AccessPolicyType,
+        [ValidateSet('','11')]
+        [String]$RadiusGroupAttribute = '',
+        [ValidateScript(
+            {
+                if ( ($_.isPresent) -and ($AccessPolicyType -ne 'Hybrid authentication') ) {
+                    Throw "Parameter IncreaseAccessSpeed can only be used when parameter AccessPolicyType is 'Hybrid authentication'"
+                }
+            }
+        )]
+        [switch]$IncreaseAccessSpeed,
+        [switch]$RadiusAccountingEnabled,
+        [ValidateScript(
+            {
+                if ( ($_.IsPresent) -and (-not $RadiusAccountingServers) ) {
+                    throw "Parameter RadiusAccountingServers must be used if parameter RadiusAccounting Enabled is present."
+                }
+            }
+        )]
+        [switch]$RadiusCoaSupportEnabled,
+        [switch]$RadiusTestingEnabled,
+        [switch]$UrlredirectWalledGardenEnabled,
+        [switch]$VoiceVlanClients,
+        [string[]]$UrlRedirectWalledGardenRanges,
+        [string]$Dot1xControlDirection,
+        [PSObject]$Radius,
+        [ValidateScript(
+            {
+                if ( -not $RadiusAccountingenabled.IsPresent) {
+                    Throw "Parameter RadiusAccountingServers must be specified if parameter RadiusAccountingEnabled is present."
+                }
+            }
+        )]
+        [PSObject[]]$RadiusAccountingServers
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/switch/accessPolicies" -f $BaseURI, $NetworkId
+
+    $_Body = @{
+        name = $Name
+        hostMode = $HostMode
+        radiusAccountingEnabled = $RadiusAccountingEnabled.IsPresent
+        radiusCoaSupportEnabled = $RadiusCoaSupportEnabled.IsPresent
+        radiusTestingEnabled = $RadiusTestingEnabled.IsPresent
+        urlRedirectWalledGardenEnabled = $UrlredirectWalledGardenEnabled.IsPresent
+    }
+
+    foreach ($RadiusServer in $RadiusServers) {
+        If ( (-not $RadiusServer.host) -or (-not $RadiusServer.port) -or (-not $RadiusServer.secret) ) {
+            throw "Invalid Radius Server obect"
+        }
+    }
+    $_Body.Add("radiusServers", $RadiusServers)
+
+    if ($GuestVlanId) { $_Body.Add("guestVlanId", $GuestVlanId) }
+    if ($AccessPolicyType) { $_Body.Add("accessPolicyType", $AccessPolicyType) }
+    if ($RadiusGroupAttribute) { $_Body.Add("radiusGroupAttribute", $RadiusGroupAttribute) }
+    if ($IncreaseAccessSpeed.IsPresent) { $_Body.Add("increaseAccessSpeed", $IncreaseAccessSpeed) }
+    if ($VoiceVlanClients) { $_Body.Add("voiceVlanClients", $VoiceVlanClients) }
+    if ($UrlRedirectWalledGardenRanges) { $_Body.Add("urlRedirectWalledGardenRanges", $UrlRedirectWalledGardenRanges) }
+    if ($Dot1xControlDirection) {
+        $_Body.Add("dot1x", @{
+            controlledDirection = $Dot1xControlDirection
+        })
+    }
+    if ($Radius) { $_Body.Add("radius", $Radius) }
+    if ($RadiusAccountingServers) {
+        foreach ($RadiusAccountingServer in $RadiusAccountingServers) {
+            if ( (-not $RadiusAccountingServers.port) -or (-not $RadiusAccountingServer.host) -or (-not $RadiusAccountingServer.secret) ) {
+                Throw "Invalid Radius Accounting Server Object."
+            }
+        }
+        $_Body.Add("radiusAccountingServers", $RadiusAccountingServers) 
+    }
+
+    $body = $_Body | ConvertTo-Json -Depth 10 -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    }
+    catch {
+        Throw $_
+    }
+    <#
+    .SYNOPSIS
+    Create a switch access policy
+    .DESCRIPTION
+    Create a Meraki switch access policy for a network.
+    .PARAMETER NetworkId
+    The network Id of the network to create the policy
+    .PARAMETER Name
+    The name of the access policy
+    .PARAMETER HostMode
+    Host Mode for the access policy.
+    .PARAMETER RadiusServers
+    List of RADIUS servers to require connecting devices to authenticate against before granting network access.
+    A radius server object consists of the following:
+        port*:integer - UDP port that the RADIUS server listens on for access requests
+        host*:string - Public IP address of the RADIUS server
+        secret*:string - RADIUS client shared secret
+    
+    See examples for creating these objects
+    .PARAMETER GuestVlanId
+    ID for the guest VLAN allow unauthorized devices access to limited network resources.
+    .PARAMETER AccessPolicyType
+    Access Type of the policy. Automatically 'Hybrid authentication' when hostMode is 'Multi-Domain'.
+    .PARAMETER RadiusGroupAttribute
+    Acceptable values are "" for None, or "11" for Group Policies ACL
+    .PARAMETER IncreaseAccessSpeed
+    Enabling this option will make switches execute 802.1X and MAC-bypass authentication simultaneously so that clients authenticate faster. Only required when accessPolicyType is 'Hybrid Authentication.
+    .PARAMETER RadiusAccountingEnabled
+    Enable to send start, interim-update and stop messages to a configured RADIUS accounting server for tracking connected clients
+    .PARAMETER RadiusCoaSupportEnabled
+    Change of authentication for RADIUS re-authentication and disconnection
+    .PARAMETER RadiusTestingEnabled
+    If enabled, Meraki devices will periodically send access-request messages to these RADIUS servers
+    .PARAMETER UrlredirectWalledGardenEnabled
+    Enable to restrict access for clients to a specific set of IP addresses or hostnames prior to authentication.
+    .PARAMETER VoiceVlanClients
+    CDP/LLDP capable voice clients will be able to use this VLAN. Automatically true when hostMode is 'Multi-Domain'.
+    .PARAMETER UrlRedirectWalledGardenRanges
+    IP address ranges, in CIDR notation, to restrict access for clients to a specific set of IP addresses or hostnames prior to authentication
+    .PARAMETER Dot1xControlDirection
+    Supports either 'both' or 'inbound'. Set to 'inbound' to allow unauthorized egress on the switchport. Set to 'both' to control both traffic directions with authorization. Defaults to 'both'
+    .PARAMETER Radius
+    Object for RADIUS Settings
+    A radius object consists of the following
+
+        failedAuthVlanId:integer - VLAN that clients will be placed on when RADIUS authentication fails. Will be null if hostMode is Multi-Auth
+        reAuthenticationInterval:integer - Re-authentication period in seconds. Will be null if hostMode is Multi-Auth
+            criticalAuth:object - Critical auth settings for when authentication is rejected by the RADIUS server
+            dataVlanId:integer - VLAN that clients who use data will be placed on when RADIUS authentication fails. Will be null if hostMode is Multi-Auth
+            voiceVlanId:integer - VLAN that clients who use voice will be placed on when RADIUS authentication fails. Will be null if hostMode is Multi-Auth
+            suspendPortBounce:boolean - Enable to suspend port bounce when RADIUS servers are unreachable
+    
+    See examples for creating this object.
+    .PARAMETER RadiusAccountingServers
+    List of RADIUS accounting servers to require connecting devices to authenticate against before granting network access
+    A RadiusAccounting server object consist of the following:
+        port*:integer - UDP port that the RADIUS Accounting server listens on for access requests
+        host*:string - Public IP address of the RADIUS accounting server
+        secret*:string - RADIUS client shared secret
+
+    See examples for creatng these objects.
+    .OUTPUTS
+    An Access Policy Object
+    .EXAMPLE
+    Creating Radius server object. This applies to parameters RadiusServers and RadiusAccountingServers
+    Create using a PSCustomeObject:
+    $RadiusServers = [PSCustomObject@(
+        @{
+            host = "10.10.10.1"
+            port = 1812
+            secret = "SGFDOI2;TH60MD-877TH4"
+        },
+        {
+            host = "10.10.10.2"
+            port = 1812
+            secret = "QWSISJ564SDLK47^$JH/2342"
+        }
+    )
+
+    Create using a hashtable:
+     $RadiusServers = @(
+        @{
+            host = "10.10.10.1"
+            port = 1812
+            secret = "SGFDOI2;TH60MD-877TH4"
+        },
+        {
+            host = "10.10.10.2"
+            port = 1812
+            secret = "QWSISJ564SDLK47^$JH/2342"
+        }
+    )
+    .EXAMPLE Create the Radius object.
+    Create using a PSCustomObject
+    $radius = [PSCustomObject]@{
+        failedAuthVlanId = 10
+        reAuthenticationInterval = 20
+        criticalAuth = @{
+            dataVlanId = 30
+            voiceVlanId = 40
+            suspendPortBounce = true
+        }
+    }
+
+    Create using a hash table:
+    $radius = @{Remove-MerakiSwitchStaticRoute
+            dataVlanId = 30
+            voiceVlanId = 40
+            suspendPortBounce = true
+        }
+    }
+    #>    
+}
+
+function Set-MerakiSwitchAccessPolicy() {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$AccessPolicyNumber,        
+        [string]$Name,
+        [ValidateSet('Single-Host','Multi-Host','Multi-Domain','Multi-Auth')]
+        [string]$HostMode,
+        [PSObject[]]$RadiusServers,
+        [ValidateRange(1,4096)]
+        [int]$GuestVlanId,
+        [ValidateSet('Hybrid authentication','802.1x','AC authentication bypass')]
+        [string]$AccessPolicyType,
+        [ValidateSet('','11')]
+        [String]$RadiusGroupAttribute = '',
+        [ValidateScript(
+            {
+                if ( ($_.isPresent) -and ($AccessPolicyType -ne 'Hybrid authentication') ) {
+                    Throw "Parameter IncreaseAccessSpeed can only be used when parameter AccessPolicyType is 'Hybrid authentication'"
+                }
+            }
+        )]
+        [switch]$IncreaseAccessSpeed,
+        [switch]$RadiusAccountingEnabled,
+        [ValidateScript(
+            {
+                if ( ($_.IsPresent) -and (-not $RadiusAccountingServers) ) {
+                    throw "Parameter RadiusAccountingServers must be used if parameter RadiusAccounting Enabled is present."
+                }
+            }
+        )]
+        [switch]$RadiusCoaSupportEnabled,
+        [switch]$RadiusTestingEnabled,
+        [switch]$UrlredirectWalledGardenEnabled,
+        [switch]$VoiceVlanClients,
+        [string[]]$UrlRedirectWalledGardenRanges,
+        [string]$Dot1xControlDirection,
+        [PSObject]$Radius,
+        [ValidateScript(
+            {
+                if ( -not $RadiusAccountingenabled.IsPresent) {
+                    Throw "Parameter RadiusAccountingServers must be specified if parameter RadiusAccountingEnabled is present."
+                }
+            }
+        )]
+        [PSObject[]]$RadiusAccountingServers
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/switch/accessPolicies{2}" -f $BaseURI, $NetworkId, $AccessPolicyNumber
+
+    $_Body = @{}
+    if ($Name) { $_Body.Add("name", $Name) }
+    if ($HostMode) { $_Body.Add("hostMode", $HostMode) }
+    if ($RadiusAccountingServers) { $_Body.Add("radiusAccountingEnabled", $RadiusAccountingEnabled.IsPresent) }
+    if ($RadiusCoaSupportEnabled) { $_Body.Add("radiusCoaSupportEnabled", $RadiusCoaSupportEnabled.IsPresent) }
+    if ($RadiusTestingEnabled) { 
+        $_Body.Add("radiusTestingEnabled", $RadiusTestingEnabled.IsPresent)
+        $_Body.Add("urlRedirectWalledGardenEnabled", $UrlredirectWalledGardenEnabled.IsPresent) 
+    }
+    if ($RadiusServers) {
+        foreach ($RadiusServer in $RadiusServers) {
+            If ( (-not $RadiusServer.host) -or (-not $RadiusServer.port) -or (-not $RadiusServer.secret) ) {
+                throw "Invalid Radius Server obect"
+            }
+        }
+        $_Body.Add("radiusServers", $RadiusServers)
+    }
+    if ($GuestVlanId) { $_Body.Add("guestVlanId", $GuestVlanId) }
+    if ($AccessPolicyType) { $_Body.Add("accessPolicyType", $AccessPolicyType) }
+    if ($RadiusGroupAttribute) { $_Body.Add("radiusGroupAttribute", $RadiusGroupAttribute) }
+    if ($IncreaseAccessSpeed.IsPresent) { $_Body.Add("increaseAccessSpeed", $IncreaseAccessSpeed) }
+    if ($VoiceVlanClients) { $_Body.Add("voiceVlanClients", $VoiceVlanClients) }
+    if ($UrlRedirectWalledGardenRanges) { $_Body.Add("urlRedirectWalledGardenRanges", $UrlRedirectWalledGardenRanges) }
+    if ($Dot1xControlDirection) {
+        $_Body.Add("dot1x", @{
+            controlledDirection = $Dot1xControlDirection
+        })
+    }
+    if ($Radius) { $_Body.Add("radius", $Radius) }
+    if ($RadiusAccountingServers) {
+        foreach ($RadiusAccountingServer in $RadiusAccountingServers) {
+            if ( (-not $RadiusAccountingServers.port) -or (-not $RadiusAccountingServer.host) -or (-not $RadiusAccountingServer.secret) ) {
+                Throw "Invalid Radius Accounting Server Object."
+            }
+        }
+        $_Body.Add("radiusAccountingServers", $RadiusAccountingServers) 
+    }
+
+    $body = $_Body | ConvertTo-Json -Depth 10 -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    }
+    catch {
+        Throw $_
+    }
+    <#
+    .SYNOPSIS
+    Create a switch access policy
+    .DESCRIPTION
+    Create a Meraki switch access policy for a network.
+    .PARAMETER NetworkId
+    The network Id of the network to create the policy
+    .PARAMETER Name
+    The name of the access policy
+    .PARAMETER HostMode
+    Host Mode for the access poliRemove-MerakiSwitchStaticRoutecy.
+    .PARAMETER RadiusServers
+    List of RADIUS servers to require connecting devices to authenticate against before granting network access.
+    .PARAMETER GuestVlanId
+    ID for the guest VLAN allow unauthorized devices access to limited network resources.
+    .PARAMETER AccessPolicyType
+    Access Type of the policy. Automatically 'Hybrid authentication' when hostMode is 'Multi-Domain'.
+    .PARAMETER RadiusGroupAttribute
+    Acceptable values are "" for None, or "11" for Group Policies ACL
+    .PARAMETER IncreaseAccessSpeed
+    Enabling this option will make switches execute 802.1X and MAC-bypass authentication simultaneously so that clients authenticate faster. Only required when accessPolicyType is 'Hybrid Authentication.
+    .PARAMETER RadiusAccountingEnabled
+    Enable to send start, interim-update and stop messages to a configured RADIUS accounting server for tracking connected clients
+    .PARAMETER RadiusCoaSupportEnabled
+    Change of authentication for RADIUS re-authentication and disconnection
+    .PARAMETER RadiusTestingEnabled
+    If enabled, Meraki devices will periodically send access-request messages to these RADIUS servers
+    .PARAMETER UrlredirectWalledGardenEnabled
+    Enable to restrict access for clients to a specific set of IP addresses or hostnames prior to authentication.
+    .PARAMETER VoiceVlanClients
+    CDP/LLDP capable voice clients will be able to use this VLAN. Automatically true when hostMode is 'Multi-Domain'.
+    .PARAMETER UrlRedirectWalledGardenRanges
+    IP address ranges, in CIDR notation, to restrict access for clients to a specific set of IP addresses or hostnames prior to authentication
+    .PARAMETER Dot1xControlDirection
+    Supports either 'both' or 'inbound'. Set to 'inbound' to allow unauthorized egress on the switchport. Set to 'both' to control both traffic directions with authorization. Defaults to 'both'
+    .PARAMETER Radius
+    Object for RADIUS Settings
+    .PARAMETER RadiusAccountingServers
+    List of RADIUS accounting servers to require connecting devices to authenticate against before granting network access
+    .OUTPUTS 
+    An Access Policy object.
+    #>
+}
+
+function Remove-MerakiSwitchAccessPolicy() {
+    [CmdletBinding(SupportsShouldProcess)]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$AccessPolicyNumber
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}switch/accessPolicies/{2}" -f $BaseURI, $NetworkId, $AccessPolicyNumber
+
+    $AccessPolicy = Get-MerakiSwitchAccessPolicy -NetworkId $NetworkId -AccessPolicyNumber $AccessPolicyNumber
+
+    if ($PSCmdlet.ShouldProcess('Delete', "Access Policy: $($AccessPolicy.Name)")) {
+        try {
+            $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers
+            return $response
+        }
+        catch {
+            throw $_
+        }
+    }
+    <#
+    .SYNOPSIS
+    Delete an Access Policy
+    .DESCRIPTION 
+    Delete a Meraki switch Access Policy
+    .PARAMETER NetworkId
+    The network Id to delete the policy from.
+    .PARAMETER AccessPolicyNumber
+    The access policy number to delete.
+    #>
+}
+#endregion
+
+#region Routing Multicast
+function Get-MerakiSwitchRoutingMulticast() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipeline = $true,
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [Alias('NetworkId')]
+        [string]$Id
+    )
+
+    Begin {
+        $Headers = Get-Headers
+        $Multicasts = [List]::New()
+    }
+
+    Process {
+        $Uri = "{0}/networks/{1}/switch/routing/milticast" -f $Id
+        $Network = Get-MerakiNetwork -networkID $Id
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+            $Multicast = [PSCustomObject]@{
+                NetworkId = $Network.Id
+                NetworkName = $Network.Name
+                $MulticastSettings = $response
+            }
+            $Multicasts.Add($Multicast)
+        } catch {
+            throw $_
+        }
+    }
+
+    End {
+        return $Multicasts
+    }
+    <#
+    .SYNOPSIS
+    Retrieve multicast settings for switches
+    .DESCRIPTION
+    Retrieve the multicast setting for switches in a Meraki network.
+    .PARAMETER NetworkId
+    Network ID of the network to retrieve the settings.
+    .OUTPUTS 
+    A multicast settings object
+    #>
+}
+
+function Set-MerakiSwitchRoutingMulticast() {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [switch]$FloodUnknownMulticastTrafficEnabled,
+        [switch]$igmpSnoopingEnabled,
+        [PSObject[]]$Overrides
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/switch/routing/multicast" -f $NetworkId
+
+    $_Body = @{
+        defaultSettings = @{
+            floodUnknownMulticastTrafficEnabled = $FloodUnknownMulticastTrafficEnabled.IsPresent
+            igmpSnoopingEnabled = $igmpSnoopingEnabled.IsPresent
+        }
+    }
+
+    if ($Overrides) {
+        $_Body.Add("Overrides", $Overrides)
+    }
+
+    $body = $_Body | ConvertTo-Json -Depth 5 -Compress
+    
+    try {
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body
+        return $response        
+    } catch {
+        throw $_
+    }
+
+    <#
+    .SYNOPSIS
+    Update switch multicast routing
+    .DESCRIPTION
+    Updte the multicast routing for switches in a Meraki network.
+    .PARAMETER NetworkId
+    The network Id of the network to update
+    .PARAMETER FloodUnknownMulticastTrafficEnabled
+    Default setting for FloodUnknownMulticastTrafficEnabled.
+    .PARAMETER igmpSnoopingEnabled
+    Default setting for igmpSnoopingEnabled
+    .PARAMETER Overrides
+    Array of paired switches/stacks/profiles and corresponding multicast settings. An empty array will clear the multicast settings.
+    An override object consists of:
+        floodUnknownMulticastTrafficEnabled*:boolean - Flood unknown multicast traffic setting for switches, switch stacks or switch profiles )required)
+        igmpSnoopingEnabled*:boolean - IGMP snooping setting for switches, switch stacks or switch profiles (required)
+        stacks: array[] - List of switch stack ids for non-template network
+        switchProfiles:array[] - List of switch profiles ids for template network
+        switches:array[] List of switch serials for non-template network
+    #>
+}
+#endregion
+
+#region OSPF
+function Get-MerakiSwitchRoutingOspf() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipeline = $true,
+            ValueFromPipelineByPropertyName = $true
+            )]
+            [Alias('NetworkId')]
+            [string]$Id
+    )
+
+    Begin {
+        $Headers = Get-Headers        
+    }
+
+    Process {
+        $Uri = "{0}/networks/{1}/switch/routing/ospf" -f $BaseURI, $Id
+
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .SYNOPSIS
+    Return routing OSPF setting
+    .DESCRIPTION
+    Return the Meraki network OSPF settings
+    .PARAMETER Id
+    The Id of the network
+    .OUTPUTS
+    An object containing the OSPF settings
+    #>
+}
+
+function Set-MerakiSwitchRoutingOspf() {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [int]$DeadTimerInSeconds,
+        [ValidateRange(1,255)]
+        [int]$HelloTimerInSeconds,
+        [switch]$Enabled,
+        [switch]$Md5AuthenticationEnabled,
+        [ValidateScript(
+            {
+                if ($Md5AuthenticationEnabled.IsPresent -and (-not $_)) {
+                    throw "Parameter Md5AuthenticationId must be specified when parameter Md4AuthenticationEnabled is present."
+                }
+            }
+        )]
+        [ValidateRange(1,255)]
+        [int]$Md5AuthenticationKeyId,
+        [ValidateScript(
+            {
+                if ($Md5AuthenticationEnabled.IsPresent -and (-not $_)) {
+                    throw "Parameter Md5AuthenticationPassphrase must be specified when Md5AuthenticationEnabled is present."
+                }
+            }
+        )]
+        [securestring]$Md5AuthenticationPassphrase,
+        [int]$V3DeadTimerInSeconds,
+        [ValidateRange(1.255)]
+        [int]$V3HelloTimerInSeconds,
+        [switch]$V3Enabled,
+        [PSObject[]]$V3Areas,
+        [psobject[]]$Areas
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/switch/routing/ospf" -f $BaseURI, $NetworkId
+
+    $_Body = @{}
+    if ($Enabled.IsPresent) {
+        if ($DeadTimerInSeconds) { $_Body.Add("deadTimerInSeconds", $DeadTimerInSeconds) }
+        if ($HelloTimerInSeconds) { $_Body.Add("helloTimerInSeconds", $HelloTimerInSeconds) }
+        $_Body.Add("enabled", $Enabled.IsPresent)
+        if ($Md5AuthenticationEnabled.IsPresent) {
+            $_Body.Add("md5Authentication", $Md5AuthenticationEnabled.IsPresent)
+            $_Body.Add("md5AuthenticationKey", @{
+                "id" = $Md5AuthenticationKeyId
+                "passphrase" = $Md5AuthenticationPassphrase
+            })
+        }
+    }
+    if ($V3Enabled) {
+        $_Body.Add("v3", @{})
+        if ($V3DeadTimerInSeconds) { $_Body.v3.Add("deadTimerInSeconds", $V3DeadTimerInSeconds)}
+        if ($V3HelloTimerInSeconds) { $_Body.v3.Add("helloTimerInSeconds", $V3HelloTimerInSeconds)}
+        $_Body.v3.Add("enabled", $V3Enabled.IsPresent)
+        $_Body.v3.Add("areas", $V3Areas)            
+    }
+    if ($Areas) { $_Body.Add("areas", $Areas) }
+
+    $body = $_Body | ConvertTo-Json -Depth 5 -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    } catch {
+        throw $_
+    }
+    <#
+    .SYNOPSIS
+    Modify the OSPF settings
+    .DESCRIPTION
+    Modify a Meraki Networks OSPF settings
+    .PARAMETER NetworkId
+    The Network ID
+    .PARAMETER DeadTimerInSeconds
+    Time interval to determine when the peer will be declared inactive/dead. Value must be between 1 and 65535
+    .PARAMETER HelloTimerInSeconds
+    Time interval in seconds at which hello packet will be sent to OSPF neighbors to maintain connectivity. Value must be between 1 and 255. Default is 10 seconds.
+    .PARAMETER Enabled
+    Boolean value to enable or disable OSPF routing. OSPF routing is disabled by default.
+    .PARAMETER Md5AuthenticationEnabled
+    Boolean value to enable or disable MD5 authentication. MD5 authentication is disabled by default.
+    .PARAMETER Md5AuthenticationKeyId
+    MD5 authentication key index. Key index must be between 1 to 255
+    .PARAMETER Md5AuthenticationPassphrase
+    MD5 authentication passphrase
+    .PARAMETER V3DeadTimerInSeconds
+    Time interval to determine when the peer will be declared inactive/dead. Value must be between 1 and 65535
+    .PARAMETER V3HelloTimerInSeconds
+    Time interval in seconds at which hello packet will be sent to OSPF neighbors to maintain connectivity. Value must be between 1 and 255. Default is 10 seconds.
+    .PARAMETER V3Enabled
+    Boolean value to enable or disable V3 OSPF routing. OSPF V3 routing is disabled by default.
+    .PARAMETER V3Areas
+    an array of OSPF v3 areas
+    An area object consists of:
+        areaId*:string - OSPF area ID
+        areaName*:string - Name of the OSPF area
+        areaType*:string - Area types in OSPF. Must be one of: ["normal", "stub", "nssa"]
+    
+    * required
+    .PARAMETER Areas
+    An array of OSPF areas
+    An area object consists of:
+        areaId*:string - OSPF area ID
+        areaName*:string - Name of the OSPF area
+        areaType*:string - Area types in OSPF. Must be one of: ["normal", "stub", "nssa"]
+
+    * required
+    #>
+}

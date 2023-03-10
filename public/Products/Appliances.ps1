@@ -1,5 +1,5 @@
 #Meraki Appliance Functions
-
+using namespace System.Management
 function Get-MerakiNetworkApplianceContentFilteringCategories() {
     [CmdletBinding()]
     Param(
@@ -30,7 +30,7 @@ function Get-MerakiNetworkApplianceContentFilteringCategories() {
     #>
 }
 
-Set-Alias GMNetAppCFCats -Value Get-MerakiNetworkContentFilteringCategories -Option ReadOnly
+Set-Alias GMNetAppCFCats -Value Get-MerakiNetworkApplianceContentFilteringCategories -Option ReadOnly
 
 <#
 .Description
@@ -62,7 +62,7 @@ function Get-MerakiNetworkApplianceContentFiltering() {
     #>
 }
 
-Set-Alias GMNetCF -Value Get-MerakiNetworkContentFilteringRules -Option ReadOnly
+Set-Alias GMNetCF -Value Get-MerakiNetworkApplianceContentFiltering -Option ReadOnly
 
 function Update-MerakiNetworkApplianceContentFiltering() {
     [CmdletBinding()]
@@ -73,28 +73,75 @@ function Update-MerakiNetworkApplianceContentFiltering() {
             ValueFromPipelineByPropertyName = $true
         )]
         [string]$id,
-        [Parameter(
-            ParameterSetName = "values",
-            Mandatory = $true
+        [ValidateScript(
+            {
+                if ($ContentFilteringRules) {
+                    throw "The allowedURLPatterns parameter cannot be used with the ContentFilteringRules parameter."
+                } elseif (-not $_) {
+                        throw "The allowedURLPatterns parameter is require if the ContentFilteringRules parameter is omitted."
+                } elseif ((-not $blockedURLPatterns) -or (-not $blockedUrlCategories) -or (-not $urlCategoryListSize)) {
+                    throw "The allowedUrlPatterns parameter requires the blockedURLPatterns and blockedUrlCategories parameters "
+                } else {
+                    $true
+                }
+            }
         )]
         [string[]]$allowedURLPatterns,
         [Parameter(
             Mandatory=$true,
             ParameterSetName = "values"            
         )]
+        [ValidateScript(
+            {
+                if ($ContentFilteringRules) {
+                    throw "The blockedURLPatterns parameter cannot be used with the ContentFilteringRules parameter."
+                } elseif (-not $_) {
+                        throw "The blockedURLPatterns parameter is require if the ContentFilteringRules parameter is omitted."
+                } elseif ((-not $aloowedURLPatterns) -or (-not $blockedUrlCategories) -or (-not $urlCategoryListSize)) {
+                    throw "The blockedUrlPatterns parrameter requires the allowedURLPatterns and blockedUrlCategories parameters "
+                } else {
+                    $true
+                }
+            }
+
+        )]
         [string[]]$blockedURLPatterns,
-        [Parameter(
-            ParameterSetName = "values",
-            Mandatory = $true
+        [ValidateScript(
+            {
+                if ($ContentFilteringRules) {
+                    throw "The blockedUrlCategories parameter cannot be used with the ContentFilteringRules parameter."
+                } elseif(-not $_) {
+                        throw "The blockedUrlCategories parameter is required if the ContentFilteringRules parameter is omitted."
+                } elseif ((-not $allowedURLPatterns) -or (-not $blockedUrlCategories) -or (-not $urlCategoryListSize)) {
+                    throw "The blockedUrlCategories parrameter requires the allowedURLPatterns and blockedURLPatterns parameters "
+                } else {
+                    $true
+                }
+            }
+
         )]
         [string[]]$blockedUrlCategories,
-        [Parameter(
-            Mandatory = $true, ParameterSetName = 'values'
+        [ValidateScript(
+            {
+                if ($ContentFilteringRules) {
+                    throw "The urlCategoryListSize parameter cannot be used with the ContentFilteringRules parameter."
+                } elseif ((-not $allowedURLPatterns) -or (-not $blockedUrlCategories) -or (-not $blockedUrlCategories)) {
+                    throw "The UrlCategoriesListSize parameter requires the allowedURLPatterns, blockedURLPatterns, and blockedUrlCategories parameters "
+                } else {
+                    $true
+                }
+            }            
         )]
         [ValidateSet('topSites','fullList')]
         [string]$urlCategoryListSize,
-        [Parameter(
-            ParameterSetName = "object"
+        [ValidateScript(
+            {
+                if ($allowedURLPatterns -or $blockedURLPatterns -or $blockedUrlCategories -or $urlCategoryListSize) {
+                    throw "The parameter ContentFilteringRules cannot be used with the allowedURLPatterns, blockedURLPatterns, blockedURLCategories -or urlCategoriesList parameters"
+                } else {
+                    $true
+                }
+            }
         )]
         [psObject]$ContentFilteringRules
     )
@@ -128,11 +175,14 @@ function Update-MerakiNetworkApplianceContentFiltering() {
 
     $psBody = [PSCustomObject]$properties
     
-    $body = $psBody | ConvertTo-Json
+    $body = $psBody | ConvertTo-Json -Compress -Depth 6
 
-    $response = Invoke-RestMethod -Method PUT -Uri $Uri -Body $body -Headers $Headers
-
-    return  $response
+    try {
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Body $body -Headers $Headers
+        return  $response
+    } catch {
+        throw $_
+    }
     <#
     .SYNOPSIS
     Update the content filtering rules.
@@ -150,6 +200,7 @@ function Update-MerakiNetworkApplianceContentFiltering() {
     A Meraki content filtering rule object (not supported with other parameters).
     .OUTPUTS
     The updated Meraki content filtering object.
+    .NOTES
     .EXAMPLE
     You must pull the Content Filtering Rules using the function Get-MerakiNetworkApplianceContentFiltering and then modify the properties of that object.
     Adding a new URL to the blocked URL Pattern
@@ -167,7 +218,7 @@ function Update-MerakiNetworkApplianceContentFiltering() {
     #>
 }
 
-Set-Alias -Name UMNetAppCF -value Update-MerakiNetworkContentFiltering -Option ReadOnly
+Set-Alias -Name UMNetAppCF -value Update-MerakiNetworkApplianceContentFiltering -Option ReadOnly
 
 function Add-MerakiNetworkApplianceContentFilteringRules() {
     Param (
@@ -183,7 +234,7 @@ function Add-MerakiNetworkApplianceContentFilteringRules() {
 
     Process {
         if ((-not $allowedURLPatterns) -and (-not $blockedURLPatterns) ) {
-            Write-Host "You must provide al least one fo the content filtering patterns" -ForegroundColor Red
+            Write-Host "You must provide al least one of the content filtering patterns" -ForegroundColor Red
             exit
         }
         $cfr = Get-MerakiNetworkApplianceContentFiltering -Id $Id
@@ -339,6 +390,7 @@ function Get-MerakiNetworkApplianceStaticRoutes() {
 
 Set-Alias -Name GMNetAppRoutes -Value Get-MerakiNetworkApplianceStaticRoutes -Option ReadOnly
 
+#region VLANs
 function Get-MerakiNetworkApplianceVLANS() {
     [cmdletbinding()]
     Param(
@@ -404,6 +456,258 @@ function Get-MerakiNetworkApplianceVLAN() {
 
 Set-Alias -name GMNetAppVLAN -Value Get-MerakiNetworkApplianceVLAN -Option ReadOnly
 
+function Add-MerakiNetworkApplianceVlan() {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [string]$VlanId,
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+        [string]$Subnet,
+        [string]$ApplianceIp,
+        [string]$GroupPolicyId,
+        [ValidateSet('same','unique')]
+        [string]$TemplateVlanType,
+        [string]$CIDR,
+        [int]$Mask,
+        [switch]$Ipv6Enabled,
+        [hashtable]$Ipv6PrefixAssignments,
+        [switch]$MandatoryDHCP
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/appliance/vlans" -f $BaseURI, $NetworkId
+
+    $_Body = @{
+        "id" = $VlanId
+        "name" = $Name
+    }
+    if ($Subnet) { $_Body.Add("subnet", $Subnet) }
+    if ($ApplianceIp) { $_Body.Add("applianceIp", $ApplianceIp) }
+    if ($GroupPolicyId) { $_Body.Add("groupPolicyId", $GroupPolicyId) }
+    if ($TemplateVlanType) { $_Body.Add("templateVlanType", $TemplateVlanType) }
+    if ($CIDR) { $_Body.Add("cidr", $CIDR) }
+    if ($Mask) { $_Body.Add("mask", $Mask ) }
+    if ($Ipv6Enabled.IsPresent) {
+        $_Body.Add("ipv6", @{
+            "enabled" = $true
+            "PrefixAssignments" = $Ipv6PrefixAssignments
+        })        
+    }
+    if ($MandatoryDHCP.IsPresent) {
+        $_Body.Add(
+            @{
+                "enabled" = $true
+            }
+        )
+    }
+
+    $body = $_Body | ConvertTo-Json -Depth 5 -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    } catch {
+        throw $_
+    }
+}
+
+Function Remove-MerakiNetworkApplianceVlan() {
+    [CmdletBinding(SupportsShouldProcess)]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory)]
+        [string]$VlanId
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/appliance/vlans/{2}" -f $BaseURI, $NetworkId, $VlanId
+
+    if ($PSCmdlet.ShouldProcess("Delete", "VLAN ID $VlanId")) {
+        try {
+            $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers
+            return $response
+        } catch {
+            throw $_
+        }           
+    }
+    <#
+    .SYNOPSIS
+    Remove a VLAN
+    .DESCRIPTION
+    Remove a Meraki Appliance VLAN
+    .PARAMETER NetworkId
+    The Id of the network
+    .PARAMETER VlanId
+    The VLAN ID to remove
+    #>
+}
+
+function Set-MerakiNetworkApplianceVLAN() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory = $true
+        )]
+        [Alias("NetworkId")]
+        [string]$id,
+        [Parameter(Mandatory = $true)]
+        [string]$VlanId,
+        [string]$VlanName,
+        [String]$ApplianceIp,
+        [string]$Subnet,
+        [string]$GroupPolicyId,
+        [ValidateSet("same","unique")]
+        [string]$TemplateVlanType,
+        [string]$TranslateVPNSubnet,
+        [string]$CIDR,
+        [string]$Mask,
+        [ValidateScript(
+            {
+                if ($_ -isnot [hashtable]) {
+                    Throw "fixedIpAssignments must be a hashtable"
+                }
+            }
+        )]
+        [hashtable]$fixedIpAssignments,
+        [hashtable[]]$ReservedIpRanges,
+        [string]$DnsNameServers,
+        [ValidateSet("Run a DHCP Server","Relay DHCP to another Server","Do not respond to DHCP requests")]
+        [string]$DhcpHandling,
+        [ValidateScript(
+            {
+                If ($DhcpHandling -ne "Relay DHCP to another Server") {
+                    Throw "Parameter DhcpRelayServers is not valid with DhcpHandling = $DhcpHandling"
+                }
+            }
+        )]
+        [string[]]$DhcpRelayServerIPs,
+        [ValidateSet(
+            '30 minutes', '1 hour', '4 hours', '12 hours', '1 day', '1 week'
+        )]
+        [string]$DhcpLeaseTime,
+        [bool]$DhcpBootOptionEnabled,
+        [string]$DhcpBootNextServer,
+        [string]$DhcpBootFilename,
+        [hashtable]$DhcpOptions,
+        [hashtable]$IPv6,
+        [bool]$MandatoryDhcp,
+        [string]$VpnNatSubnet
+    )
+    
+    $Headers = Get-Headers
+
+    # Return the network Info so we can determine is thi snetwork is assinged to a template.
+    $Network = Get-MerakiNetwork -networkID $id
+
+    # check for Template only parameters.
+    if ($mask -or $CIDR -or $TemplateVlanType) {
+        if ($Network.$_isBoundToConfigTemplate -eq $false) {
+            Throw "Parameters 'mask', 'CIDR' and TemplateVLanType are only applicable to template networks."
+        }
+    }
+
+    $Uri = "{0}/networks/{1}/appliance/vlans/{2}" -f $BaseURI, $id, $VlanId
+
+    $_body = {}
+    if ($name) {
+        $_.Body.Add("name", $Name)
+    }
+    if ($ApplianceIp) {
+        $_body.Add("applianceIp", $ApplianceIp)
+    }
+    if ($subnet) {
+        $_body.Add("subnet", $subnet)
+    }
+    if ($GroupPolicyId) {
+        $_body.Add("groupPolicyId", $GroupPolicyId)
+    }
+    if ($TemplateVlanType) {
+        $_body.Add("templateVlanType", $TemplateVlanType)
+    }
+    if ($CIDR) {
+        $_body.Add("cidr", $CIDR)
+    }
+    if ($Mask) {
+        $_body.Add("mask", $Mask)
+    }
+    if ($fixedIpAssignments) {
+        $_body.Add("fixedIpAssignments", $fixedIpAssignments)
+    }
+    if ($ReservedIpRanges) {
+        $_body.Add("ReservedIpRanges", $ReservedIpRanges)
+    }
+    if ($DnsNameServers) {
+        $_body.Add("dnsNameServers", $DnsNameServers)
+    }
+    if ($DhcpHandling) {
+        $_body.Add("dhcpHandling", $DhcpHandling)
+    }
+    if ($DhcpRelayServerIPs) {
+        $_body.Add("dhcpRelayServerIps", $DhcpRelayServerIPs)
+    }
+    if ($DhcpLeaseTime) {
+        $_body.Add("dhcpLeaseTime", $DhcpLeaseTime)
+    }
+    if ($DhcpBootOptionEnabled) {
+        $_body.Add("dhcpBootOptionsEnabled", $DhcpBootOptionEnabled)
+    }
+    if ($DhcpBootNextServer) {
+        $_body.Add("dhcpBootNextServer", $DhcpBootNextServer)
+    }
+    if ($DhcpBootFilename) {
+        $_body.Add("dhcpBoofFilename", $DhcpBootFilename)
+    }
+    if ($IPv6) {
+        $_body.Add("ipv6", $IPv6)
+    }
+    if ($MandatoryDhcp) {
+        $_body.Add("mandatoryDhcp", $MandatoryDhcp)
+    }
+    if ($VpnNatSubnet) {
+        $_body.Add("vpnNatSubnet", $VpnNatSubnet)
+    }
+
+    $body = $_body | ConvertTo-Json -Depth 10 -Compress
+
+    Try {
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    } catch {
+        Throw $_
+    }
+    <#
+    .SYNOPSIS
+    "Update Appliance VLAN"
+    .DESCRIPTION
+    "Updates settings for a Meraki Appliance VLAN"
+    .PARAMETER id
+    "Network Id"
+    .PARAMETER VlanId
+    "VLAN ID to be updated"
+    .PARAMETER VlanName
+    "Name of the VLAN"
+    .PARAMETER ApplianceIp
+    "Appliance IP for this VLAN (Default Gateway)"
+    .PARAMETER Subnet
+    "Subnet for this VLAN"
+    .PARAMETER GroupPolicyId
+    .ID of the group policy to apply to this VLAN"
+    .PARAMETER TemplateVlanType
+    "Type of subnetting of the VLAN. Applicable only for template network"
+    .PARAMETER TranslateVPNSubnet
+
+    #>
+}
+
+Set-Alias -Name SetMNAppVLAN  -Value Set-MerakiNetworkApplianceVLAN
+
+#endregion
+
 function Get-MerakiNetworkApplianceSiteToSiteVPN() {
     [CmdletBinding()]
     Param(
@@ -465,6 +769,80 @@ function Get-MerakiNetworkApplianceSiteToSiteVPN() {
 }
 
 Set-Alias -Name GMNetAppSSVpn -Value Get-MerakiNetworkApplianceSiteToSiteVPN -Option ReadOnly
+
+function Set-MerakiNetworkApplianceSiteToSiteVpn() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory = $true)]        
+        [string]$NetworkId,
+        [ValidateScript(
+            {
+                if ($_) {
+                    if (($null -ne $Mode) -or ($null -ne $Hubs) -or ($null -ne $Subnets)) {
+                        Throw "Parameter VpnSetting must be used without other parameters except Networkid"
+                    } else {
+                        $true
+                    }
+                }
+            }            
+        )]
+        [PSObject]$VpnSettings,
+        [string]$Mode,
+        [ValidateScript(
+            {
+                if ( (-not $_) -and $mode -eq 'spoke') {
+                    throw "Parameter Hubs is required if Parameter Mode is set to 'spoke'"
+                } else {
+                    $true
+                }
+            }
+        )]
+        [psobject[]]$Hubs,
+        [psobject[]]$Subnets
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/appliance/vpn/siteToSiteVpn" -f $BaseURI, $NetworkId
+
+    If ($VpnSettings) {
+        $body = $VpnSettings | ConvertTo-Json -Depth 6 -Compress
+    } else {
+
+        $_Body = @{
+            mode = $mode
+        }
+
+        if ($Hubs) {
+            foreach ($Hub in $hubs) {
+                if (-not $Hub.hubid) {
+                    throw "Property hubId is required for all Hubs"
+                }
+            }
+            $_Body.Add("hubs", $Hubs)
+        }
+
+        if ($Subnets) {
+            foreach($Subnet in $Subnets) {
+                if (-not $Subnet.localSubnet) {
+                    throw "Property localSubnet is requored for all Subnets"
+                }
+            }
+            $_Body.Add("subnets", $Subnets)
+        }
+
+        $body = $_Body | ConvertTo-Json -Depth 6 -Compress
+    }
+
+    try {
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $Body
+        return $response
+    }
+    catch {
+        throw $_
+    }
+}
+
 
 function Get-MerakiApplianceUplinkStatuses() {
     [CmdletBinding()]
@@ -614,3 +992,267 @@ function Get-MerakiNetworkApplianceVpnStats() {
 }
 
 Set-Alias -Name GMAVpnStats -Value Get-MerakiNetworkApplianceVpnStats -Option ReadOnly
+
+function Get-MerakiNetworkApplianceDhcpSubnets() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [string]$serial
+    )
+
+    Begin {
+        $Headers = Get-Headers
+
+    }
+
+    Process {
+        $Url = "{0}/devices/{1}/appliance/dhcp/subnets" -f $BaseURI, $Serial
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Url -Headers $Headers
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .SYNOPSIS
+    Returns DHCP Subnets for an appliance.
+    .DESCRIPTION
+    Returns inforation and statistics for an appliances DHCP subnets. Including used count and free count.
+    .PARAMETER serial
+    The serial number of the appliance.
+    .OUTPUTS
+    A collection of Subnet objects.
+    #>
+}
+
+Set-Alias -Name GMNetAppDhcpSubnet -Value Get-MerakiNetworkApplianceDhcpSubnets -Option ReadOnly
+
+#region Firewall
+function Get-MerakiNetworkApplianceCellularFirewallRules () {
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [Alias('NetworkId')]
+        [string]$Id        
+    )
+
+    Begin {
+        $Headers = Get-Headers
+
+        $Uri = "{0}/network/{1}/appliance/firewall/cellularFirewallRules" -f $BaseURI, $Id        
+    }
+    
+    Process {
+
+        $Network = Get-MerakiNetwork -networkID $Id
+
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+            $response | Add-Member -MemberType NoteProperty -Name "NetworkId" -Value $Id
+            $response | Add-Member -MemberType NoteProperty -Name "NetworkName" -Value $Network.Name
+            return $response
+        }
+        catch {
+            throw $_
+        }
+    }
+}
+
+function Set-MerakiNetworkApplianceCellularFirewallRules() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [Parameter(Mandatory = $true)]
+        [psObject[]]$Rules
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/appliance/firewall/cellularFirewallRules" -f $BaseURI, $Id
+
+    $body = $Rules | ConvertTo-Json -Depth 4 -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method Put -Uri $Uri -Headers $Headers -Body $body
+        return $response
+    } catch {
+        throw $_
+    }
+}
+
+function Set-MerakiNetworkApplianceCellularFirewallRule() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [Alias('Networkid')]
+        [string]$Id,
+        [Parameter(Mandatory = $true)]
+        [int]$RuleIndex,
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('allow','deny')]
+        [string]$Policy,
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('tcp', 'udp', 'icmp', 'icmp6', 'any')]
+        [string]$protocol,
+        [Alias('srcPort')]
+        [string]$SourcePort = 'any',
+        [Parameter(Mandatory = $true)]
+        [ALias('srcCidr')]
+        [string]$SourceCidr,
+          [Parameter(Mandatory = $true)]
+        [Alias('DestCidr')]
+        [string]$DestinationCidr,
+        [Alias('destPort')]
+        [string]$DestinationPort = 'any',
+        [switch]$SyslogEnabled,
+        [Parameter(Mandatory = $true)]
+        [string]$Comment
+    )
+
+    $rules = (Get-MerakiNetworkApplianceCellularFirewallRules -id $Id).rules
+
+    $alRules = [System.Collections.ArrayList]$rules
+    $alRules.RemoveAt($RuleIndex)
+    $Properties = [PSCustomObject]@{
+        "policy" = $Policy
+        "srcCidr" = $SourceCidr
+        "srcPort" = $SourcePort
+        "protocol" = $protocol
+        "destCidr" = $DestinationCidr
+        "destPort" = $DestinationPort
+        "comment" = $Comment
+    }
+    if ($SyslogEnabled.IsPresent) { $properties.Add("syslogEnabled", $SyslogEnabled) }
+    $rule = [PSCustomObject]$Properties
+    
+    $alRules.Insert($RuleIndex, $rule)
+    $newRules = $alRules.ToArray()
+    
+    try {
+        $response = Set-MerakiNetworkApplianceCellularFirewallRules -Id $NetworkId, -rules $newRules
+        return $response
+    }
+    catch {
+        throw $_
+    }
+}
+
+function Add-MerakiNetworkApplianceCellularFirewallRule() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [Alias('Networkid')]
+        [string]$Id,
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('allow','deny')]
+        [string]$Policy,
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('tcp', 'udp', 'icmp', 'icmp6', 'any')]
+        [string]$protocol,
+        [Alias('srcPort')]
+        [string]$SourcePort = 'any',
+        [Parameter(Mandatory = $true)]
+        [ALias('srcCidr')]
+        [string]$SourceCidr,
+          [Parameter(Mandatory = $true)]
+        [Alias('DestCidr')]
+        [string]$DestinationCidr,
+        [Alias('destPort')]
+        [string]$DestinationPort = 'any',
+        [switch]$SyslogEnabled,
+        [Parameter(Mandatory = $true)]
+        [string]$Comment
+    )
+
+    $Rules = (Get-MerakiNetworkApplianceCellularFirewallRules -Id $Id).rules
+
+    $Properties = [PSCustomObject]@{
+        "policy" = $Policy
+        "srcCidr" = $SourceCidr
+        "srcPort" = $SourcePort
+        "protocol" = $protocol
+        "destCidr" = $DestinationCidr
+        "destPort" = $DestinationPort
+        "comment" = $Comment
+    }
+    if ($SyslogEnabled.IsPresent) { $properties.Add("syslogEnabled", $SyslogEnabled) }
+    $rule = [PSCustomObject]$Properties
+
+    $Rules += $rule
+
+    try {
+        $response = Set-MerakiNetworkApplianceCellularFirewallRules -Id $id, -Rules $Rules
+        return $response
+    }
+    catch {
+        throw $_
+    }
+}
+
+function Remove-MerakiNetworkAplianceCelularFirewallRule() {
+    [CmdletBinding(SupportsShouldProcess)]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [int]$RuleIndex
+    )
+
+    $Rules = (Get-MerakiNetworkApplianceCellularFirewallRules -id $NetworkId).Rules
+    $alRules = [System.Collections.ArrayList]$Rules
+
+    $alRules.RemoveAt($RuleIndex)
+
+    $newRules = $alRules.ToArray()
+
+    if ($PSCmdlet.ShouldProcess('DELETE', "Cellular Firewall Rule at index $ruleIndex")) {
+        try {
+            $response = Set-MerakiNetworkApplianceCellularFirewallRules -Id $NetworkId -Rules $newRules
+            return $response
+        }
+        catch {
+            throw $_
+        }
+    }
+}
+
+#endregion
+
+#region Firewalled Services
+function Get-MerakiNetworkApplianceFirewalledServices() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipeline = $true,
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [Alias('Networkid')]
+        [string]$Id
+    )
+
+    Begin {
+        $Headers = Get-Headers
+    }
+
+    Process {
+        $Uri = "{0}/networks/{1}/appliance/firewall/firewalledServices" -f $BaseURI, $Id
+        $Network = Get-MerakiNetwork -networkID $Id
+        try {
+            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers
+            $response | Add-Member -MemberType NoteProperty -Name "NetworkId" -Value $Id
+            $response | Add-Member -MemberType NoteProperty -Name "NetworkName" -Value $Network.Name
+            return $response
+        }
+        catch {
+            Throw $_
+        }
+    }
+}
+#endregion

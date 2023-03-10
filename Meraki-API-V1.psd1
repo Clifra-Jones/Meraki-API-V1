@@ -80,7 +80,8 @@ FunctionsToExport = @(`
     'Get-MerakiOrganizations', 
     'Get-MerakiOrganization', 
     'Get-MerakiNetworks', 
-    'Get-MerakiOrganizationConfigTemplates', 
+    'Get-MerakiOrganizationConfigTemplates',
+    'Get-MerakiOrganizationConfigTemplate',
     'Get-MerakiOrganizationDevices', 
     'Get-MerakiOrganizationAdmins', 
     'Get-MerakiOrganizationConfigurationChanges',
@@ -108,6 +109,7 @@ FunctionsToExport = @(`
     'Get-MerakiNetworkApplianceVLANS', 
     'Get-MerakiNetworkApplianceVLAN', 
     'Get-MerakiNetworkApplianceSiteToSiteVPN', 
+    'Set-MerakiNetworkApplianceSiteToSiteVpn',
     'Get-MerakiApplianceUplinkStatuses', 
     'Get-MerakiSwitchRoutingInterfaces',
     'Get-MerakiSwitchRoutingInterface', 
@@ -126,14 +128,59 @@ FunctionsToExport = @(`
     'Get-MerakiSwitchStackRoutingInterfaceDHCP', 
     'Get-MerakiSwitchStackRoutingInterfacesDHCP', 
     'Get-MerakiSwitchStackRoutingInterfacesDHCP',
-    'Get-MerakiNetworkSwitchStack', 
+    'Get-MerakiSwitchStack', 
     'Get-MerakiSwitchStackRoutingStaticRoutes', 
-    'Get-MerakiDeviceSwitchPort',
+    'Get-MerakiSwitchPort',
     'Get-MerakiNetworkApplianceVpnStats',
     'Get-MerakiOrganizationInventoryDevices',
     'Add-MerakiNetworkApplianceContentFilteringRules',
-    'Remove-MerakiNetworkApplianceContentFilteringRules',
-    'Set-MerakiProfile'
+    #'Remove-MerakiNetworkApplianceContentFilteringRules',
+    'Set-MerakiProfile',
+    'Get-MerakiNetworkClients',
+    'Get-MerakiDeviceClients',
+    'Get-MerakiNetworkApplianceDhcpSubnets',
+    'Get-MerakiOrganizationSecurityEvents',
+    'Get-MerakiNetworkClientApplicationUsage',
+    'Get-MerakiNetworkClientBandwidthUsage',
+    'Get-MerakiOrganizationSecurityEvents'
+    'Get-MerakiSwitchPortsStatus',
+    'Get-MerakiSwitchPortsPacketCounters',
+    'Get-MerakiOrganizationFirmwareUpgrades',
+    #'Set-MerakiNetworkApplianceVLAN'
+    #'New-fixedIpAssignment',
+    #'New-ReservedIpRange',
+    #'New-DhcpOption',
+    #'New-IPv6',
+    #'New-IPv6PrefixAssignment',
+    #'Add-MerakiSwitchStackRoutingInterface',
+    #'Set-MerakiSwitchStackRoutingInterface',
+    #'Set-MerakiSwitchStackRoutingInterfaceDhcp',
+    #'Add-MerakiSwitchRoutingInterface',
+    #'Set-MerakiSwitchRoutingInterface',
+    #'Set-MerakiSwitchRoutingInterfaceDhcp',
+    'Get-MerakiSwitchStackRoutingStaticRoutes',
+    #'Remove-MerakiSwitchStackRoutingStaticRoute',
+    #'Remove-MerakiSwitchStackRoutingInterface',
+    #'Set-MerakiNetworkSwitchStackRoutingStaticRoute',
+    #'Add-MerakiNetworkSwitchLAG'
+    #'Set-MerakiNetworkSwitchLAG',
+    #'Remove-MerakiNetworkSwitchLAG',
+    'Get-MerakiSwitchPortSchedules',
+    #'Add-MerakiSwitchPortSchedule',
+    #'Set-MerakiSwitchPortSchedule',
+    #'Remove-MerakiSwitchPortSchedule',
+    #'Set-MerakiSwitchPort',
+    'Get-MerakiSwitchQosRules',
+    'Get-MerakiSwitchQosRule',
+    #'Add-MerakiSwitchQosRule',
+    #'Set-MerakiSwitchQosRule',
+    #'Remove-MerakiSwitchQosRule',
+    'Get-MerakiSwitchQosRulesOrder',
+    #'Set-MerakiSwitchQosruleOrder',
+    #'Add-MerakiSwitchRoutingStaticRoute',
+    #'Set-MerakiSwitchRoutingStaticRoute',
+    #'Remove-MerakiSwitchStaticRoute',
+    #'New-MerakiSwitchStack'
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
@@ -147,8 +194,13 @@ AliasesToExport = @(`
     'StartMDevBlink','GMDev','GMOrgs','GMOrg','GMNets','GMOrgTemplates','GMOrgDevs','GMOrgAdmins', `
     'GMOrgCC','GMOrg3pVP','GMOrgInv','GMNet','GMNetDevs','GMNetEvents','GMNetET','GMNetAppCFCats', 'GMOrgInvDevices', `
     'GMNetCF','UMNetAppCF','GMAppPorts', 'GMNetAppRoutes', 'GMNetAppVLANs','GMNetAppVLAN', 'GMSwStackRoutInt', 'GMDevSwPort', `
-    'GMNetAppSSVpn','GMAppUpStat', 'GMSWRoutInts','GMSWRoutInt','GMSWRoutIntDHCP','GMSWRoutStatic','GMSwStRoutIntsDHCP','GMSwStRoutIntDHCP', 'RemoveMNetAppCfr',
-    'GMNetSWLag','GMNetSWStacks','GMDevSwPorts','RMSWPorts','GMSSIDs','GMSSID','GMWirelessStat','GMNetSWStRoutInts','GMSwStack','GMSwStRoutStatic','GMAVpnStats', 'AddMNetAppCFR'
+    'GMNetAppSSVpn','GMAppUpStat', 'GMSWRoutInts','GMSWRoutInt','GMSWRoutIntDHCP','GMSWRoutStatic','GMSwStRteIntsDHCP',
+    'GMSwStRoutIntDHCP', 'RemoveMNetAppCfr','GMNetSWLag','GMNetSWStacks','GMDevSwPorts','RMSWPorts','GMSSIDs','GMSSID',
+    'GMWirelessStat','GMNetSWStRoutInts','GMSwStack','GMSWStRoutStatic','GMAVpnStats', 'AddMNetAppCFR',
+    'GMNetClients','GMDevClients','GMNetAppDhcpSubnet','GMNetClientAppUsage', 'GMNetSecEvents','GMSWPortStatus',
+    'GMSWPortsPacketCntrs','GMOFirmwareUpgrades','SetMNAppVLAN', 'AddMSSRteInt','SetMNSSRteStRoute','New-MerakiNeworkSwitchStack',
+    'SetMSStkRteInt','GMSWStackRoutInt','RemoveMSStackRouteInt', 'GMNetCltBWUsage','RSWStkRteInt','Get-MerakiNetworkSwitchStack',
+    'UMSRteInt','SetMSRteIntDHCP','AddMSRouteInt', 'AMSSSwitch', 'UMNSSRteStRoute', 'UMSStkRteIntDhcp'
 )
 
 # DSC resources to export from this module
