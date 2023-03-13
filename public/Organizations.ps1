@@ -409,7 +409,7 @@ function Get-MerakiNetworks() {
         [string]$profileName,
         [string]$ConfigTeplateId,
         [switch]$IsBoundToConfigTemplate,
-        [switch]$IncludeTemplates,
+        [switch]$IncludeTemplates
     )
 
     if (-not $orgID) {
