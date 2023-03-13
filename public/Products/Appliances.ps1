@@ -787,6 +787,7 @@ function Set-MerakiNetworkApplianceSiteToSiteVpn() {
             }            
         )]
         [PSObject]$VpnSettings,
+        [ValidateSet('none', 'spoke', 'hub')]
         [string]$Mode,
         [ValidateScript(
             {
@@ -841,6 +842,61 @@ function Set-MerakiNetworkApplianceSiteToSiteVpn() {
     catch {
         throw $_
     }
+    <#
+    .SYNOPSIS
+    Update Network Site-to-Site VPN
+    .DESCRIPTION
+    Update the Meraki Network Site to Site VPN Settings.
+    .PARAMETER NetworkId
+    The ID of the to update
+    .PARAMETER VpnSettings
+    A Object containing the VPN Settings to apply. This parameter must be used without other parameters.
+    .PARAMETER Mode
+    The site-to-site VPN mode. Can be one of 'none', 'spoke' or 'hub'
+    .PARAMETER Hubs
+    The list of VPN hubs, in order of preference. In spoke mode, at least 1 hub is required.
+    Hub objects contain the following properties.
+    hubId:string (Required) - The network ID of the hub.
+
+    useDefaultRoute:boolean - Only valid in 'spoke' mode. Indicates whether default route traffic should be sent to this hub.
+    .PARAMETER Subnets
+    The list of subnets and their VPN presence.
+    Subnet object contain the following properties:
+    localSubnet:string (required) - The CIDR notation subnet used within the VPN
+    useVpn: boolean - Indicates the presence of the subnet in the VPN
+    .EXAMPLE
+    Updating an existing network configured as a spoke.
+    # The easiest way to do this is to get the current von settings in an object.
+    $VpnSettings = Get-MerakiNetworkApplianceSiteToSiteCpn -id N_1246598574
+    # Modify the settings in this object
+    # Set the 1st hub destination
+    $VpnSettings.hubs[0].hubId = N_5452659857
+    $VpnSettings.hubs[0].useDefaultRoute = $false
+    # Modify the 2nd hub destination
+    $VpnSettings.hubs[0].hubId = N_4585965254
+    $VpnSettings.hubs[0].useDefaultRoute = $false
+    # Modify the subnet settings if necessary
+    $VpnSettings.Subnets[0].localSubnet = 10.5.5.5/24
+    $VpnSettings.Subnets[0].useVpn = $true
+    # Update the VPN Settings
+    Set-MeraqkiNetworkApplianceSiteToSiteVpn -NetworkId N_1246598574 -VpnSettings $VpnSettings
+    .EXAMPLE
+    In this example we are going to convert a Hub (mess) network to a Spoke network
+    In this instance the subnet is already set as we want it so we will only change the mode and add in the remote hub networks.
+    
+    # Create an array of hubs object
+    $Hubs = @(
+        @{
+            hubId = "N_54265629254"
+            useDefaultRoute = $False
+        },
+        @{
+            hubId = "N_75485962345"
+            useDefaultroute = $false
+        }
+    )
+    Set-MerakiNetworkApplianceSiteToSiteVpn -NetworkId N_845926352 -Mode Spoke -Hubs $Hubs
+    #>
 }
 
 
