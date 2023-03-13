@@ -406,8 +406,12 @@ function Get-MerakiNetworks() {
                 }
             }
         )]
-        [string]$profileName
+        [string]$profileName,
+        [string]$ConfigTeplateId,
+        [switch]$IsBoundToConfigTemplate,
+        [switch]$IncludeTemplates,
     )
+
     if (-not $orgID) {
         $config = Read-Config
         if ($profileName) {
@@ -420,20 +424,52 @@ function Get-MerakiNetworks() {
         }
     }
     $Uri = "{0}/organizations/{1}/networks" -f $BaseURI, $orgID
+    if ($ConfigTeplateId){
+        $Uri = "$Uri?configTemplateId=" -f $ConfigTeplateId
+    }
+
+    If ($IsBoundToConfigTemplate.IsPresent) {
+        if ($Uri.Contains("?")) {
+            $Uri = "$Uri&isBoundToConfigTemplate=true"
+        } else {
+            $Uri = "$Uri?isBoundToConfigTemplate=true"
+        }
+    }
+
     $Headers = Get-Headers
-
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
-
-    return $response
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+        If ($IncludeTemplates.IsPresent) {
+            $templates = @{}
+            Get-MerakiOrganizationConfigTemplates | ForEach-Object {
+                $templates.Add($_.id, $_)
+            }
+            foreach ($network in $response) {
+                If ($Network.isBoundToConfigTemplate) {
+                    $template = $templates[$Network.configTemplateId]
+                    $response[$response.IndexOf($Network)] | Add-Member -MemberType NoteProperty -Name "configTemplate" -Value $template
+                }
+            }
+        } 
+        return $response
+    } catch {
+        throw $_
+    }
     <#
     .SYNOPSIS
     Get all Meraki Networks.
     .DESCRIPTION
     Get all Meraki networks in an organization.
-    .PARAMETER OrdID
+    .PARAMETER OrgID
     The Organization ID.
     .PARAMETER profileName
     The profile name to use to get networks.
+    .PARAMETER IncludeTemplates
+    Includes a configTemplate property containing the configuration template.
+    .PARAMETER ConfigTeplateId
+    Get all networks bound to this template Id.
+    .PARAMETER IsBoundToConfigTemplate
+    Get only networks bound to config templates.
     .OUTPUTS
     An array of Meraki network objects.
     #>
