@@ -407,7 +407,7 @@ function Get-MerakiNetworks() {
             }
         )]
         [string]$profileName,
-        [string]$ConfigTeplateId,
+        [string]$ConfigTemplateId,
         [switch]$IsBoundToConfigTemplate,
         [switch]$IncludeTemplates
     )
@@ -425,14 +425,14 @@ function Get-MerakiNetworks() {
     }
     $Uri = "{0}/organizations/{1}/networks" -f $BaseURI, $orgID
     if ($ConfigTeplateId){
-        $Uri = "$Uri?configTemplateId=" -f $ConfigTeplateId
+        $Uri = "{0}?configTemplateId=" -f $Uri, $ConfigTemplateId
     }
 
     If ($IsBoundToConfigTemplate.IsPresent) {
         if ($Uri.Contains("?")) {
-            $Uri = "$Uri&isBoundToConfigTemplate=true"
+            $Uri = "{0}&isBoundToConfigTemplate=true" -f $Uri
         } else {
-            $Uri = "$Uri?isBoundToConfigTemplate=true"
+            $Uri = "{0}?isBoundToConfigTemplate=true" -f $Uri
         }
     }
 
