@@ -1355,3 +1355,109 @@ function Get-MerakiOrganizationFirmwareUpgrades() {
 }
 
 Set-Alias -name GMOFirmwareUpgrades -Value Get-MerakiOrganizationFirmwareUpgrades
+
+
+function Get-MerakiOrganizationFormwareUpgradesByDevice() {
+    [CmdletBinding()]
+    Param(
+        [ValidateScript(
+            {
+                if ($profileName) {
+                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
+        [string]$OrgId,
+        [ValidateScript(
+            {
+                if ($OrgId) {
+                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
+        [string]$ProfileName,
+        [string[]]$NetworkIds,
+        [string[]]$Serials,
+        [string[]]$Macs,
+        [string[]]$FirmwareUpgradeIds,
+        [string[]]$FirmwareUpgradeBatchIds
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/organizations/{1}/firmware/upgrades/byDevice" -f $BaseURI, $OrgId
+
+    if ($NetworkIds) {
+        $Uri = "{0}?networkIds={1}" -f $Uri, ($NetworkIds -join ",")
+    }
+    
+    if ($Serials) {
+        if ($Uri.Contains("?")) {
+            $Uri = "{0}&" -f $Uri
+        } else {
+            $Uri = "{0}?" -f $Uri
+        }
+        $Uri = "{0}serials={1}" -f $Uri, ($serials -join ",")
+    }
+
+    if ($Macs) {
+        if ($Uri.Contains("?")) {
+            $Uri = "{0}&" -f $Uri
+        } else {
+            $Uri = "{0}?" -f $Uri
+        }
+        $Uri = "{0}macs={1}" -f $Uri, ($Macs -join ",")
+    }
+
+    if ($FirmwareUpgradeIds) {
+        if ($Uri.Contains("?")) {
+            $Uri = "{0}&" -f $Uri
+        } else {
+            $Uri = "{0}?" -f $Uri
+        }
+        $Uri = "{0}firmwareUpgradeIds={1}" -f $Uri, ($FirmwareUpgradeIds -join ",")
+    }
+
+    if ($FirmwareUpgradeBatchIds) {
+        if ($Uri.Contains("?")) {
+            $Uri = "{0}&" -f $Uri
+        } else {
+            $Uri = "{0}?" -f $Uri
+        }
+        $Uri = "{0}firmwareUpgradeBatchIds={1}" -f $Uri, ($FirmwareUpgradeBatchIds -join ",")
+    }
+
+    Try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+
+        return $response
+    } catch {
+        throw $_
+    }
+    <#
+    .SYNOPSIS
+    Get firmware upgrades by Device
+    .DESCRIPTION
+    Get Meraki organization firmware upgrades by device
+    .PARAMETER OrgId
+    The organization Id
+    .PARAMETER ProfileName
+    The saved profile name.
+    .PARAMETER NetworkIds
+    An array of netword Ids to retrieve upgrades for
+    .PARAMETER Serials
+    An array of serials to retrieve upgrades for
+    .PARAMETER Macs
+    An array of MAC Addresses to retrieve upgrades for
+    .PARAMETER FirmwareUpgradeIds
+    An array of Upgrade Ids ro retrieve upgrades for
+    .PARAMETER FirmwareUpgradeBatchIds
+    An array of Firmware Upgrade Batch Ids to retrieve upgrades for
+    .OUTPUTS
+    An array of firmware upgrade objects.
+    #>
+}
