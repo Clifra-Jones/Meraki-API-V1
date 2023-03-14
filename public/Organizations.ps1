@@ -1357,7 +1357,7 @@ function Get-MerakiOrganizationFirmwareUpgrades() {
 Set-Alias -name GMOFirmwareUpgrades -Value Get-MerakiOrganizationFirmwareUpgrades
 
 
-function Get-MerakiOrganizationFormwareUpgradesByDevice() {
+function Get-MerakiOrganizationFirmwareUpgradesByDevice() {
     [CmdletBinding()]
     Param(
         [ValidateScript(
