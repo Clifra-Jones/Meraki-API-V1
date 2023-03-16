@@ -1152,8 +1152,11 @@ function Set-MerakiOrganizationThirdPartyVpnPeer() {
     if ($IpsecPolicies) { $Peer[$Name].ipsecPolicies = $IpsecPolicies}
         
     $NewPeers = $Peers.Values
+    $_Body = @{
+        peers = $NewPeers
+    }
 
-    $Body = $NewPeers | ConvertTo-Json -Depth 5 -Compress
+    $Body = $_Body | ConvertTo-Json -Depth 5 -Compress
 
     try {
         $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $Body
@@ -1161,6 +1164,92 @@ function Set-MerakiOrganizationThirdPartyVpnPeer() {
         return $response
     } catch {
         throw $_
+    }
+}
+
+function New-MerakiOrganizationThirdPartyVpnPeer() {
+    [CmdletBinding(DefaultParameterSetName = 'none')]
+    Param(
+        [ValidateScript(
+            {
+                if ($profileName) {
+                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
+        [string]$OrgID,
+        [ValidateScript(
+            {
+                if ($OrgID) {
+                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
+        [string]$profileName,
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+        [Parameter(Mandatory = $true)]
+        [string]$Secret,
+        [ValidateSet('1', '2')]
+        [string]$IkeVerson,
+        [ValidateSet('default', 'aws', 'azure')]
+        [string]$IpsecPoliciesPreset,
+        [string]$LocalId,
+        [string]$PublicIp,
+        [Parameter(Mandatory = $true)]
+        [string[]]$PrivateSubnets,
+        [string]$RemoteId,
+        [string[]]$NetworkTags = 'all',
+        [PSObject]$IpsecPolicies
+    )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgId = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgId = $config.profiles.default
+        }
+    }
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/organizations/{1}/appliance/vpn/thirdPartyVPNPeers" -f $BaseURI, $OrgID
+
+    $Peers = Get-MerakiOrganizationThirdPartyVPNPeers
+
+    $Peer = @{
+        name = $Name
+        secret = $Secret
+        privateSubnet = $PrivateSubnets
+    }
+    if ($IkeVerson) { $Peer.Add("ikeVersion", $IkeVerson) }
+    if ($IpsecPoliciesPreset) { $Peer.Add("ipsecPoliciesPreset", $IpsecPoliciesPreset) }
+    if ($LocalId) { $Peer.Add("localId", $LocalId) }
+    if ($PublicIp) { $Peer.Add("publicIp", $PublicIp) }
+    if ($RemoteId) { $Peer.Add("networkTags", $NetworkTags) }
+    if ($IpsecPolicies) { $Peer.Add("ipsecPolicies", $IpsecPolicies) }
+
+    $Peers += $Peer
+    $_Body = @{
+        peers = $Peers
+    }
+
+    $Body = $_Body | ConvertTo-Json -Depth 5 -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $Body
+
+        return $response
+    } catch {
+        Throw $_
     }
 }
 
