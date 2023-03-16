@@ -86,7 +86,6 @@ FunctionsToExport = @(`
     'Get-MerakiOrganizationAdmins', 
     'Get-MerakiOrganizationConfigurationChanges',
     'Get-MerakiOrganizationThirdPartyVPNPeers',
-    'Set-MerakiOrganizationThirdPartyVpnPeer',
     'Get-MerakiNetwork', 
     'Get-MerakiNetworkDevices', 
     'Get-MerakiNetworkEvents', 
