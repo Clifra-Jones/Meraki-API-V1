@@ -1015,7 +1015,7 @@ function Get-MerakiOrganizationConfigurationChanges() {
 Set-Alias -name GMOrgCC -Value Get-MerakiOrganizationConfigurationChanges -Option ReadOnly
 
 
-function Get-MerakiOrganizationThirdPartyVPNPeers() {
+function Get-MerakiOrganizationThirdPartyVpnPeers() {
     [CmdletBinding(DefaultParameterSetName = 'none')]
     Param(
         [ValidateScript(
@@ -1055,9 +1055,13 @@ function Get-MerakiOrganizationThirdPartyVPNPeers() {
     $Uri = "{0}/organizations/{1}/appliance/vpn/thirdPartyVPNPeers" -f $BaseURI, $OrgID
     $Headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
-
-    return $response
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+    
+        return $response.peers 
+    } catch {
+        throw $_
+    }
     <#
     .SYNOPSIS
     Get Organization 3rd paty VPNs.
@@ -1072,6 +1076,93 @@ function Get-MerakiOrganizationThirdPartyVPNPeers() {
 
 Set-Alias -Name GMOrg3pVP -Value Get-MerakiOrganizationThirdPartyVPNPeers -Option ReadOnly
 
+function Set-MerakiOrganizationThirdPartyVpnPeer() {
+    [CmdletBinding(DefaultParameterSetName = 'none')]
+    Param(
+        [ValidateScript(
+            {
+                if ($profileName) {
+                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
+        [string]$OrgID,
+        [ValidateScript(
+            {
+                if ($OrgID) {
+                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
+                } else {
+                    $true
+                }
+            }
+        )]
+        [string]$profileName,
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+        [Parameter(Mandatory = $true)]
+        [string]$Secret,
+        [ValidateSet('1', '2')]
+        [string]$IkeVerson,
+        [ValidateSet('default', 'aws', 'azure')]
+        [string]$IpsecPoliciesPreset,
+        [string]$LocalId,
+        [string]$PublicIp,
+        [Parameter(Mandatory = $true)]
+        [string[]]$PrivateSubnets,
+        [string]$RemoteId,
+        [string[]]$NetworkTags = 'all',
+        [PSObject]$IpsecPolicies
+    )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgId = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgId = $config.profiles.default
+        }
+    }
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/organizations/{1}/appliance/vpn/thirdPartyVPNPeers" -f $BaseURI, $OrgID
+
+    $Peers = @{}
+    Get-MerakiOrganizationThirdPartyVpnPeers | ForEach-Object {
+        $Peers.Add($Name, $_)
+    }
+
+    if (-not $Peers[$Name]) {
+        throw "Peer $Name is not found!"
+    }
+
+    if ($IkeVerson) { $Peers[$Name].ikeVerson = $IkeVerson }
+    if ($IpsecPoliciesPreset) { $Peers[$Name].IpsecPoliciesPreset = $IpsecPoliciesPreset } 
+    if ($LocalId) { $Peers[$Name].localId = $LocalId }
+    if ($publicIp) { $Peers[$Name].publicIp = $PublicIp }
+    if ($RemoteId) { $Peers[$Name].remoteIp = $RemoteId }
+    if ($Secret) { $Peers[$Name].secret = $Secret}
+    if ($NetworkTags) { $Peer[$Name].networkTags = $NetworkTags }
+    if ($PrivateSubnets) { $Peers[$Name].privateSubnets = $PrivateSubnets }
+    if ($IpsecPolicies) { $Peer[$Name].ipsecPolicies = $IpsecPolicies}
+        
+    $NewPeers = $Peers.Values
+
+    $Body = $NewPeers | ConvertTo-Json -Depth 5 -Compress
+
+    try {
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $Body
+
+        return $response
+    } catch {
+        throw $_
+    }
+}
 
 function Get-MerakiOrganizationInventoryDevices() {
     [CmdletBinding(DefaultParameterSetName = 'none')]
@@ -1461,3 +1552,6 @@ function Get-MerakiOrganizationFirmwareUpgradesByDevice() {
     An array of firmware upgrade objects.
     #>
 }
+
+#region OrganizationThirdPartyVpnPeers
+
