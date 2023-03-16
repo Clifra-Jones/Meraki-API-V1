@@ -10,7 +10,7 @@ This module uses the Version 1 REST API.
 
 **The V0 module will still work but lacks many features found here**
 
-[**Module Reference**](https://clifra-jones.github.io/Meraki-API-V1/docs/referrence.html)
+[**Module Reference**](https://clifra-jones.github.io/Meraki-API-V1/docs/reference.html)
 
 [**Release notes**](https://clifra-jones.github.io/Meraki-API-V1/docs/releaseNotes.md)
 
@@ -98,6 +98,7 @@ Save this key in a safe place.
 Once you have your API key you need to obtain the Organization ID for the Organizations you have access to. You can do this with the Get-MerakiOrganizations function.
 
 Open Powershell
+
 ```powershell
 Import-Module Meraki-API
 Get-MerakiOrganizations -APIKey '{key string}'
