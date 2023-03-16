@@ -466,7 +466,7 @@ function Get-MerakiNetworks() {
     The profile name to use to get networks.
     .PARAMETER IncludeTemplates
     Includes a configTemplate property containing the configuration template.
-    .PARAMETER ConfigTeplateId
+    .PARAMETER ConfigTemplateId
     Get all networks bound to this template Id.
     .PARAMETER IsBoundToConfigTemplate
     Get only networks bound to config templates.
