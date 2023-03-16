@@ -1,5 +1,19 @@
 ## Release Notes
 
+### 03/16/2023
+
+Added the following functions
+Set-MerakiNetworkApplianceSiteToSiteVpn
+
+Added the following parameters to function Get-MerakiNetworks:
+
+- PARAMETER IncludeTemplates
+    Includes a configTemplate property containing the configuration template.
+- PARAMETER ConfigTemplateId
+    Get all networks bound to this template Id.
+- PARAMETER IsBoundToConfigTemplate
+    Get only networks bound to config templates.
+
 ### 11/10/2022
 
 ### Added the following functions
