@@ -5,6 +5,8 @@
 #
 # Generated on: 9/8/2020
 #
+# Copyright Balfour Beatty US
+#
 
 @{
 
@@ -96,7 +98,6 @@ FunctionsToExport = @(`
     'Get-MerakiNetworkApplianceStaticRoutes', 
     'Get-MerakiNetworkApplianceVLANS', 
     'Get-MerakiNetworkApplianceVLAN', 
-    'Get-MerakiNetworkApplianceSiteToSiteVPN', 
     'Get-MerakiApplianceUplinkStatuses', 
     'Get-MerakiDevice', 
     'Start-MerakiDeviceBlink', 
@@ -108,7 +109,7 @@ FunctionsToExport = @(`
     'Get-MerakiNetworkApplianceStaticRoutes', 
     'Get-MerakiNetworkApplianceVLANS', 
     'Get-MerakiNetworkApplianceVLAN', 
-    'Get-MerakiNetworkApplianceSiteToSiteVPN', 
+    'Get-MerakiNetworkApplianceSiteToSiteVpn', 
     'Set-MerakiNetworkApplianceSiteToSiteVpn',
     'Get-MerakiApplianceUplinkStatuses', 
     'Get-MerakiSwitchRoutingInterfaces',
