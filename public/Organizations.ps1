@@ -6,13 +6,8 @@ function Set-MerakiAPI() {
     Param(
         [string]$APIKey,
         [string]$OrgID,
-         [string]$ProfileName
+        [string]$ProfileName
     )
- 
-    if ($OrgID -and (-not $ProfileName)) {
-        Write-Host "The parameter ProfileName must be used with the OrdId parameter." -ForegroundColor Red
-        exit
-    }
     
     $configPath = "{0}/.meraki" -f $HOME
     $configFile = "{0}/config.json" -f $configPath
