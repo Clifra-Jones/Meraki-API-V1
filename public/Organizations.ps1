@@ -179,7 +179,7 @@ function Get-MerakiOrganization() {
 
     If ($OrgId -and $profileName) {
         Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
-        exit
+        return
     }
 
     if (-not $OrgID) {
@@ -280,7 +280,7 @@ function Set-MerakiOrganization() {
 
     If ($OrgId -and $profileName) {
         Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
-        exit
+        return
     }
 
     if (-not $orgID) {
@@ -361,7 +361,7 @@ function Get-MerakiNetworks() {
 
     If ($OrgId -and $profileName) {
         Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
-        exit
+        return
     }
 
     if (-not $orgID) {
@@ -446,7 +446,7 @@ function Add-MerakiNetwork() {
 
     If ($OrgId -and $profileName) {
         Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
-        exit
+        return
     }
 
     if (-not $orgID) {
@@ -520,7 +520,7 @@ function Merge-MerakiNetworks() {
 
     If ($OrgId -and $profileName) {
         Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
-        exit
+        return
     }
 
     if (-not $orgID) {
@@ -564,7 +564,7 @@ function Get-MerakiOrganizationConfigTemplates() {
 
     If ($OrgId -and $profileName) {
         Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
-        exit
+        return
     }
     
     if (-not $OrgID) {
@@ -612,7 +612,7 @@ function Get-MerakiOrganizationConfigTemplate () {
 
     If ($OrgId -and $profileName) {
         Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
-        exit
+        return
     }
 
     if (-not $OrgID) {
@@ -650,7 +650,7 @@ function Get-MerakiOrganizationDevices() {
 
     If ($OrgId -and $profileName) {
         Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
-        exit
+        return
     }
 
     If (-not $OrgID) {
@@ -696,7 +696,7 @@ function Get-MerakiOrganizationAdmins() {
 
     If ($OrgId -and $profileName) {
         Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
-        exit
+        return
     }
     
     If (-not $orgID) {
@@ -754,28 +754,28 @@ function Get-MerakiOrganizationConfigurationChanges() {
  
     If ($OrgId -and $profileName) {
         Write-Host "The parameters OrdId and ProfileName cannot be used together!" -ForegroundColor Red
-        exit
+        return
     }
 
     if ($Days) {
         if ($StartDate) {
             Write-Host "The Days parameter cannot be used with the StartDate parameter." -BackgroundColor Red
-            exit
+            return
         }
         if ($EndDate) {
             Write-Host "The Days parameter cannot be used with the EndDate parameter." -BackgroundColor Red
-            exit
+            return
         }
     }
 
     if ($StartDate -and (-not $EndDate)) {
         Write-Host "The EndDate Parameter is required with the StartDate Parameter." -BackgroundColor Red
-        exit
+        return
     }
 
     if ($endDate -and (-not $StartDate)) {
         Write-Host "The StartDate parameter is required with the EndDate parameter." -BackgroundColor Red
-        exit
+        return
     }
 
     If (-not $OrgID) {
@@ -871,7 +871,7 @@ function Get-MerakiOrganizationThirdPartyVpnPeers() {
 
     If ($OrgId -and $profileName) {
         Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
-        exit
+        return
     }
 
     if (-not $OrgID) {
@@ -934,7 +934,7 @@ function Set-MerakiOrganizationThirdPartyVpnPeer() {
 
     If ($OrgId -and $profileName) {
         Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
-        exit
+        return
     }
 
     if (-not $OrgID) {
@@ -1070,7 +1070,7 @@ function Get-MerakiOrganizationInventoryDevices() {
 
     If ($OrgId -and $profileName) {
         Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
-        exit
+        return
     }
 
     if (-not $OrgID) {
@@ -1121,28 +1121,28 @@ function Get-MerakiOrganizationSecurityEvents() {
 
     If ($OrgId -and $profileName) {
         Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
-        exit
+        return
     }
 
     if ($Days) {
         if ($StartDate) {
             Write-Host "The Days parameter cannot be used with the StartDate parameter." -BackgroundColor Red
-            exit
+            return
         }
         if ($EndDate) {
             Write-Host "The Days parameter cannot be used with the EndDate parameter." -BackgroundColor Red
-            exit
+            return
         }
     }
 
     if ($StartDate -and (-not $EndDate)) {
         Write-Host "The EndDate Parameter is required with the StartDate Parameter." -BackgroundColor Red
-        exit
+        return
     }
 
     if ($endDate -and (-not $StartDate)) {
         Write-Host "The StartDate parameter is required with the EndDate parameter." -BackgroundColor Red
-        exit
+        return
     }
 
     $Headers = Get-Headers
@@ -1231,7 +1231,7 @@ function Get-MerakiOrganizationFirmwareUpgrades() {
 
     If ($OrgId -and $profileName) {
         Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
-        exit
+        return
     }
 
     if (-not $OrgID) {
@@ -1304,7 +1304,7 @@ function Get-MerakiOrganizationFirmwareUpgradesByDevice() {
 
     If ($OrgId -and $profileName) {
         Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
-        exit
+        return
     }
 
     $Headers = Get-Headers
