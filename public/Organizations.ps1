@@ -387,30 +387,17 @@ function Set-MerakiOrganization() {
 function Get-MerakiNetworks() {
     [CmdletBinding(DefaultParameterSetName = 'none')]
     Param(
-        [ValidateScript(
-            {
-                if ($profileName) {
-                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [string]$OrgID,
-        [ValidateScript(
-            {
-                if ($OrgID) {
-                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [string]$profileName,
         [string]$ConfigTemplateId,
         [switch]$IsBoundToConfigTemplate,
         [switch]$IncludeTemplates
     )
+
+    If ($OrgId -and $profileName) {
+        Write-Host "Ther parameters OrdIf and ProfileName cannot be used together!" -ForegroundColor Red
+        exit
+    }
 
     if (-not $orgID) {
         $config = Read-Config
