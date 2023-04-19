@@ -6,17 +6,13 @@ function Set-MerakiAPI() {
     Param(
         [string]$APIKey,
         [string]$OrgID,
-        [ValidateScript(
-            {
-                if (-not $OrgId) {
-                    throw "The profileName parameter must be used with the OrgId parameter"
-                } else {
-                    $true
-                }
-            }
-        )]
-        [string]$profileName
+         [string]$ProfileName
     )
+ 
+    if ($OrgID -and (-not $ProfileName)) {
+        Write-Host "The parameter ProfileName must be used with the OrdId parameter." -ForegroundColor Red
+        exit
+    }
     
     $configPath = "{0}/.meraki" -f $HOME
     $configFile = "{0}/config.json" -f $configPath
@@ -182,27 +178,14 @@ Set-Alias -Name GMOrgs -Value Get-MerakiOrganizations -Option ReadOnly
 function Get-MerakiOrganization() {
     [CmdLetBinding(DefaultParameterSetName = 'none')]
     Param (
-        [ValidateScript(
-            {
-                if ($profileName) {
-                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [string]$OrgID,
-        [ValidateScript(
-            {
-                if ($OrgID) {
-                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [string]$profileName
     )
+
+    If ($OrgId -and $profileName) {
+        Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
+        exit
+    }
 
     if (-not $OrgID) {
         $config = Read-Config
@@ -291,25 +274,7 @@ function New-MerakiOrganization() {
 function Set-MerakiOrganization() {
     [CmdletBinding()]
     Param(
-        [ValidateScript(
-            {
-                if ($profileName) {
-                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [string]$OrgID,
-        [ValidateScript(
-            {
-                if ($OrgID) {
-                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [string]$profileName,
         [Parameter(Mandatory = $true)]
         [string]$Name,
@@ -317,7 +282,12 @@ function Set-MerakiOrganization() {
         [string]$ManagementValue,
         [switch]$ApiEnabled        
     )
-    
+
+    If ($OrgId -and $profileName) {
+        Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
+        exit
+    }
+
     if (-not $orgID) {
         $config = Read-Config
         if ($profileName) {
@@ -395,7 +365,7 @@ function Get-MerakiNetworks() {
     )
 
     If ($OrgId -and $profileName) {
-        Write-Host "Ther parameters OrdIf and ProfileName cannot be used together!" -ForegroundColor Red
+        Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
         exit
     }
 
@@ -474,28 +444,15 @@ function Add-MerakiNetwork() {
         [string]$TimeZone,
         [string]$Notes,
         [string[]]$Tags,
-        [string]$CopyFromNetworkId,
-        [ValidateScript(
-            {
-                if ($profileName) {
-                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
+        [string]$CopyFromNetworkId,        
         [string]$OrgID,
-        [ValidateScript(
-            {
-                if ($OrgID) {
-                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [string]$profileName
     )
+
+    If ($OrgId -and $profileName) {
+        Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
+        exit
+    }
 
     if (-not $orgID) {
         $config = Read-Config
@@ -557,25 +514,7 @@ function Add-MerakiNetwork() {
 function Merge-MerakiNetworks() {
     [CmdletBinding()]
     Param(
-        [ValidateScript(
-            {
-                if ($profileName) {
-                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [string]$OrgID,
-        [ValidateScript(
-            {
-                if ($OrgID) {
-                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [string]$profileName,
         [Parameter(Mandatory = $true)]
         [string]$Name,
@@ -583,6 +522,11 @@ function Merge-MerakiNetworks() {
         [string[]]$NetworkIds,
         [string]$EnrollmentString
     )
+
+    If ($OrgId -and $profileName) {
+        Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
+        exit
+    }
 
     if (-not $orgID) {
         $config = Read-Config
@@ -619,28 +563,15 @@ function Merge-MerakiNetworks() {
 function Get-MerakiOrganizationConfigTemplates() {
     [CmdletBinding(DefaultParameterSetName = 'none')]
     Param(
-        [ValidateScript(
-            {
-                if ($profileName) {
-                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [string]$OrgID,
-        [ValidateScript(
-            {
-                if ($OrgID) {
-                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [string]$profileName
     )
 
+    If ($OrgId -and $profileName) {
+        Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
+        exit
+    }
+    
     if (-not $OrgID) {
         $config = Read-Config
         if ($profileName) {
@@ -680,27 +611,14 @@ function Get-MerakiOrganizationConfigTemplate () {
     Param(
         [Parameter(Mandatory = $true)]
         [string]$TemplateId,
-        [ValidateScript(
-            {
-                if ($profileName) {
-                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [string]$OrgID,
-        [ValidateScript(
-            {
-                if ($OrgID) {
-                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [string]$profileName
     )
+
+    If ($OrgId -and $profileName) {
+        Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
+        exit
+    }
 
     if (-not $OrgID) {
         $config = Read-Config
@@ -731,27 +649,14 @@ function Get-MerakiOrganizationConfigTemplate () {
 function Get-MerakiOrganizationDevices() {
     [CmdletBinding(DefaultParameterSetName = 'none')]
     Param(
-        [ValidateScript(
-            {
-                if ($profileName) {
-                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [string]$OrgID,
-        [ValidateScript(
-            {
-                if ($OrgID) {
-                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [string]$profileName
     )
+
+    If ($OrgId -and $profileName) {
+        Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
+        exit
+    }
 
     If (-not $OrgID) {
         $config = Read-Config
@@ -790,28 +695,15 @@ Set-Alias GMOrgDevs -Value Get-MerakiOrganizationDevices -Option ReadOnly
 function Get-MerakiOrganizationAdmins() {
     [CmdletBinding(DefaultParameterSetName = 'none')]
     Param(
-        [ValidateScript(
-            {
-                if ($profileName) {
-                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [string]$OrgID,
-        [ValidateScript(
-            {
-                if ($OrgID) {
-                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [string]$profileName
     )
 
+    If ($OrgId -and $profileName) {
+        Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
+        exit
+    }
+    
     If (-not $orgID) {
         $config = Read-Config
         if ($profileName) {
@@ -848,67 +740,14 @@ Set-Alias -name GMOrgAdmins -Value Get-MerakiOrganizationAdmins -Option ReadOnly
 function Get-MerakiOrganizationConfigurationChanges() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(                
-        [ValidateScript(
-            {
-                if ($profileName) {
-                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [string]$OrgID,
-        [ValidateScript(
-            {
-                if ($OrgID) {
-                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
-        [string]$profileName,
-        [ValidateScript(
-            {
-                if ($Days) {
-                    throw "The StartDate parameter cannot be used with the Days Parameter."
-                } else {
-                    $true
-                }
-                if (-not $EndDate) {
-                    throw "The StartDate parameter must be used with the EndDate parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
+        [string]$profileName,        
         [ValidateScript({$_ -is [DateTime]})]
         [Alias('StartTime')]
         [datetime]$StartDate,
-        [ValidateScript(
-            {
-                if ($Days) {
-                    throw "The EndDate parameter cannot be used with the Days parameter."
-                } else {
-                    $true
-                }
-                if (-not $StartDate) {
-                    throw "The EndDate parameter must be used with the StartDate parameter."
-                }
-            }
-        )]
         [ValidateScript({$_ -is [DateTime]})]
         [Alias('EndTime')]
         [DateTime]$EndDate,        
-        [ValidateScript(
-            {
-                if ($StartDate -or $EndDate) {
-                    throw "The Days parameter cannot be used witht he StartDate or EndDate parameters."
-                } else {
-                    $true
-                }
-            }
-        )]
         [ValidateScript({$_ -is [int32]})]
         [Alias('TimeSpan')]
         [Int]$Days,
@@ -917,7 +756,33 @@ function Get-MerakiOrganizationConfigurationChanges() {
         [string]$NetworkID,
         [string]$AdminID
     )
-    
+ 
+    If ($OrgId -and $profileName) {
+        Write-Host "The parameters OrdId and ProfileName cannot be used together!" -ForegroundColor Red
+        exit
+    }
+
+    if ($Days) {
+        if ($StartDate) {
+            Write-Host "The Days parameter cannot be used with the StartDate parameter." -BackgroundColor Red
+            exit
+        }
+        if ($EndDate) {
+            Write-Host "The Days parameter cannot be used with the EndDate parameter." -BackgroundColor Red
+            exit
+        }
+    }
+
+    if ($StartDate -and (-not $EndDate)) {
+        Write-Host "The EndDate Parameter is required with the StartDate Parameter." -BackgroundColor Red
+        exit
+    }
+
+    if ($endDate -and (-not $StartDate)) {
+        Write-Host "The StartDate parameter is required with the EndDate parameter." -BackgroundColor Red
+        exit
+    }
+
     If (-not $OrgID) {
         $config = Read-Config
         if ($profileName) {
@@ -1005,27 +870,14 @@ Set-Alias -name GMOrgCC -Value Get-MerakiOrganizationConfigurationChanges -Optio
 function Get-MerakiOrganizationThirdPartyVpnPeers() {
     [CmdletBinding(DefaultParameterSetName = 'none')]
     Param(
-        [ValidateScript(
-            {
-                if ($profileName) {
-                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [string]$OrgID,
-        [ValidateScript(
-            {
-                if ($OrgID) {
-                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [string]$profileName
     )
+
+    If ($OrgId -and $profileName) {
+        Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
+        exit
+    }
 
     if (-not $OrgID) {
         $config = Read-Config
@@ -1066,25 +918,7 @@ Set-Alias -Name GMOrg3pVP -Value Get-MerakiOrganizationThirdPartyVPNPeers -Optio
 function Set-MerakiOrganizationThirdPartyVpnPeer() {
     [CmdletBinding(DefaultParameterSetName = 'none')]
     Param(
-        [ValidateScript(
-            {
-                if ($profileName) {
-                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [string]$OrgID,
-        [ValidateScript(
-            {
-                if ($OrgID) {
-                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [string]$profileName,
         [Parameter(Mandatory = $true)]
         [string]$Name,
@@ -1102,6 +936,11 @@ function Set-MerakiOrganizationThirdPartyVpnPeer() {
         [string[]]$NetworkTags = 'all',
         [PSObject]$IpsecPolicies
     )
+
+    If ($OrgId -and $profileName) {
+        Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
+        exit
+    }
 
     if (-not $OrgID) {
         $config = Read-Config
@@ -1157,25 +996,7 @@ function Set-MerakiOrganizationThirdPartyVpnPeer() {
 function New-MerakiOrganizationThirdPartyVpnPeer() {
     [CmdletBinding(DefaultParameterSetName = 'none')]
     Param(
-        [ValidateScript(
-            {
-                if ($profileName) {
-                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [string]$OrgID,
-        [ValidateScript(
-            {
-                if ($OrgID) {
-                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [string]$profileName,
         [Parameter(Mandatory = $true)]
         [string]$Name,
@@ -1193,6 +1014,11 @@ function New-MerakiOrganizationThirdPartyVpnPeer() {
         [string[]]$NetworkTags = 'all',
         [PSObject]$IpsecPolicies
     )
+
+    If ($OrgId -and $profileName) {
+        Write-Host "The parameters OrdIf and ProfileName cannot be used together!" -ForegroundColor Red
+        exit
+    }
 
     if (-not $OrgID) {
         $config = Read-Config
@@ -1243,27 +1069,14 @@ function New-MerakiOrganizationThirdPartyVpnPeer() {
 function Get-MerakiOrganizationInventoryDevices() {
     [CmdletBinding(DefaultParameterSetName = 'none')]
     Param(
-        [ValidateScript(
-            {
-                if ($profileName) {
-                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [string]$OrgID,
-        [ValidateScript(
-            {
-                if ($OrgID) {
-                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [string]$profileName
     )
+
+    If ($OrgId -and $profileName) {
+        Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
+        exit
+    }
 
     if (-not $OrgID) {
         $config = Read-Config
@@ -1300,71 +1113,42 @@ Set-Alias -Name GMOrgInvDevices -value Get-MerakiOrganizationInventoryDevices -O
 function Get-MerakiOrganizationSecurityEvents() {
     [CmdLetBinding(DefaultParameterSetName='Default')]
     Param(
-        [ValidateScript(
-            {
-                if ($profileName) {
-                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [string]$OrgId,
-        [ValidateScript(
-            {
-                if ($OrgId) {
-                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [string]$ProfileName,
-        [ValidateScript(
-            {
-                if ($Days) {
-                    throw "The StartDate parameter cannot be used with the Days parameter."
-                } else {
-                    $true
-                }
-                if (-not $EndDate) {
-                    throw "The EndDate parameter must be sup0lied with the StartDate parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [ValidateScript({$_ -is [datetime]})]
         [datetime]$StartDate,
-        [ValidateScript(
-            {
-                if ($Days) {
-                    throw "The EndDate parameter cannot be used with the Days parameter."
-                } else {
-                    $true
-                }
-                if (-not $StartDate) {
-                    throw "The EndDate parameter must be supplied with with the StartDate parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [ValidateScript({$_ -is [datetime]})]
         [datetime]$EndDate,
-        [ValidateScript(
-            {
-                if ($StartDate -or $EndDate) {
-                    throw "The Days parameter cannot be used with the StartDate or EndDate parameter"
-                } else {
-                    $true
-                }
-            }
-        )]
         [int]$Days,
         [ValidateRange(3, 1000)]
         [int]$PerPage
     )
+
+    If ($OrgId -and $profileName) {
+        Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
+        exit
+    }
+
+    if ($Days) {
+        if ($StartDate) {
+            Write-Host "The Days parameter cannot be used with the StartDate parameter." -BackgroundColor Red
+            exit
+        }
+        if ($EndDate) {
+            Write-Host "The Days parameter cannot be used with the EndDate parameter." -BackgroundColor Red
+            exit
+        }
+    }
+
+    if ($StartDate -and (-not $EndDate)) {
+        Write-Host "The EndDate Parameter is required with the StartDate Parameter." -BackgroundColor Red
+        exit
+    }
+
+    if ($endDate -and (-not $StartDate)) {
+        Write-Host "The StartDate parameter is required with the EndDate parameter." -BackgroundColor Red
+        exit
+    }
 
     $Headers = Get-Headers
     if (-not $OrgID) {
@@ -1444,29 +1228,16 @@ Set-Alias -Name GMNetSecEvents -Value Get-MerakiOrganizationSecurityEvents
 function Get-MerakiOrganizationFirmwareUpgrades() {
     [CmdletBinding()]
     Param(
-        [ValidateScript(
-            {
-                if ($profileName) {
-                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [string]$OrgId,
-        [ValidateScript(
-            {
-                if ($OrgId) {
-                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [string]$ProfileName,
         [string]$Status,
         [string]$ProductType
     )
+
+    If ($OrgId -and $profileName) {
+        Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
+        exit
+    }
 
     if (-not $OrgID) {
         $config = Read-Config
@@ -1527,25 +1298,7 @@ Set-Alias -name GMOFirmwareUpgrades -Value Get-MerakiOrganizationFirmwareUpgrade
 function Get-MerakiOrganizationFirmwareUpgradesByDevice() {
     [CmdletBinding()]
     Param(
-        [ValidateScript(
-            {
-                if ($profileName) {
-                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [string]$OrgId,
-        [ValidateScript(
-            {
-                if ($OrgId) {
-                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
         [string]$ProfileName,
         [string[]]$NetworkIds,
         [string[]]$Serials,
@@ -1553,6 +1306,11 @@ function Get-MerakiOrganizationFirmwareUpgradesByDevice() {
         [string[]]$FirmwareUpgradeIds,
         [string[]]$FirmwareUpgradeBatchIds
     )
+
+    If ($OrgId -and $profileName) {
+        Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
+        exit
+    }
 
     $Headers = Get-Headers
 
