@@ -146,6 +146,11 @@ function Update-MerakiNetworkApplianceContentFiltering() {
         [psObject]$ContentFilteringRules
     )
 
+    If ($ContentFilteringRules) {
+        if ($allowedURLPatterns) {
+            Write-Host "The Parameter AlloweeUrlPatterns cannot be used with"
+        }
+    }
 
     $Uri = "{0}/networks/{1}/appliance/contentFiltering" -f $BaseURI, $id
     $Headers = Get-Headers
@@ -566,25 +571,12 @@ function Set-MerakiNetworkApplianceVLAN() {
         [string]$TranslateVPNSubnet,
         [string]$CIDR,
         [string]$Mask,
-        [ValidateScript(
-            {
-                if ($_ -isnot [hashtable]) {
-                    Throw "fixedIpAssignments must be a hashtable"
-                }
-            }
-        )]
+        [ValidateScript({$_ -is [hashtable]})]
         [hashtable]$fixedIpAssignments,
         [hashtable[]]$ReservedIpRanges,
         [string]$DnsNameServers,
         [ValidateSet("Run a DHCP Server","Relay DHCP to another Server","Do not respond to DHCP requests")]
         [string]$DhcpHandling,
-        [ValidateScript(
-            {
-                If ($DhcpHandling -ne "Relay DHCP to another Server") {
-                    Throw "Parameter DhcpRelayServers is not valid with DhcpHandling = $DhcpHandling"
-                }
-            }
-        )]
         [string[]]$DhcpRelayServerIPs,
         [ValidateSet(
             '30 minutes', '1 hour', '4 hours', '12 hours', '1 day', '1 week'
@@ -598,6 +590,11 @@ function Set-MerakiNetworkApplianceVLAN() {
         [bool]$MandatoryDhcp,
         [string]$VpnNatSubnet
     )
+
+    if ($DhcpRelayServerIPs -and ($DhcpHandling -ne "Relay DHCP to another Server")) {
+        Write-Host Throw "Parameter DhcpRelayServers is not valid with DhcpHandling = 'Relay DHCP to another Server'" -ForegroundColor Red
+        return
+    }
     
     $Headers = Get-Headers
 
@@ -775,30 +772,15 @@ function Set-MerakiNetworkApplianceSiteToSiteVpn() {
     Param(
         [Parameter(Mandatory = $true)]        
         [string]$NetworkId,
-        [ValidateScript(
-            {
-                if ($_) {
-                    if (($null -ne $Mode) -or ($null -ne $Hubs) -or ($null -ne $Subnets)) {
-                        Throw "Parameter VpnSetting must be used without other parameters except Networkid"
-                    } else {
-                        $true
-                    }
-                }
-            }            
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
         )]
-        [PSObject]$VpnSettings,
         [ValidateSet('none', 'spoke', 'hub')]
         [string]$Mode,
-        [ValidateScript(
-            {
-                if ( (-not $_) -and $mode -eq 'spoke') {
-                    throw "Parameter Hubs is required if Parameter Mode is set to 'spoke'"
-                } else {
-                    $true
-                }
-            }
-        )]
+        [Parameter(ValueFromPipelineByPropertyName)]
         [psobject[]]$Hubs,
+        [Parameter(ValueFromPipelineByPropertyName)]
         [psobject[]]$Subnets
     )
 
@@ -915,6 +897,7 @@ function Get-MerakiApplianceUplinkStatuses() {
         [String]$serial="*",
         [string]$profileName
     )
+
     $config = Read-Config
     if ($profileName) {
         $OrgID = $config.profiles.$profileName
