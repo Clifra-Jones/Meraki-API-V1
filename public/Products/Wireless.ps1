@@ -87,42 +87,20 @@ function Get-MerakiWirelessStatus() {
 Set-Alias -Name GMWirelessStat -Value Get-MerakiWirelessStatus
 
 function Get-NetworkWirelessClientConnectionStatus() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
             ValueFromPipelineByPropertyName = $true
         )]
         [string]$Id,
-        [ValidateScript(
-            {
-                if ($Days) {
-                    throw "The StartDate parameter cannot be used with the Days parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
+        [Parameter(ParameterSetName = 'dates')]
         [ValidateScript({$_ -is [datetime]})]
         [datetime]$StartDate,
-        [ValidateScript(
-            {
-                if ($Days) {
-                    throw "The EndDate parameter cannot be used with the Days parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
+        [Parameter(ParameterSetName = 'dates')]
         [ValidateScript({$_ -is [datetime]})]
         [DateTime]$EndDate,
-        [ValidateScript(
-            {
-                if ($StartDate -or $EndDate) {
-                    Throw "The Days parameter cannot be used with the StartDate pr EndDate parameters."
-                }
-            }
-        )]
+        [Parameter(ParameterSetName = 'days')]
         [ValidateScript({$_ -is [int]})]
         [int]$Days,
         [ValidateSet('2.5','5','6')]

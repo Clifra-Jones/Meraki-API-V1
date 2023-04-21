@@ -104,6 +104,7 @@ function Add-MerakiSwitchStackRoutingInterface() {
         [string]$InterfaceIp,
         [string]$DefaultGateway,
         [string]$Ipv6Address,
+        [ValidateScript({$_ -eq 'static' -and ($Ipv6Address)}, ErrorMessage = "Parameter Ipv6Assignment must be 'static' if Parameter Ipv6Address is specified.")]
         [string]$Ipv6AssignmentMode,
         [string]$Ipv6Gateway,
         [string]$Ipv6Prefix,
@@ -115,37 +116,7 @@ function Add-MerakiSwitchStackRoutingInterface() {
         [int]$OspfV3Cost,
         [string]$OspfV3Area,
         [switch]$OspfV3IsPassiveEnabled
-    )
-
-    if ($Ipv6Address) {
-        if ((-not $Ipv6AssignmentMode) -or (-not $Ipv6Gateway) -or (-not $Ipv6Prefix) ) {
-            Write-Host "All Ipv6 parameters must be specified." -ForegroundColor Red
-            return
-        }
-
-    }
-
-    if (-not ($OspfCost -and $OspfArea)) {
-        Write-Host "Parameter OspfCost and parameter OspfArea must be use together."
-        return
-    }
-
-    if ($OspfIsPassiveEnabled.IsPresent -and (-not ($OspfCost -and $OspfArea))) {
-        Write-Host "Parameter OspfIsPassiveEnabled can only be present when parameters OspfCost and OspfArea are used." -ForegroundColor Red
-        return
-    }
-
-    if (-not ($OspfV3Cost -and $OspfV3Area)) {
-        Write-Host "Parameter OspfV3Cost and parameter OspfV3Area must be use together."
-        return
-    }
-
-    if ($OspfIsV3PassiveEnabled.IsPresent -and (-not ($OspfCost -and $OspfArea))) {
-        Write-Host "Parameter OspfV3IsPassiveEnabled can only be present when parameters OspfV3Cost and OspfV3Area are used." -ForegroundColor Red
-        return
-    }
-
-    
+    )  
 
     $Headers = Get-Headers
 
@@ -244,6 +215,7 @@ function Set-MerakiSwitchStackRoutingInterface() {
         [string]$InterfaceIp,
         [string]$DefaultGateway,
         [string]$Ipv6Address,
+        [ValidateScript({$_ -eq "static -and ($ipv6Address)"}, ErrorMessage = "Parameter Ipv6Assignment mode must be static if parameter Ipv6Address is specified.")]
         [string]$Ipv6AssignmentMode,
         [string]$Ipv6Gateway,
         [string]$Ipv6Prefix,
@@ -256,30 +228,6 @@ function Set-MerakiSwitchStackRoutingInterface() {
         [string]$OspfV3Area,
         [bool]$OspfV3IsPassiveEnabled
     )
-
-    if (-not ($Ipv6Address -and $Ipv6AssignmentMode -and $Ipv6Gateway -and $Ipv6Prefix)) {
-        Write-Host "All Ipv6 parameters must be soecified." -ForegroundColor Red
-        return
-    }
-
-    if (-not ($OspfCost -and $OspfArea)) {
-        Write-Host "Parameters OspfCost and OspfArea must be used together"
-    }
-
-    if ($OspfIsPassiveEnabled.IsPresent -and (-not ($OspfCost -and $OspfArea))) {
-        Write-Host "Parameters OspfCost and OspfArea must be specified if parameter OspfIsPassivEnabled is present." -ForegroundColor Red
-        return
-    }
-
-    if (-not ($OspfV3Cost -and $OspfV3Area)) {
-        Write-Host "Parameters OspfV3Cost and OspfV3Area must be used together"
-    }
-
-    if ($OspfV3IsPassiveEnabled.IsPresent -and (-not ($OspfV3Cost -and $OspfV3Area))) {
-        Write-Host "Parameters OspfV3Cost and OspfV3Area must be specified if parameter OspfV3IsPassivEnabled is present." -ForegroundColor Red
-        return
-    }    
-
 
     $Headers = Get-Headers
 
@@ -725,7 +673,7 @@ function Get-MerakiSwitchRoutingInterface() {
 Set-Alias -Name GMSWRoutInt -Value Get-MerakiSwitchRoutingInterface -Option ReadOnly
 
 function Add-MerakiSwitchRoutingInterface() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$Serial,
@@ -741,6 +689,7 @@ function Add-MerakiSwitchRoutingInterface() {
         [string]$MulticastRouting,
         [string]$Ipv6Address,
         [ValidateSet('eui-64','static')]
+        [ValidateScript({$_ -eq 'static' -and $Ipv6Address}, ErrorMessage = "Ipv6Address cannot be specified with Ipv6Assignment mode 'eui-64'")]
         [string]$Ipv6AssignmentMode,
         [string]$Ipv6Gateway,
         [string]$Ipv6Prefix,
@@ -751,31 +700,6 @@ function Add-MerakiSwitchRoutingInterface() {
         [string]$OspfV3Area,
         [switch]$OspfV3IsPassive
     )
-
-    if ($Ipv6Address) {
-        if ($Ipv6AssignmentMode -eq 'uei-64') {
-            Write-Host "Static Ipv6 address cannot be used with AssignmentMode eui-64" -ForegroundColor Red
-            return
-        }
-    }
-
-    if ($OspfCost -and (-not $OspfArea)) {
-        Write-Host "The parameter OspfArea must be used with parameter OspfCost" -ForegroundColor Red
-        return
-    }
-
-    if ($OspfArea -and (-not $OspfCost)) {
-        Write-Host "Parameter OspfCost must be used with OspfArea" -ForegroundColor Red
-        return
-    }
-
-    if ($OspfV3Cost -and (-not $OspfV3Area)) {
-        Write-Host "Parameter OspfV3Area must be used with parameter OspfV3Cost" -ForegroundColor Red
-    }
-
-    if ($OspfV3Area -and (-not $OspfV3Cost)) {
-        Write-Host "Parameter OspfV3Cost must be used with OspfV3Area. If no area is used specify 'disabled'"
-    }
 
     $Headers = Get-Headers
 
@@ -800,6 +724,7 @@ function Add-MerakiSwitchRoutingInterface() {
         })
     }
     if ($OspfV3Cost) {
+        if (-not $OspfArea) {$OspfArea = 'disabled'}
         $_Body.Add("ospfSettings", @{
             "area" = $OspfArea
             "cost" = $OspfCost
@@ -807,6 +732,7 @@ function Add-MerakiSwitchRoutingInterface() {
         })
     }
     if ($OspfV3Cost) {
+        if (-not $OspfV3Area) {$OspfV3Area = 'disabled'}
         $_Body.Add("ospfV3", @{
             "area" = $OspfV3Area
             "cost" = $OspfV3Cost
@@ -888,6 +814,7 @@ function Set-MerakiSwitchRoutingInterface() {
         [string]$MulticastRouting,
         [string]$Ipv6Address,
         [ValidateSet('eui-64','static')]
+        [ValidateScript({$_ -eq 'static' -and ($Ipv5Address)}, ErrorMessage = "Parameter Ipv6Assignment must be 'static' if parameter Ipv6Address is specified")]
         [string]$Ipv6AssignmentMode,
         [string]$Ipv6Gateway,
         [string]$Ipv6Prefix,
@@ -900,21 +827,6 @@ function Set-MerakiSwitchRoutingInterface() {
         [string]$OspfV3Area,
         [switch]$OspfV3IsPassive        
     )
-
-    if ($Ipv6Address -and ($Ipv6AssignmentMode -eq 'eui-64')) {
-        Write-Host "Static Ipv6 address cannot be used with AssignmentMode eui-64" -ForegroundColor Red
-        return
-    }
-
-    if (-not ($OspfCost -and $OspfArea)) {
-        Write-Host "Parameterw OspfCost and OspfArea must be used together." -ForegroundColor Red
-        return
-    }
-
-    if (-not ($Ospfv3Cost -and $Ospfv3Area)) {
-        Write-Host "Parameterw OspfV3Cost and OspfV3Area must be used together." -ForegroundColor Red
-        return
-    }
 
     $Headers = Get-Headers
 
@@ -1080,7 +992,7 @@ function Get-MerakiSwitchRoutingInterfaceDHCP() {
 Set-Alias GMSWRoutIntDHCP -value Get-MerakiSwitchRoutingInterfaceDHCP -option ReadOnly
 
 function Set-MerakiSwitchRoutingInterfaceDhcp() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$Serial,
@@ -1088,28 +1000,23 @@ function Set-MerakiSwitchRoutingInterfaceDhcp() {
         [string]$InterfaceId,
         [ValidateSet('dhcpDisabled', 'dhcpRelay', 'dhcpServer')]
         [string]$DhcpMode,
+        [ValidateScript({$_ -and $DhcpMode -eq 'dhcpRelay'}, ErrorMessage = "Parameter DhcpRelayServerIps is only valid with DhcpMode 'dhcpRelay'")]
         [string[]]$DhcpRelayServerIps,
         [ValidateSet('30 minutes', '1 hour', '4 hours', '12 hours', '1 day', '1 week')]
         [string]$DhcpLeaseTime,
         [ValidateSet('googlePublicDns', 'openDns', 'custom')]
         [string]$DnsNameServerOptions,
         [string[]]$DnsCustomNameServers,
+        [Parameter(ParameterSetName = 'boot')]
         [switch]$BootOptionsEnabled,
+        [Parameter(ParameterSetName = 'boot')]
         [string]$BootNextServer,
+        [Parameter(ParameterSetName = 'boot')]
         [string]$BootFileName,
         [hashtable[]]$DhcpOptions,
         [hashtable[]]$ReservedIpRanges,
         [hashtable[]]$FixedIpRanges
     )
-
-    if ($DhcpRelayServerIps -and ($DhcpMode -ne "dhcpRelay")) {
-        Write-Host "Parameter DhcpRelayServerIps is only valid with DhcpMode 'dhcpRelay'" -ForegroundColor Red
-        return
-    }
-
-    if (-not ($BootOptionsEnabled -and $BootNextServer -and $BootFileName)) {
-        Write-Host "Parameters BootOptionsEnabled, BootNextServer and VootFileName must be used together" -ForegroundColor Red
-    }
 
     $Headers = Get-Headers
 
@@ -2621,6 +2528,7 @@ function Add-MerakiSwitchQosRule() {
 }
 
 function Set-MerakiSwitchQosRule() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
@@ -2629,40 +2537,16 @@ function Set-MerakiSwitchQosRule() {
         [int]$Vlan,
         [ValidateSet("ANY", "TCP", "UDP")]
         [string]$Protocol = "ANY",
-        [ValidateScript(
-            {
-                if ($_ -and ($Protocol -ne "ANY") ) {
-                    throw "Parameter SourcePort cannot be use when parameter Protocol is 'ANY'."
-                }
-            }
-        )]        
+        [ValidateScript({$_ -and (Protocol -ne 'ANY')}, ErrorMessage = "Protocol Must not be 'ANY'")]        
         [Alias('srcPort')]
         [int]$SourcePort,
-        [ValidateScript(
-            {
-                if ($_ -and ($Protocol -ne "ANY") ) {
-                    throw "Parameter SourcePortRange cannot be use when parameter Protocol is 'ANY'."
-                }
-            }
-        )]        
+        [ValidateScript({$_ -and (Protocol -ne 'ANY')}, ErrorMessage = "Protocol Must not be 'ANY'")]        
         [Alias('srcPortRange')]
         [string]$SourcePortRange,        
-        [ValidateScript(
-            {
-                if ($_ -and ($Protocol -ne "ANY") ) {
-                    throw "Parameter DestinationPort cannot be use when parameter Protocol is 'ANY'."
-                }
-            }
-        )]        
+        [ValidateScript({$_ -and (Protocol -ne 'ANY')}, ErrorMessage = "Protocol Must not be 'ANY'")]        
         [Alias('dstPort')]        
         [int]$DestinationPort,
-        [ValidateScript(
-            {
-                if ($_ -and ($Protocol -ne "ANY") ) {
-                    throw "Parameter DestinationPortRange cannot be use when parameter Protocol is 'ANY'."
-                }
-            }
-        )]        
+        [ValidateScript({$_ -and (Protocol -ne 'ANY')}, ErrorMessage = "Protocol Must not be 'ANY'")]
         [Alias('dstPortRange')]
         [string]$DestinationPortRange,
         [ValidateRange(-1,0)]
@@ -2933,6 +2817,7 @@ function Get-MerakiSwitchAccessPolicy() {
 }
 
 function Add-MerakiSwitchAccessPolicy() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
@@ -2949,7 +2834,9 @@ function Add-MerakiSwitchAccessPolicy() {
         [string]$AccessPolicyType,
         [ValidateSet('','11')]
         [String]$RadiusGroupAttribute = '',
+        [ValidateScript({$_.isPresent -and $AccessPolicyType -eq 'Hybrid Authentication'}, ErrorMessage = "AccessPolicyType must equal 'Hybrid Authentication'")]
         [switch]$IncreaseAccessSpeed,
+        [Parameter(ParameterSetName = 'RadiusAccounting')]
         [switch]$RadiusAccountingEnabled,
         [switch]$RadiusCoaSupportEnabled,
         [switch]$RadiusTestingEnabled,
@@ -2958,6 +2845,7 @@ function Add-MerakiSwitchAccessPolicy() {
         [string[]]$UrlRedirectWalledGardenRanges,
         [string]$Dot1xControlDirection,
         [PSObject]$Radius,
+        [Parameter(ParameterSetName = 'RadiusAccounting')]
         [PSObject[]]$RadiusAccountingServers
     )
 
@@ -2967,7 +2855,7 @@ function Add-MerakiSwitchAccessPolicy() {
     }
     
     if ($RadiusCoaSupportEnabled.IsPresent -and (-not $RadiusAccountingServers)) {
-        Write-Host "Parameter RadiusAccountingServers must be used if parameter RadiusAccounting Enabled is present." -ForegroundColor Red
+        Write-Host "Parameter RadiusAccountingServers must be used if parameter RadiusAccountingEnabled is present." -ForegroundColor Red
         return
     }
 
@@ -3136,6 +3024,7 @@ function Add-MerakiSwitchAccessPolicy() {
 }
 
 function Set-MerakiSwitchAccessPolicy() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
@@ -3151,22 +3040,10 @@ function Set-MerakiSwitchAccessPolicy() {
         [string]$AccessPolicyType,
         [ValidateSet('','11')]
         [String]$RadiusGroupAttribute = '',
-        [ValidateScript(
-            {
-                if ( ($_.isPresent) -and ($AccessPolicyType -ne 'Hybrid authentication') ) {
-                    Throw "Parameter IncreaseAccessSpeed can only be used when parameter AccessPolicyType is 'Hybrid authentication'"
-                }
-            }
-        )]
+        [ValidateScript({$_.IsPresent -and $AccessPolicyType -eq "Hybrid Authentication"}, ErrorMessege="AccessPolicyType must equal 'Hybrid Authentication")]
         [switch]$IncreaseAccessSpeed,
-        [switch]$RadiusAccountingEnabled,
-        [ValidateScript(
-            {
-                if ( ($_.IsPresent) -and (-not $RadiusAccountingServers) ) {
-                    throw "Parameter RadiusAccountingServers must be used if parameter RadiusAccounting Enabled is present."
-                }
-            }
-        )]
+        [Parameter(ParameterSetName = 'Radius Accounting')]
+        [switch]$RadiusAccountingEnabled,        
         [switch]$RadiusCoaSupportEnabled,
         [switch]$RadiusTestingEnabled,
         [switch]$UrlredirectWalledGardenEnabled,
@@ -3174,13 +3051,7 @@ function Set-MerakiSwitchAccessPolicy() {
         [string[]]$UrlRedirectWalledGardenRanges,
         [string]$Dot1xControlDirection,
         [PSObject]$Radius,
-        [ValidateScript(
-            {
-                if ( -not $RadiusAccountingenabled.IsPresent) {
-                    Throw "Parameter RadiusAccountingServers must be specified if parameter RadiusAccountingEnabled is present."
-                }
-            }
-        )]
+        [Parameter(ParameterSetName = 'RadiusAccounting')]
         [PSObject[]]$RadiusAccountingServers
     )
 
@@ -3461,6 +3332,7 @@ function Get-MerakiSwitchRoutingOspf() {
 }
 
 function Set-MerakiSwitchRoutingOspf() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
@@ -3470,9 +3342,12 @@ function Set-MerakiSwitchRoutingOspf() {
         [ValidateScript({$_ -is [int]})]
         [int]$HelloTimerInSeconds,
         [switch]$Enabled,
+        [Parameter(ParameterSetName = 'Md5')]
         [switch]$Md5AuthenticationEnabled,
         [ValidateRange(1,255)]
+        [Parameter(ParameterSetName = 'Md5')]
         [int]$Md5AuthenticationKeyId,
+        [Parameter(ParameterSetName = 'Md5')]
         [securestring]$Md5AuthenticationPassphrase,
         [ValidateScript({$_ -is [int]})]
         [int]$V3DeadTimerInSeconds,
@@ -3483,13 +3358,6 @@ function Set-MerakiSwitchRoutingOspf() {
         [PSObject[]]$V3Areas,
         [psobject[]]$Areas
     )
-
-    if ($Md5AuthenticationEnabled.IsPresent) {
-        if (-not ($Md5AuthenticationKeyId -and $Md5AuthenticationPassphrase)) {
-            Write-Host "Parameters Md5AuthenticationKeyId and Md5AuthenticationPassPhrase mustbe used when Md5Authenticationenabled is present" -ForegroundColor Red
-            return
-        }
-    }
 
     $Headers = Get-Headers
 

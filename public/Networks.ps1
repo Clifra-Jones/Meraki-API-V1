@@ -165,22 +165,24 @@ function Disconnect-MerakiNetworkFromTemplate() {
 }
 
 function Merge-MerakiNetworks() {
-    [CmdletBinding(SupportsShouldProcess)]
+    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$Name,
         [Parameter(Mandatory = $true)]
         [strng[]]$NetworkIds,
         [string]$EnrollmentString,
+        [Parameter(ParameterSetName = 'org')]
         [string]$OrgID,
+        [Parameter(ParameterSetName = 'profile')]
         [string]$profileName
     )
-
+<# 
     if ($OrgID -and $profileName) {
         Write-Host "The OrgId and ProfileName parameters cannot be used together." -ForegroundColor Red
         return
     }
-
+ #>
     if (-not $OrgID) {
         $config = Read-Config
         if ($profileName) {
@@ -534,7 +536,7 @@ function Get-MerakiNetworkEventTypes() {
 Set-Alias -Name GMNetET  Get-MerakiNetworkEventTypes -Option ReadOnly
 
 function Get-MerakiNetworkClients () {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -543,10 +545,14 @@ function Get-MerakiNetworkClients () {
         )]
         [Alias("NetworkId")]
         [string]$id,
+        [Parameter(ParameterSetName = 'dates')]
         [ValidateScript({$_ -is [DateTime]})]
         [datetime]$StartDate,
+        [Parameter(ParameterSetName = 'dates')]
         [ValidateScript({$_ -is [DateTime]})]
         [datetime]$EndDate,
+        [Parameter(ParameterSetName = 'days')]
+        [ValidateScript({$_ -is [int]})]
         [int]$Days,
         [string]$Statuses,
         [string]$Mac,
@@ -557,7 +563,7 @@ function Get-MerakiNetworkClients () {
         [string[]]$recentDeviceConnections
     )
     Begin {
-        if ($Days) {
+<#         if ($Days) {
             if ($StartDate) {
                 Write-Host "The paramter StartDate cannot be used with the parameter Days" -ForegroundColor Red
                 return
@@ -577,6 +583,7 @@ function Get-MerakiNetworkClients () {
             Write-Host "The parameter endDate requires the prameter StartDate" -ForegroundColor Red
             return
         }
+ #>        
         $Headers = Get-Headers
         Set-Variable -Name Query 
         if ($StartDate) {
@@ -694,7 +701,7 @@ function Get-MerakiNetworkClients () {
 Set-Alias GMNetClients -Value Get-MerakiNetworkClients -Option ReadOnly
 
 function Get-MerakiNetworkClientApplicationUsage() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -705,37 +712,40 @@ function Get-MerakiNetworkClientApplicationUsage() {
         [string[]]$Clients,
         [int]$SSIDNumber,
         [ValidateScript({$_ -is [DateTime]})]
+        [Parameter(ParameterSetName = 'dates')]
         [DateTime]$StartDate,
         [ValidateScript({$_ -is [DateTime]})]
+        [Parameter(ParameterSetName = 'dates')]
         [DateTime]$EndDate,
         [ValidateScript({$_ -is [int]})]
+        [Parameter(ParameterSetName = 'days')]
         [int]$Days,
         [ValidateScript({$_ -is [int]})]
         [int]$PerPage
     )
 
-    if ($Days) {
-        if ($StartDate) {
-            Write-Host "The paramter StartDate cannot be used with the parameter Days" -ForegroundColor Red
-            return
-        }
-        if ($EndDate) {
-            Write-Host "The paramter EndDate cannot be used with the parameter Days" -ForegroundColor Red
-            return
-        }
-    }
-
-    if ($StartDate -and (-not $EndDate)) {
-        Write-Host "The parameter StartDate requires the parameter EndDate." -ForegroundColor Red
-        return
-    }
-
-    if ($EndDate -and (-not $StartDate)) {
-        Write-Host "The parameter endDate requires the prameter StartDate" -ForegroundColor Red
-        return
-    }
-
     Begin {
+        if ($Days) {
+            if ($StartDate) {
+                Write-Host "The paramter StartDate cannot be used with the parameter Days" -ForegroundColor Red
+                return
+            }
+            if ($EndDate) {
+                Write-Host "The paramter EndDate cannot be used with the parameter Days" -ForegroundColor Red
+                return
+            }
+        }
+    
+        if ($StartDate -and (-not $EndDate)) {
+            Write-Host "The parameter StartDate requires the parameter EndDate." -ForegroundColor Red
+            return
+        }
+    
+        if ($EndDate -and (-not $StartDate)) {
+            Write-Host "The parameter endDate requires the prameter StartDate" -ForegroundColor Red
+            return
+        }
+    
         $Headers = Get-Headers
         
         $Query = $null
@@ -823,7 +833,7 @@ function Get-MerakiNetworkClientApplicationUsage() {
 Set-Alias -Name GMNetClientAppUsage -Value Get-MerakiNetworkClientApplicationUsage -Option ReadOnly
 
 function Get-MerakiNetworkClientBandwidthUsage() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -831,9 +841,13 @@ function Get-MerakiNetworkClientBandwidthUsage() {
         )]
         [Alias('NetworkId')]
         [string]$id,
+        [Parameter(ParameterSetName = 'dates')]
+        [ValidateScript({$_ -is [datetime]})]
         [datetime]$StartTime,
+        [Parameter(ParameterSetName = 'dates')]
         [ValidateScript({$_ -is [datetime]})]
         [datetime]$EndTime,
+        [Parameter(ParameterSetName = 'days')]
         [ValidateScript({$_ -is [int]})]
         [int]$Days,
         [ValidateScript({$_ -is [int]})]
@@ -841,7 +855,7 @@ function Get-MerakiNetworkClientBandwidthUsage() {
     )
 
     Begin {
-        if ($Days) {
+<#         if ($Days) {
             if ($StartDate) {
                 Write-Host "The paramter StartDate cannot be used with the parameter Days" -ForegroundColor Red
                 return
@@ -861,6 +875,7 @@ function Get-MerakiNetworkClientBandwidthUsage() {
             Write-Host "The parameter endDate requires the prameter StartDate" -ForegroundColor Red
             return
         }
+ #>        
         $Headers = Get-Headers
 
         Set-Variable -Name Query
