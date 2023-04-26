@@ -154,3 +154,25 @@ function Get-MerakiDeviceClients() {
 }
 
 Set-Alias -Name GMDevClients -Value Get-MerakiDeviceClients -Option ReadOnly
+
+function Get-MerakiDeviceApplianceUplinks() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [string]$Serial
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/devices/{1}/appliance/uplinks/settings" -f $BaseURI, $Serial
+
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+        return $response
+    } catch {
+        throw $_
+    }
+}

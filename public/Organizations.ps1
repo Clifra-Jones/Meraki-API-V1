@@ -1,5 +1,5 @@
 # Meraki Organization functions
-
+using namespace System.Collections.Generic
 
 function Set-MerakiAPI() {
     [CmdletBinding()]
@@ -192,7 +192,7 @@ function Get-MerakiOrganization() {
                 throw "Invalid profile name!"
             }
         } else {
-            $OrgId = $config.profile.default
+            $OrgId = $config.profiles.default
             if (-not $OrgId) {
                 throw "There is no default profile. You must use the -OrgId parameter and supply the Organization Id."
             }
@@ -1447,3 +1447,154 @@ function Get-MerakiOrganizationFirmwareUpgradesByDevice() {
 
 #region OrganizationThirdPartyVpnPeers
 
+function Get-MerakiOrganizationDeviceUplinks() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(ValueFromPipelineByPropertyName)]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [Parameter(ValueFromPipelineByPropertyName)]
+        [string]$Serial,
+        [string]$OrgId,
+        [string]$ProfileName
+    )
+
+    Begin {
+        $Headers = Get-Headers
+        $NetworkIds = [List[string]]::New()
+        $Serials = [List[string]]::New()
+
+        if (-not $OrgID) {
+            $config = Read-Config
+            if ($profileName) {
+                $OrgID = $config.profiles.$profileName
+                if (-not $OrgID) {
+                    throw "Invalid profile name!"
+                }
+            } else {
+                $OrgID = $config.profiles.default
+            }        
+        }
+
+        $Uri = "{0}/organizations/{1}/devices/uplinks/addresses/byDevice" -f $BaseURI, $OrgId
+    }
+
+    Process {
+        if ($id) {
+            $NetworkIds.Add($Id)
+        }
+
+        if ($Serial) {
+            $Serials.Add($Serial)
+        }
+    }
+
+    end {        
+
+        $_Body = @{}
+
+        if ($NetworkIds.Count -gt 0) {
+            $_Body.Add("networkIds", $NetworkIds.ToArray())
+        }
+
+        if ($Serials.Count -gt 0) {
+            $_Body.Add("serials", $Serials.ToArray())
+        }
+
+        $Params = @{
+            Method = "Get"
+            Uri = $Uri
+            Headers = $Headers
+        }
+
+        if ($_Body.Keys.Count -gt 0) {
+            $body = $_Body | ConvertTo-Json -Depth 10 -Compress
+            $Params.Add("Body", $body)
+        }
+
+        try {
+            $response = Invoke-RestMethod @Params
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+}
+
+function Get-MerakiOrganizationDeviceStatus() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(ValueFromPipelineByPropertyName)]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [Parameter(ValueFromPipelineByPropertyName)]
+        [string]$Serial,
+        [string]$OrgId,
+        [string]$ProfileName
+    )
+
+    Begin {
+        $Headers = Get-Headers
+        $NetworkIds = [List[string]]::New()
+        $Serials = [List[string]]::New()
+
+        if (-not $OrgID) {
+            $config = Read-Config
+            if ($profileName) {
+                $OrgID = $config.profiles.$profileName
+                if (-not $OrgID) {
+                    throw "Invalid profile name!"
+                }
+            } else {
+                $OrgID = $config.profiles.default
+            }        
+        }
+
+        $Uri = "{0}/organizations/{1}/devices/statuses" -f $BaseUri, $OrgId
+    }
+
+    Process {
+        if ($id) {
+            $NetworkIds.Add($Id)
+        }
+
+        if ($Serial) {
+            $Serials.Add($Serial)
+        }
+    }
+
+    End {
+
+        $_Body = @{}
+
+        if ($NetworkIds.Count -gt 0) {
+            $_Body.Add("networkIds", $NetworkIds.ToArray())
+        }
+
+        if ($Serials.Count -gt 0) {
+            $_Body.Add("serials", $Serials.ToArray())
+        }
+
+        $Params = @{
+            Method = "Get"
+            Uri = $Uri
+            Headers = $Headers
+        }
+
+        if ($_Body.Keys.Count -gt 0) {
+            $body = $_Body | ConvertTo-Json -Depth 10 -Compress
+            $Params.Add("Body", $body)
+        }
+
+        try {
+            $response = Invoke-RestMethod @Params
+            $response | ForEach-Object {
+                $Network = Get-MerakiNetwork -networkID $_.networkId
+                $_ | Add-Member -MemberType NoteProperty -Name "NetworkName" -Value $Network.Name
+            }
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+}
