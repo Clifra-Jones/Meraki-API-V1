@@ -144,17 +144,21 @@ function Set-MerakiProfile () {
 
 function Get-MerakiOrganizations() {
     Param(
-        [Parameter(Mandatory = $true)]
         [string]$APIKey
     )
 
+
+
     $Uri = "{0}/organizations" -f $BaseURI
     
-    $Headers = @{
-        "X-Cisco-Meraki-API-Key" = $APIKey
-        "Content-Type" = 'application/json'
+    If ($APIKey) {
+        $Headers = @{
+            "X-Cisco-Meraki-API-Key" = $APIKey
+            "Content-Type" = 'application/json'
+        }
+    } else {
+        $Headers = Get-Headers
     }
-    
     $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
     
     return $response
