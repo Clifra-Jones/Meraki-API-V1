@@ -165,35 +165,24 @@ function Disconnect-MerakiNetworkFromTemplate() {
 }
 
 function Merge-MerakiNetworks() {
-    [CmdletBinding(SupportsShouldProcess)]
+    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$Name,
         [Parameter(Mandatory = $true)]
         [strng[]]$NetworkIds,
         [string]$EnrollmentString,
-        [ValidateScript(
-            {
-                if ($profileName) {
-                    throw "The OrgId parameter cannot be used with the ProfileName parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
+        [Parameter(ParameterSetName = 'org')]
         [string]$OrgID,
-        [ValidateScript(
-            {
-                if ($OrgID) {
-                    throw "The ProfileName parameter cannot be used with the OrgId parameter."
-                } else {
-                    $true
-                }
-            }
-        )]
+        [Parameter(ParameterSetName = 'profile')]
         [string]$profileName
     )
-
+<# 
+    if ($OrgID -and $profileName) {
+        Write-Host "The OrgId and ProfileName parameters cannot be used together." -ForegroundColor Red
+        return
+    }
+ #>
     if (-not $OrgID) {
         $config = Read-Config
         if ($profileName) {
@@ -547,7 +536,7 @@ function Get-MerakiNetworkEventTypes() {
 Set-Alias -Name GMNetET  Get-MerakiNetworkEventTypes -Option ReadOnly
 
 function Get-MerakiNetworkClients () {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -556,36 +545,14 @@ function Get-MerakiNetworkClients () {
         )]
         [Alias("NetworkId")]
         [string]$id,
-        [ValidateScript(
-            {
-                if ($Days) {
-                    throw "The StartDate prameter cannot be used with the Days parameter."
-                }
-                if (-not $EndDate) {
-                    throw "The EndDate parameter must be supplied with the StartDate parameter."
-                }
-            }
-        )]
+        [Parameter(ParameterSetName = 'dates')]
+        [ValidateScript({$_ -is [DateTime]})]
         [datetime]$StartDate,
-        [ValidateScript(
-            {
-                if ($Days) {
-                    throw "The EndDate parameter cannot be used with the Days parameter."
-                }
-                if (-not $StartDate) {
-                    throw "The StartDate parameter must be supplied with the EndDate parameter."
-                }
-            }
-        )]
+        [Parameter(ParameterSetName = 'dates')]
+        [ValidateScript({$_ -is [DateTime]})]
         [datetime]$EndDate,
-        [ValidateScript(
-            {
-                if ($StartDate -or $EndDate) {
-                    throw "The Days parameter cannot be used witht he StartDate or EndDate parameter"
-                }
-            }
-        )]
-        [ValidateSet({$_ -is [int]})]
+        [Parameter(ParameterSetName = 'days')]
+        [ValidateScript({$_ -is [int]})]
         [int]$Days,
         [string]$Statuses,
         [string]$Mac,
@@ -596,6 +563,27 @@ function Get-MerakiNetworkClients () {
         [string[]]$recentDeviceConnections
     )
     Begin {
+<#         if ($Days) {
+            if ($StartDate) {
+                Write-Host "The paramter StartDate cannot be used with the parameter Days" -ForegroundColor Red
+                return
+            }
+            if ($EndDate) {
+                Write-Host "The paramter EndDate cannot be used with the parameter Days" -ForegroundColor Red
+                return
+            }
+        }
+    
+        if ($StartDate -and (-not $EndDate)) {
+            Write-Host "The parameter StartDate requires the parameter EndDate." -ForegroundColor Red
+            return
+        }
+    
+        if ($EndDate -and (-not $StartDate)) {
+            Write-Host "The parameter endDate requires the prameter StartDate" -ForegroundColor Red
+            return
+        }
+ #>        
         $Headers = Get-Headers
         Set-Variable -Name Query 
         if ($StartDate) {
@@ -713,7 +701,7 @@ function Get-MerakiNetworkClients () {
 Set-Alias GMNetClients -Value Get-MerakiNetworkClients -Option ReadOnly
 
 function Get-MerakiNetworkClientApplicationUsage() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -723,35 +711,41 @@ function Get-MerakiNetworkClientApplicationUsage() {
         [string]$Id,
         [string[]]$Clients,
         [int]$SSIDNumber,
-        [ValidateScript(
-            {
-                if ($Days) {
-                    throw "The StartDate parameter cannot be used with the Days parameter."
-                }
-                if (-not $EndDate) {
-                    throw "The EndDate parameter must be provided with the StartDate parameter."
-                }
-            }
-        )]
+        [ValidateScript({$_ -is [DateTime]})]
+        [Parameter(ParameterSetName = 'dates')]
         [DateTime]$StartDate,
-        [ValidateScript(
-            {
-                if ($Days) {
-                    throw "The Days parameter cannot be used with teh EndDate parameter."
-                }
-                if (-not $StartDate) {
-                    throw "The StartDate parameter must be provided with the EndDate parameter"
-                }
-            }
-        )]
+        [ValidateScript({$_ -is [DateTime]})]
+        [Parameter(ParameterSetName = 'dates')]
         [DateTime]$EndDate,
         [ValidateScript({$_ -is [int]})]
+        [Parameter(ParameterSetName = 'days')]
         [int]$Days,
         [ValidateScript({$_ -is [int]})]
         [int]$PerPage
     )
 
     Begin {
+        if ($Days) {
+            if ($StartDate) {
+                Write-Host "The paramter StartDate cannot be used with the parameter Days" -ForegroundColor Red
+                return
+            }
+            if ($EndDate) {
+                Write-Host "The paramter EndDate cannot be used with the parameter Days" -ForegroundColor Red
+                return
+            }
+        }
+    
+        if ($StartDate -and (-not $EndDate)) {
+            Write-Host "The parameter StartDate requires the parameter EndDate." -ForegroundColor Red
+            return
+        }
+    
+        if ($EndDate -and (-not $StartDate)) {
+            Write-Host "The parameter endDate requires the prameter StartDate" -ForegroundColor Red
+            return
+        }
+    
         $Headers = Get-Headers
         
         $Query = $null
@@ -839,7 +833,7 @@ function Get-MerakiNetworkClientApplicationUsage() {
 Set-Alias -Name GMNetClientAppUsage -Value Get-MerakiNetworkClientApplicationUsage -Option ReadOnly
 
 function Get-MerakiNetworkClientBandwidthUsage() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -847,37 +841,13 @@ function Get-MerakiNetworkClientBandwidthUsage() {
         )]
         [Alias('NetworkId')]
         [string]$id,
-        [ValidateScript(
-            {
-                if ($Days) {
-                    throw "The StartTime parameter cannot be used with the Days parameter."
-                }
-                if (-not $EndTime) {
-                    throw "The EndTime parameter must be used with the StartTime parameter"
-                }
-            }
-        )]
+        [Parameter(ParameterSetName = 'dates')]
         [ValidateScript({$_ -is [datetime]})]
         [datetime]$StartTime,
-        [ValidateScript(
-            {
-                if ($Days) {
-                    throw "The Days parameter cannot be used with the EndTime parameter."
-                }
-                if (-not $StartTime) {
-                    throw "The StartTime parameter must be used with teh EndTime parameter."
-                }
-            }
-        )]
+        [Parameter(ParameterSetName = 'dates')]
         [ValidateScript({$_ -is [datetime]})]
         [datetime]$EndTime,
-        [ValidateSet(
-            {
-                if ($StartTime -or $EndTime) {
-                    throw "The Days Parameter dannot be used withteh StartTime and EndTime parameters."
-                }
-            }
-        )]
+        [Parameter(ParameterSetName = 'days')]
         [ValidateScript({$_ -is [int]})]
         [int]$Days,
         [ValidateScript({$_ -is [int]})]
@@ -885,6 +855,27 @@ function Get-MerakiNetworkClientBandwidthUsage() {
     )
 
     Begin {
+<#         if ($Days) {
+            if ($StartDate) {
+                Write-Host "The paramter StartDate cannot be used with the parameter Days" -ForegroundColor Red
+                return
+            }
+            if ($EndDate) {
+                Write-Host "The paramter EndDate cannot be used with the parameter Days" -ForegroundColor Red
+                return
+            }
+        }
+    
+        if ($StartDate -and (-not $EndDate)) {
+            Write-Host "The parameter StartDate requires the parameter EndDate." -ForegroundColor Red
+            return
+        }
+    
+        if ($EndDate -and (-not $StartDate)) {
+            Write-Host "The parameter endDate requires the prameter StartDate" -ForegroundColor Red
+            return
+        }
+ #>        
         $Headers = Get-Headers
 
         Set-Variable -Name Query

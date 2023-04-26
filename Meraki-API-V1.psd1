@@ -176,12 +176,18 @@ FunctionsToExport = @(`
     #'Add-MerakiSwitchQosRule',
     #'Set-MerakiSwitchQosRule',
     #'Remove-MerakiSwitchQosRule',
-    'Get-MerakiSwitchQosRulesOrder' #,
+    'Get-MerakiSwitchQosRulesOrder',
     #'Set-MerakiSwitchQosruleOrder',
     #'Add-MerakiSwitchRoutingStaticRoute',
     #'Set-MerakiSwitchRoutingStaticRoute',
     #'Remove-MerakiSwitchStaticRoute',
     #'New-MerakiSwitchStack'
+    #'Add-MerakiSwitchAccessPolicy',
+    #'Add-MerakiNetwork',
+    #'Add-MerakiSwitchRoutingInterface',
+    'Get-MerakiOrganizationDeviceUplinks',
+    'Get-MerakiDeviceApplianceUplinks',
+    'Get-MerakiOrganizationDeviceStatus'
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.

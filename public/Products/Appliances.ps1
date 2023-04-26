@@ -91,61 +91,19 @@ function Update-MerakiNetworkApplianceContentFiltering() {
             Mandatory=$true,
             ParameterSetName = "values"            
         )]
-        [ValidateScript(
-            {
-                if ($ContentFilteringRules) {
-                    throw "The blockedURLPatterns parameter cannot be used with the ContentFilteringRules parameter."
-                } elseif (-not $_) {
-                        throw "The blockedURLPatterns parameter is require if the ContentFilteringRules parameter is omitted."
-                } elseif ((-not $aloowedURLPatterns) -or (-not $blockedUrlCategories) -or (-not $urlCategoryListSize)) {
-                    throw "The blockedUrlPatterns parrameter requires the allowedURLPatterns and blockedUrlCategories parameters "
-                } else {
-                    $true
-                }
-            }
-
-        )]
         [string[]]$blockedURLPatterns,
-        [ValidateScript(
-            {
-                if ($ContentFilteringRules) {
-                    throw "The blockedUrlCategories parameter cannot be used with the ContentFilteringRules parameter."
-                } elseif(-not $_) {
-                        throw "The blockedUrlCategories parameter is required if the ContentFilteringRules parameter is omitted."
-                } elseif ((-not $allowedURLPatterns) -or (-not $blockedUrlCategories) -or (-not $urlCategoryListSize)) {
-                    throw "The blockedUrlCategories parrameter requires the allowedURLPatterns and blockedURLPatterns parameters "
-                } else {
-                    $true
-                }
-            }
-
-        )]
         [string[]]$blockedUrlCategories,
-        [ValidateScript(
-            {
-                if ($ContentFilteringRules) {
-                    throw "The urlCategoryListSize parameter cannot be used with the ContentFilteringRules parameter."
-                } elseif ((-not $allowedURLPatterns) -or (-not $blockedUrlCategories) -or (-not $blockedUrlCategories)) {
-                    throw "The UrlCategoriesListSize parameter requires the allowedURLPatterns, blockedURLPatterns, and blockedUrlCategories parameters "
-                } else {
-                    $true
-                }
-            }            
-        )]
-        [ValidateSet('topSites','fullList')]
         [string]$urlCategoryListSize,
-        [ValidateScript(
-            {
-                if ($allowedURLPatterns -or $blockedURLPatterns -or $blockedUrlCategories -or $urlCategoryListSize) {
-                    throw "The parameter ContentFilteringRules cannot be used with the allowedURLPatterns, blockedURLPatterns, blockedURLCategories -or urlCategoriesList parameters"
-                } else {
-                    $true
-                }
-            }
-        )]
+        [ValidateScript({$_ -and -not ($allowedURLPatterns -or $blockedUrlCategories -or $urlCategoryListSize)}, 
+            ErrorMessage="The parameter ContentFilteringRules cannot be used with the allowedURLPatterns, blockedURLPatterns, blockedURLCategories -or urlCategoriesList parameters")]
         [psObject]$ContentFilteringRules
     )
 
+    If ($ContentFilteringRules) {
+        if ($allowedURLPatterns) {
+            Write-Host "The Parameter AlloweeUrlPatterns cannot be used with"
+        }
+    }
 
     $Uri = "{0}/networks/{1}/appliance/contentFiltering" -f $BaseURI, $id
     $Headers = Get-Headers
@@ -566,25 +524,13 @@ function Set-MerakiNetworkApplianceVLAN() {
         [string]$TranslateVPNSubnet,
         [string]$CIDR,
         [string]$Mask,
-        [ValidateScript(
-            {
-                if ($_ -isnot [hashtable]) {
-                    Throw "fixedIpAssignments must be a hashtable"
-                }
-            }
-        )]
+        [ValidateScript({$_ -is [hashtable]})]
         [hashtable]$fixedIpAssignments,
         [hashtable[]]$ReservedIpRanges,
         [string]$DnsNameServers,
         [ValidateSet("Run a DHCP Server","Relay DHCP to another Server","Do not respond to DHCP requests")]
         [string]$DhcpHandling,
-        [ValidateScript(
-            {
-                If ($DhcpHandling -ne "Relay DHCP to another Server") {
-                    Throw "Parameter DhcpRelayServers is not valid with DhcpHandling = $DhcpHandling"
-                }
-            }
-        )]
+        [ValidateScript({$_ -and ($DhcpHandling -eq 'Relay DHCP to another Server"')}, ErrorMessage = "Parameter DhcpRelayServers is not valid when parameter DhcpHandling is 'Relay DHCP to another Server'")]
         [string[]]$DhcpRelayServerIPs,
         [ValidateSet(
             '30 minutes', '1 hour', '4 hours', '12 hours', '1 day', '1 week'
@@ -775,30 +721,15 @@ function Set-MerakiNetworkApplianceSiteToSiteVpn() {
     Param(
         [Parameter(Mandatory = $true)]        
         [string]$NetworkId,
-        [ValidateScript(
-            {
-                if ($_) {
-                    if (($null -ne $Mode) -or ($null -ne $Hubs) -or ($null -ne $Subnets)) {
-                        Throw "Parameter VpnSetting must be used without other parameters except Networkid"
-                    } else {
-                        $true
-                    }
-                }
-            }            
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
         )]
-        [PSObject]$VpnSettings,
         [ValidateSet('none', 'spoke', 'hub')]
         [string]$Mode,
-        [ValidateScript(
-            {
-                if ( (-not $_) -and $mode -eq 'spoke') {
-                    throw "Parameter Hubs is required if Parameter Mode is set to 'spoke'"
-                } else {
-                    $true
-                }
-            }
-        )]
+        [Parameter(ValueFromPipelineByPropertyName)]
         [psobject[]]$Hubs,
+        [Parameter(ValueFromPipelineByPropertyName)]
         [psobject[]]$Subnets
     )
 
@@ -915,6 +846,7 @@ function Get-MerakiApplianceUplinkStatuses() {
         [String]$serial="*",
         [string]$profileName
     )
+
     $config = Read-Config
     if ($profileName) {
         $OrgID = $config.profiles.$profileName
@@ -956,7 +888,9 @@ function Get-MerakiNetworkApplianceVpnStats() {
             ValueFromPipelineByPropertyName = $true
         )]
         [string]$id,
+        [ValidateSet({$_ -is [int]})]
         [int]$perPage=100,
+        [ValidateSet({$_ -is [int]})]
         [int]$timespan=5,
         [switch]$Sumarize,
         [string]$profileName
