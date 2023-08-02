@@ -274,7 +274,7 @@ function Split-MerakiNetwork() {
 
 #endregion
 function Get-MerakiNetworkDevices () {
-    [cmdletbinding()]
+    [CmdletBinding()]
     Param (
         [Parameter(
             Mandatory   = $true,
