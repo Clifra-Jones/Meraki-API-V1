@@ -395,7 +395,7 @@ function Get-MerakiNetworks() {
         if ($Uri.Contains("?")) {
             $Uri = "{0}&isBoundToConfigTemplate=true" -f $Uri
         } else {
-            $Uri = "{0}?isBoundToConfigTemplate=true" -f $Uri
+            $Uri = "{0}?isBoundToConfigTemplate=false" -f $Uri
         }
     }
 
@@ -1600,5 +1600,36 @@ function Get-MerakiOrganizationDeviceStatus() {
         } catch {
             throw $_
         }
+    }
+}
+
+Function Get-MerakiOrganizationApplianceVpnStatuses() {
+    [CmdletBinding()]
+    Param(
+        [string]$OrgId,
+        [string]$ProfileName
+    )
+
+    $Headers = Get-Headers
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
+
+    $Uri = "{0}/organizations/{1}/appliance/vpn/statuses" -f $BaseURI, $OrgId
+
+    try {
+        $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers
+        return $response
+    } catch {
+        throw $_
     }
 }

@@ -559,7 +559,7 @@ function Set-MerakiNetworkApplianceVLAN() {
 
     $Uri = "{0}/networks/{1}/appliance/vlans/{2}" -f $BaseURI, $id, $VlanId
 
-    $_body = {}
+    $_body = @{}
     if ($name) {
         $_.Body.Add("name", $Name)
     }
@@ -588,7 +588,7 @@ function Set-MerakiNetworkApplianceVLAN() {
         $_body.Add("ReservedIpRanges", $ReservedIpRanges)
     }
     if ($DnsNameServers) {
-        $_body.Add("dnsNameServers", $DnsNameServers)
+        $_body.Add("dnsNameservers", $DnsNameServers)
     }
     if ($DhcpHandling) {
         $_body.Add("dhcpHandling", $DhcpHandling)
