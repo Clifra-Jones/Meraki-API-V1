@@ -197,3 +197,24 @@ function Get-NetworkWirelessClientConnectionStatus() {
     A collection of connectivity information objects.
     #>
 }
+
+function Get-MerakiWirelessAirMarshal() {
+    [CmdletBinding()]
+    param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [string]$Id
+    )
+
+    $Uri = "{0}/networks/{1}/wireless/airMarshal" -f $BaseURI, $id
+    $Headers = Get-Headers
+
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+        return $response
+    } catch {
+        throw $_
+    }
+}
