@@ -3436,3 +3436,205 @@ function Set-MerakiSwitchRoutingOspf() {
     * required
     #>
 }
+
+#Access control Lists
+
+function Get-MerakiSwitchAccessControlList() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipeline = $true,
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [Alias('NetworkId')]
+        [string]$Id
+    )
+
+    Begin {
+        $Headers = Get-Headers
+    }
+
+    Process {
+        $switches = Get-MerakiNetworkDevices -id $Id | Where-Object {$_.Model -like "MS*"}
+        if ($switches) {
+            $Uri = "{0}/networks/{1}/switch/accessControlLists" -f $BaseURI, $Id
+
+            try {
+                $id = 1
+                $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+                $Rules = [List[psobject]]::New()
+                $response | ForEach-Object {
+                    $_.rules | Add-Member -MemberType NoteProperty -Name "Id" -Value $id
+                    $id += 1
+                    $Rules.Add($_.rules)
+                }
+
+                return $Rules.ToArray()
+            } catch {
+                throw $_
+            }
+        }
+    }
+    <#
+    .SYNOPSIS
+    Get Meraki switch ACLs
+    .DESCRIPTION
+    Retrieve Access control LIsts for Meraki Switches
+    .PARAMETER Id
+    The Network ID
+    .OUTPUTS
+    An array of ACL objects.
+    #>
+}
+
+Set-Alias -Name GMSWACL -Value Get-MerakiSwitchAccessControlList
+
+function Add-MerakiSwitchAccessControlEntry() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [string]$Vlan = 'any',
+        [Alias('SrcPort')]
+        [string]$SourcePort = 'any',
+        [Alias('SrcCidr')]
+        [string]$SourceCidr = 'any',
+        [string]$Protocol = 'any',
+        [ValidateSet('allow', 'deny')]
+        [string]$Policy,
+        [ValidateSet('any', 'ipv4', 'ipv6')]
+        [string]$IpVersion,
+        [Alias('DstPort')]
+        [string]$DestinationPort = 'any',
+        [Alias('DstCidr')]
+        [string]$DestinationCidr = 'any',
+        [string]$Comment
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/switch/accessControlLists" -f $BaseURI, $NetworkId
+
+    $Acl = (Get-MerakiSwitchAccessControlList -Id $NetworkId).Where({$_.comment -ne "Default rule"}) | Select-Object * -ExcludeProperty Id
+
+    $Ace = [PSCustomObject]@{
+        vlan = $vlan
+        srcPort = $SourcePort
+        srcCidr = $SourceCidr
+        protocol = $Protocol
+        policy = $Policy
+        ipVersion = $IpVersion
+        dstPort = $DestinationPort
+        dstCidr = $DestinationCidr
+        comment = $Comment
+    }
+
+    $Acl += $Ace
+    $body = $acl | ConvertTo-Json -Depth 5 -Compress
+
+    try {
+        $id = 1
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        $response | ForEach-Object {
+            $_ | Add-Member -MemberType NoteProperty -Name "Id" -Value $id
+            $Id += 1
+        }
+        return $response
+    } catch {
+        throw $_
+    }
+}
+
+Set-Alias -Name AMSWAce -Value Add-MerakiSwitchAccessControlEntry
+
+function Remove-MerakiSwitchAccessControlEntry() {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [int]$Id
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/switch/accessControlList" -f $BaseURI, $NetworkId
+
+    $Acl = (Get-MerakiSwitchAccessControlList -NetworkId $NetworkId).where({$_.comment -ne "Default rule"})
+
+    $NewAcl = $Acl.Where({$_.Id -ne $id}) | Select-Object * -ExcludeProperty Id
+
+    $body = $NewAcl | ConvertTo-Json -Depth 5 -Compress
+
+    try {
+        $Id = 1
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        $response | ForEach-Object {
+            $_ | Add-Member -MemberType NoteProperty -Name "Id" -Value $Id
+            $Id += 1
+        }
+        return $response
+    } catch {
+
+    }
+}
+
+Set-Alias -Name RMSWAce -value Remove-MerakiSwitchAccessControlEntry
+
+function Set-MerakiSwitchAccessControlEntry() {
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Int]$Id,
+        [string]$Vlan = 'any',
+        [Alias('SrcPort')]
+        [string]$SourcePort = 'any',
+        [Alias('SrcCidr')]
+        [string]$SourceCidr = 'any',
+        [string]$Protocol = 'any',
+        [ValidateSet('allow', 'deny')]
+        [string]$Policy,
+        [ValidateSet('any', 'ipv4', 'ipv6')]
+        [string]$IpVersion,
+        [Alias('DstPort')]
+        [string]$DestinationPort = 'any',
+        [Alias('DstCidr')]
+        [string]$DestinationCidr = 'any',
+        [string]$Comment
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/switch/accessControlList" -f $BaseURI, $NetworkId
+
+    $Acl = (Get-MerakiSwitchAccessControlList -NetworkId $NetworkId).Where({$_.comment -ne "Default rule"})
+
+    $Ace = $Acl.Where({$_.Id -eq $Id})
+
+    If ($Vlan) { $Ace.vlan = $Vlan }
+    if ($SourcePort) { $Ace.srcPort = $SourcePort }
+    if ($SourceCidr) { $Ace.srcCidr = $SourceCidr }
+    if ($Protocol) { $Ace.protocol = $Protocol }
+    if ($Policy) { $Ace.policy = $Policy }
+    if ($IpVersion) { $Ace.ipVersion = $IpVersion }
+    if ($DestinationPort) { $Ace.dstPort = $DestinationPort}
+    if ($DestinationCidr) { $Ace.DstCidr = $DestinationCidr}
+    if ($Comment) { $Ace.comment = $Comment}
+
+    $NewAcl = $Acl.Where({$_.Id -ne $Id}) | Select-Object * -ExcludeProperty Id
+    $NewAce = $Ace | Select-Object * -ExcludeProperty Id
+    $NewAcl += $NewAce
+
+    $body = $NewAcl | ConvertTo-Json -Depth 5 -Compress
+
+    Try {
+        $id = 1
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        $response | ForEach-Object {
+            $_ | Add-Member -MemberType NoteProperty -Name "Id" -Value Id
+            $Id += 1
+        }
+        return $response
+    } catch {
+        Throw $_
+    }
+}
