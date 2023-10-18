@@ -1185,7 +1185,7 @@ function Add-MerakiNetworkApplianceCellularFirewallRule() {
     }
 }
 
-function Remove-MerakiNetworkAplianceCelularFirewallRule() {
+function Remove-MerakiNetworkApplianceCellularFirewallRule() {
     [CmdletBinding(SupportsShouldProcess)]
     Param(
         [Parameter(Mandatory = $true)]
@@ -1242,6 +1242,272 @@ function Get-MerakiNetworkApplianceFirewalledServices() {
         }
         catch {
             Throw $_
+        }
+    }
+}
+#endregion
+
+#region L3 Firewall Rules
+Function Get-MerakiApplianceL3FirewallRules() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$id
+    )
+
+    $Uri = "{0}/networks/{1}/appliance/firewall/l3FirewallRules" -f $BaseURI, $Id
+
+    $Headers = Get-Headers
+
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+        $rules = $response.Rules
+        $ruleId = 1
+        $rules | Foreach-Object {
+            $_ | Add-Member -MemberType NoteProperty -Name "RuleId" -Value $ruleId
+            $RuleId += 1
+        }
+        return $rules
+    } catch {
+        Throw $_
+    }
+}
+
+function Set-MerakiApplianceL3FirewallRules() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [Parameter(
+            Mandatory
+        )]
+        [psobject[]]$Rules,
+        [switch]$PassThru
+    )    
+
+    Begin {
+        $Headers = Get-Headers
+
+        # The below statements are used if rules are being copied from another network/
+
+        # Remove the RuleId property. This is added and used by this module and is not part of the Meraki configuration.
+        if ($Rules[0].PSObject.Properties.Name -contains 'RuleId') {
+            $Rules = $Rules | Select-Object -Property * -ExcludeProperty RuleId
+        }
+
+        # remove the default rule if it exists.
+        $Rules = $Rules | Where-Object {$_.comment -ne 'Default rule'}
+    }
+    Process {
+    
+        $Uri = "{0}/networks/{1}/appliance/firewall/l3FirewallRules" -f $BaseUri, $id
+        $_body = @{"rules" = $Rules}
+        $body = $_body | ConvertTo-Json -Depth 5 -Compress
+
+        try {
+            $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+            return $response.rules
+        } catch {
+            throw $_
+        }
+    }
+}
+
+function Add-MerakiApplianceL3FirewallRule() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [ValidateSet('allow','deny')]
+        [string]$Policy,
+        [string]$Comment,
+        [ValidateSet('tcp', 'udp', 'icmp', 'icmp6', 'any')]
+        [string]$Protocol,
+        [ValidateScript(
+            {
+                $subnetPart = $_.split("/")
+                $_ -eq "any" -or ([IPAddress]$subnetPart[0] -is [IPAddress] -and $SubnetPart[1] -In 0..32)
+            }
+        )]
+        [string]$SourceCIDR,
+        [string]$SourcePort = 'any',
+        [ValidateScript(
+            {
+                $subnetPart = $_.split("/")
+                $_ -eq "any" -or [IPAddress]$subnetPart[0] -is [IPAddress] -and $SubnetPart[1] -In 0..32
+            }
+        )]
+        [string]$DestinationCIDR,
+        [string]$DestinationPort = 'any',
+        [switch]$SyslogEnabled,
+        [switch]$PassThru
+    )
+
+    Begin {
+        $Headers = Get-Headers
+    }
+    
+    Process {
+
+        $Uri = "{0}/networks/{1}/appliance/firewall/l3FirewallRules" -f $BaseUri, $Id
+
+
+        $Rules = Get-MerakiApplianceL3FirewallRules -id $Id | Select-Object * -ExcludeProperty RuleId
+
+        # Remove the default rule
+        $Rules = $Rules | Where-Object {$_.comment -ne "Default rule"}
+
+        $NewRule = [PSCustomObject]@{
+            policy = $policy
+            comment = $Comment
+            protocol = $Protocol
+            destPort = $DestinationPort
+            destCidr = $DestinationCIDR
+            srcPort = $SourcePort
+            srcCidr = $SourceCIDR
+            syslogEnabled = $SyslogEnabled.IsPresent
+        }
+        $Rules += $NewRule
+        
+        $_Body = @{rules = $Rules}
+        $body = $_body | ConvertTo-JSON -Depth 5 -Compress
+
+        try {
+            $response = Invoke-RestMethod -Method Put -Uri $Uri -Headers $Headers -Body $body
+            return $response.rules
+        } catch {
+            throw $_
+        }
+    }
+}
+
+function Set-MerakiApplianceL3FirewallRule() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory
+        )]
+        [string]$NetworkId,
+        [int]$RuleId,
+        [ValidateSet('allow','deny')]
+        [string]$Policy,
+        [string]$Comment,
+        [ValidateSet('tcp', 'udp', 'icmp', 'icmp6', 'any')]
+        [string]$Protocol,
+        [ValidateScript(
+            {
+                $subnetPart = $_.split("/")
+                [IPAddress]$subnetPart[0] -is [IPAddress] -and $SubnetPart[1] -In 0..32
+            }
+        )]
+        [string]$SourceCIDR,
+        [string]$SourcePort,
+        [ValidateScript(
+            {
+                $subnetPart = $_.split("/")
+                [IPAddress]$subnetPart[0] -is [IPAddress] -and $SubnetPart[1] -In 0..32
+            }
+        )]
+        [string]$DestinationCIDR,
+        [string]$DestinationPort,
+        [switch]$SyslogEnabled
+    )
+
+    $Uri = "{0}/networks/{1}/appliance/firewall/l3FirewallRules" -f $BaseUri, $NetworkId
+
+    $Headers = Get-Headers
+
+    $Rules = Get-MerakiApplianceL3FirewallRules -id $NetworkId
+
+    # Remove the Default Rule
+    $Rules = $Rules | Where-Object {$_.comment -ne "Default rule"}
+    
+    $Rule = $Rules | Where-Object {$_.RuleId -eq $RuleId}
+    if (-not $Rule) {
+        throw "Invalid Rule Id"
+    }
+
+    $Rules = $Rules | Where-Object {$_.RuleId -ne $RuleId}
+
+    If ($Policy) {$Rule.policy = $Policy}
+    if ($Comment) {$Rule.comment = $Comment}
+    if ($Protocol) {$Rule.protocol = $Protocol}
+    if ($SourceCIDR) {$Rule.srcCIDR - $SourceCIDR}
+    if ($SourcePort) { $Rule.srcPort = $SourcePort}
+    if ($DestinationCIDR) {$Rule.destCIDR = $DestinationCIDR}
+    if ($DestinationPort) {$Rule.destPort = $DestinationPort}
+    if ($SyslogEnabled) {$Rule.syslogEnabled = $SyslogEnabled}
+
+
+    $Rules += $Rule
+
+    # Remove the RuleId Property
+    $newRules = $Rules | Select-Object * -ExcludeProperty RuleId
+
+    $_Body = @{rules = $newRules}
+
+    $body = $_Body | ConvertTo-Json
+
+    try {
+        $response = Invoke-RestMethod -Method PUT -Uri $uri -Headers $Headers -Body $body
+        return $response.rules  
+    } catch {
+        throw $_
+    }
+}
+
+function Remove-MerakiApplianceL3FirewallRule() {
+    [CmdletBinding(SupportsShouldProcess)]
+    Param(
+        [Parameter(
+            Mandatory
+        )]
+        [string]$NetworkId,
+        [Parameter(Mandatory)]
+        [string]$RuleId,
+        [switch]$PassThru
+    )
+    $Uri = "{0}/networks/{1}/appliance/firewall/l3FirewallRules" -f $BaseUri, $NetworkId
+
+    $Headers = Get-Headers
+
+    $Rules = Get-MerakiApplianceL3FirewallRules -id $NetworkId
+
+    # Remove the Default Rule
+    $Rules = $Rules | Where-Object {$_.comment -ne "Default rule"}
+
+    $Rule = $Rules | Where-Object {$_.RuleId -eq $RuleId}
+    if (-not $Rule) {
+        throw "Invalid Rule Id"
+    }
+
+    # Remove the Rule to be deleted
+    $Rules = $Rules | Where-Object {$_.RuleId -ne $RuleId}
+
+    # Remove the Rule Property
+    $Rules = $Rules | Select-Object -Property * -ExcludeProperty RuleId
+
+    $_Body = @{rules = $Rules}
+
+    $body = $_Body | ConvertTo-Json -Depth 5 -Compress
+    if ($PSCmdlet.ShouldProcess("Delete","Rule:$($Rule.Comment)")) {
+        try {
+            $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+            return $response.rules
+        } catch {
+            throw $_
         }
     }
 }

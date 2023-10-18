@@ -985,7 +985,7 @@ function Get-MerakiSwitchRoutingInterfaceDHCP() {
     .PARAMETER interfaceId
     The interface Id.
     .OUTPUTS
-    A Meraki wwitch interface DHCP Settings.
+    A Meraki switch interface DHCP Settings.
     #>
 }
 

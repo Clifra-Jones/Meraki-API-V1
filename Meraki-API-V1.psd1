@@ -190,7 +190,12 @@ FunctionsToExport = @(`
     'Get-MerakiOrganizationDeviceStatus',
     'Get-MerakiOrganizationApplianceVpnStatuses',
     'Get-MerakiWirelessAirMarshal',
-    'Get-MerakiSwitchAccessControlList'
+    'Get-MerakiSwitchAccessControlList',
+    'Get-MerakiApplianceL3FirewallRules',
+    'Set-MerakiApplianceL3FirewallRules',
+    'Add-MerakiApplianceL3FirewallRule',
+    'Set-MerakiApplianceL3FirewallRule',
+    'Remove-MerakiApplianceL3FirewallRule'
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
@@ -255,22 +260,24 @@ AliasesToExport = @(`
     'GMSWPortStatus',
     'GMSWPortsPacketCntrs',
     'GMOFirmwareUpgrades',
+     'AddMSSRteInt',
+     'New-MerakiNetworkSwitchStack', 
     #'SetMNAppVLAN',
-    'AddMSSRteInt',
+    
     #'SetMNSSRteStRoute',
-    'New-MerakiNeworkSwitchStack',
+    
     #'SetMSStkRteInt',
     'GMSWStackRoutInt',
     #'RemoveMSStackRouteInt',
     'GMNetCltBWUsage',
     #'RSWStkRteInt',
-    'Get-MerakiNetworkSwitchStack' #,
+    'Get-MerakiNetworkSwitchStack'
     #'UMSRteInt',
-    #'SetMSRteIntDHCP',
-    #'AddMSRouteInt',
+    #'SetMSRteIntDHC
     #'AMSSSwitch',
     #'UMNSSRteStRoute',
-    #'UMSStkRteIntDhcp'
+    #'UMSStkRteIntDhcp',
+
 )
 
 # DSC resources to export from this module
