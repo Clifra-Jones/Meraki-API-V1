@@ -1,5 +1,14 @@
 ## Release Notes
 
+### 11/14/2023
+
+Updated calls to API endpoints that support paging. These function now use the Invoke-WebRequest cmdlet to pull data.
+Paging is implemented to pull more data. See the module reference for these function for usage.
+
+Fixed multiple spelling errors in the Module reference.
+
+Added support for Level 3 Firewall Rules.
+
 ### 03/16/2023
 
 Added the following functions
