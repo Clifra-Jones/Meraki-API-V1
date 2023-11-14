@@ -14,7 +14,7 @@ function Get-MerakiDevice() {
     $Uri = "{0}/devices/{1}" -f $BaseURI, $Serial
     $Headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
     return $response
     <#
@@ -58,7 +58,7 @@ function Start-MerakiDeviceBlink() {
     }
     $body = $psBody | ConvertTo-Json
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Body $body -Headers $Headers
+    $response = Invoke-RestMethod -Method GET -Uri $Uri -Body $body -Headers $Headers -PreserveAuthorizationOnRedirect
 
     return $response
 
@@ -91,7 +91,7 @@ function Restart-MerakiDevice() {
     $Uri = "{0}/devices/{1}/reboot" -f $BaseURI, $serial
     $headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method POST -Uri $Uri -Headera $Headers
+    $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
     if ($response.success) {
         return $true
@@ -140,7 +140,7 @@ function Get-MerakiDeviceClients() {
     Process {
         $Uri = "{0}/devices/{1}/clients" -f $BaseURI, $serial
         try {
-            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -Body $body
+            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
             $response | ForEach-Object {
                 if ($null -eq $_.description) {
                     $_.description = $_.mac
@@ -170,7 +170,7 @@ function Get-MerakiDeviceApplianceUplinks() {
     $Uri = "{0}/devices/{1}/appliance/uplinks/settings" -f $BaseURI, $Serial
 
     try {
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
         return $response
     } catch {
         throw $_

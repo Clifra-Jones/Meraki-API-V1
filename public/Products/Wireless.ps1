@@ -1,3 +1,4 @@
+using namespace System.Collections.Generic
 # Wireless Functions
 
 function Get-MerakiSSIDs() {
@@ -8,13 +9,14 @@ function Get-MerakiSSIDs() {
             ValueFromPipeline = $true,
             ValueFromPipelineByPropertyName = $true
         )]
+        [Alias('NetworkId')]
         [string]$id
     )
 
     $Uri = "{0}/networks/{1}/wireless/ssids" -f $BaseURI, $id
     $Headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
     return $response
     <#
@@ -40,7 +42,7 @@ function Get-MerakiSSID() {
     $Uri = "[0]/networks/{1}/wireless/ssids/{2}" -f $BaseURI, $networkId, $number
     $Headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
     return $response
     <#
@@ -71,7 +73,7 @@ function Get-MerakiWirelessStatus() {
     $Uri = '{0}/devices/{1}/wireless/status' -f $BaseURI, $serial
     $Headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
     return $response
     <#
@@ -95,18 +97,18 @@ function Get-NetworkWirelessClientConnectionStatus() {
         )]
         [string]$Id,
         [Parameter(ParameterSetName = 'dates')]
-        [ValidateScript({$_ -is [datetime]})]
+        [ValidateScript({ $_ -is [datetime] })]
         [datetime]$StartDate,
         [Parameter(ParameterSetName = 'dates')]
-        [ValidateScript({$_ -is [datetime]})]
+        [ValidateScript({ $_ -is [datetime] })]
         [DateTime]$EndDate,
         [Parameter(ParameterSetName = 'days')]
-        [ValidateScript({$_ -is [int]})]
+        [ValidateScript({ $_ -is [int] })]
         [int]$Days,
-        [ValidateSet('2.5','5','6')]
+        [ValidateSet('2.5', '5', '6')]
         [string]$Band,
         [string]$SSID,
-        [ValidateScript({$_ -is [int]})]
+        [ValidateScript({ $_ -is [int] })]
         [int]$VLAN,
         [string]$APTag
     )
@@ -166,9 +168,10 @@ function Get-NetworkWirelessClientConnectionStatus() {
             $Usr += "?{0}" -f $Query
         }
         try {
-            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers
+            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
-        } catch {
+        }
+        catch {
             throw $_
         }
     }
@@ -212,9 +215,253 @@ function Get-MerakiWirelessAirMarshal() {
     $Headers = Get-Headers
 
     try {
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
         return $response
-    } catch {
+    }
+    catch {
         throw $_
+    }
+}
+
+function Get-MerakiWirelessUsageHistory() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [int]$DaysPast,
+        [ValidateSet(300, 600, 1200, 3600, 14400, 86400)]
+        [int]$Resolution,
+        [switch]$AutoResolution,
+        [Parameter(
+            ValueFromPipelineByPropertyName
+        )]
+        [string]$ClientId,
+        [Parameter(
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('DeviceSerial')]
+        [string]$Serial,
+        [string]$APTag,
+        [ValidateSet('2.4', '5', '6')]
+        [string]$Band,
+        [Int]$SsidNumber
+    )
+
+    Begin {
+        $Headers = Get-Headers
+        if ($DaysPast) {
+            $Seconds = ([Timespan]::FromDays($DaysPast)).TotalSeconds    
+            $qParams = "?timespan={0}" -f $Seconds
+        }
+
+        If ($Resolution) {
+            if ($qParams) {
+                $qParams = "{0}&" -f $qParams
+            }
+            else {
+                $qParams = "{0}?" -f $qParams
+            }
+            $qParams = "{0}resolution={1}" -f $qParams, $Resolution
+        }
+        if ($AutoResolution) {
+            if ($qParams) {
+                $qParams = "{0}&" -f $qParams
+            }
+            else {
+                $qParams = "{0}?" -f $qParams
+            }
+            $qParams = "{0}autoResolution=true" -f $qParams
+        }
+        if ($APTag) {
+            if ($qParams) {
+                $qParams = "{0}&" -f $qParams
+            }
+            else {
+                $qParams = "{0}?" -f $qParams
+            }
+            $qParams = "{0}apTag={1}" -f $qParams, $APTag
+        }
+        if ($Band) {
+            if ($qParams) {
+                $qParams = "{0}&" -f $qParams
+            }
+            else {
+                $qParams = "{0}?" -f $qParams
+            }
+            $qParams = "{0}band={1}" -f $qParams, $Band
+        }
+        if ($SsidNumber) {
+            if ($qParams) {
+                $qParams = "{0}&" -f $qParams
+            }
+            else {
+                $qParams = "{0}?" -f $qParams
+            }
+            $qParams = "{0}ssid={1}" -f $qParams, $SsidNumber
+        }
+    }
+
+    Process {
+
+        $Uri = "{0}/networks/{1}/wireless/usageHistory" -f $BaseURI, $Id
+
+        if ($ClientId) {
+            if ($qParams) {
+                $qParams = "{0}&" -f $qParams
+            } else {
+                $qParams = "{0}?" -f $qParams
+            }
+            $qParams = "{0}clientId={1}" -f $qParams, $ClientId
+        }
+        if ($Serial) {
+            if ($qParams) {
+                $qParams = "{0}&" -f $qParams
+            } else {
+                $qParams = "{0}?" -f $qParams
+            }
+            $qParams = "{0}deviceSerial={1}" -f $qParams, $Serial
+        }
+
+        $Uri = "{0}{1}" -f $Uri, $qParams
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            return $response
+        }
+        catch {
+            throw $_
+        }               
+    }
+}
+
+function Get-MerakiWirelessDataRateHistory() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [int]$DaysPast = 1,
+        [ValidateSet(300, 600, 1200, 3600, 14400, 86400)]
+        [int]$TimeResolution,
+        [switch]$AutoResolution,
+        [Parameter(
+            ValueFromPipelineByPropertyName
+        )]
+        [string]$ClientId,
+        [Parameter(
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('DeviceSerial')]
+        [string]$Serial,
+        [string]$APTag,
+        [Int]$SsidNumber,
+        [switch]$ExcludeNoData
+    )
+
+    Begin {
+        $Headers = Get-Headers
+        if ($DaysPast) {
+            $Seconds = ([Timespan]::FromDays($DaysPast)).TotalSeconds    
+            $qParams = "?timespan={0}" -f $Seconds
+        }
+
+        If ($Resolution) {
+            if ($qParams) {
+                $qParams = "{0}&" -f $qParams
+            }
+            else {
+                $qParams = "{0}?" -f $qParams
+            }
+            $qParams = "{0}resolution={1}" -f $qParams, $Resolution
+        }
+        if ($AutoResolution) {
+            if ($qParams) {
+                $qParams = "{0}&" -f $qParams
+            }
+            else {
+                $qParams = "{0}?" -f $qParams
+            }
+            $qParams = "{0}autoResolution=true" -f $qParams
+        }
+        if ($APTag) {
+            if ($qParams) {
+                $qParams = "{0}&" -f $qParams
+            }
+            else {
+                $qParams = "{0}?" -f $qParams
+            }
+            $qParams = "{0}apTag={1}" -f $qParams, $APTag
+        }
+        if ($Band) {
+            if ($qParams) {
+                $qParams = "{0}&" -f $qParams
+            }
+            else {
+                $qParams = "{0}?" -f $qParams
+            }
+            $qParams = "{0}band={1}" -f $qParams, $Band            
+        }
+        if ($Ssid) {
+            if ($qParams) {
+                $qParams = "{0}&" -f $qParams
+            }
+            else {
+                $qParams = "{0}?" -f $qParams
+            }            
+            $qParams = "{0}ssid={1}" -f $qParams, $SsidNumber
+        }
+    }
+
+    Process {
+        $QueryParams=$null
+
+        $Uri = "{0}/networks/{1}/wireless/dataRateHistory" -f $BaseURI, $Id
+
+        if ($ClientId) {
+            if ($qParams) {
+                $QueryParams = "{0}&clientId={1}" -f $qParams, $ClientId
+            } else {
+                $QueryParams = "?clientId={0}" -f $ClientId
+            }
+        }
+        if ($Serial) {
+            if ($QueryParams) {
+                $QueryParams = "{0}&deviceSerial={1}" -f $QueryParams, $Serial
+            } else {
+                if ($qParams) {
+                    $QueryParams = "{0}&deviceSerial={1}" -f $qParams, $Serial
+                } else {
+                    $QueryParams = "?deviceSerial={0}" -f $Serial
+                }
+            }
+        }
+
+        $Uri = "{0}{1}" -f $Uri, $QueryParams
+
+        try {
+            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            if ($ExcludeNoData) {
+                $result = $response |Where-Object {$null -ne $_.averageKbps -and $null -ne $_.downloadKbps -and $null -ne $_.uploadKbps}
+            } else {
+                $result = $response
+            }
+            $result | ForEach-Object {
+                if ($Serial) {
+                    $_ | Add-Member -MemberType NoteProperty -Name DeviceSerial -Value $Serial
+                }
+                if ($ClientId) {
+                    $_ | Add-Member -MemberType NoteProperty -Name ClientId -Value $ClientId
+                }
+            }
+            return $result
+        } catch {
+            throw $_
+        }
     }
 }

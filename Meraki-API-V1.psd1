@@ -127,8 +127,6 @@ FunctionsToExport = @(`
     'Get-MerakiSwitchStackRoutingInterface', 
     'Get-MerakiSwitchStackRoutingInterfaces', 
     'Get-MerakiSwitchStackRoutingInterfaceDHCP', 
-    'Get-MerakiSwitchStackRoutingInterfacesDHCP', 
-    'Get-MerakiSwitchStackRoutingInterfacesDHCP',
     'Get-MerakiSwitchStack', 
     'Get-MerakiSwitchStackRoutingStaticRoutes', 
     'Get-MerakiSwitchPort',
@@ -195,7 +193,10 @@ FunctionsToExport = @(`
     'Set-MerakiApplianceL3FirewallRules',
     'Add-MerakiApplianceL3FirewallRule',
     'Set-MerakiApplianceL3FirewallRule',
-    'Remove-MerakiApplianceL3FirewallRule'
+    'Remove-MerakiApplianceL3FirewallRule',
+    'Get-MerakiWirelessUsageHistory',
+    'Get-MerakiNetworkTraffic',
+    'Get-MerakiWirelessDataRateHistory'
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
@@ -271,7 +272,8 @@ AliasesToExport = @(`
     #'RemoveMSStackRouteInt',
     'GMNetCltBWUsage',
     #'RSWStkRteInt',
-    'Get-MerakiNetworkSwitchStack'
+    'Get-MerakiNetworkSwitchStack',
+    'Get-MerakiSwitchStackRoutingInterfacesDHCP'
     #'UMSRteInt',
     #'SetMSRteIntDHC
     #'AMSSSwitch',

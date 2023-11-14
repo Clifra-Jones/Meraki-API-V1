@@ -1,3 +1,4 @@
+using namespace System.Collections.Generic
 #Meraki Network Functions
 
 #region Networks
@@ -11,7 +12,7 @@ function Get-MerakiNetwork() {
     $Uri = "{0}/networks/{1}" -f $BaseURI, $networkID
     $Headers = Get-Headers
 
-    $Response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+    $Response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
     return $Response
     <#
@@ -52,7 +53,7 @@ function Set-MerakiNetwork() {
 
     $body = $_body | ConvertTo-Json -Depth 5 -Compress
     try {
-        $response = Invoke-RestMethod -Method Put -Uri $Uri -Headers $Headers -Body $body
+        $response = Invoke-RestMethod -Method Put -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response        
     }
     catch {
@@ -98,7 +99,7 @@ function Connect-MerakiNetworkToTemplate() {
     $Template = Get-MerakiOrganizationConfigTemplate -ConfigTemplateId $ConfigTemplateId
 
     if (-not $Template) {
-        throw "Invalue ConfigTemplateId"
+        throw "Invalid ConfigTemplateId"
     }
 
     $_Body = @{
@@ -107,7 +108,7 @@ function Connect-MerakiNetworkToTemplate() {
     }
     $body = $_Body | ConvertTo-Json -Compress
     try {
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -Body $body
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     }
     catch {
@@ -145,7 +146,7 @@ function Disconnect-MerakiNetworkFromTemplate() {
     $body = @{"retainConfigs" = $RetainConfigs.IsPresent} | ConvertTo-Json -Compress
 
     try {
-        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Header -Body $body
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Header -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
         throw $_
@@ -169,8 +170,12 @@ function Merge-MerakiNetworks() {
     Param(
         [Parameter(Mandatory = $true)]
         [string]$Name,
-        [Parameter(Mandatory = $true)]
-        [strng[]]$NetworkIds,
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
         [string]$EnrollmentString,
         [Parameter(ParameterSetName = 'org')]
         [string]$OrgID,
@@ -183,43 +188,53 @@ function Merge-MerakiNetworks() {
         return
     }
  #>
-    if (-not $OrgID) {
-        $config = Read-Config
-        if ($profileName) {
-            $OrgID = $config.profiles.$profileName
-            if (-not $OrgID) {
-                throw "Invalid profile name!"
+    Begin {
+        if (-not $OrgID) {
+            $config = Read-Config
+            if ($profileName) {
+                $OrgID = $config.profiles.$profileName
+                if (-not $OrgID) {
+                    throw "Invalid profile name!"
+                }
+            } else {
+                $OrgID = $config.profiles.default
             }
-        } else {
-            $OrgID = $config.profiles.default
         }
+
+        $Networks = [List[string]]::New()
+
+        $Header = Get-Headers
+        $Uri = "{0}/organizations/{1}/networks/combine" -f $BaseURI, $OrgID
+   }
+
+    Process {
+        $Networks.Add($Id)
     }
 
-    $Header = Get-Headers
+    End {
 
-    $Uri = "{0}/organizations/{1}/networks/combine" -f $BaseURI, $OrgID
+        $_Body = @{
+            "name" = $Name
+            "networkIds" = ($Networks.ToArray())
+        }
+        if ($EnrollmentString) { $_Body.Add("enrollmentString", $EnrollmentString) }
 
-    $_Body = @{
-        "name" = $Name
-        "networkIds" = $NetworkIds
-    }
-    if ($EnrollmentString) { $_Body.Add("enrollmentString", $EnrollmentString) }
+        $body = $_Body | ConvertTo-Json -Compress
 
-    $body = $_Body | ConvertTo-Json -Compress
-
-    if ($PSCmdlet.ShouldProcess('Merge',"Networks $($Networks -join ',')")) {
-        try {
-            $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Header -Body $Body
-            return $response
-        } catch {
-            throw $_
+        if ($PSCmdlet.ShouldProcess('Merge',"Networks $($Networks -join ',')")) {
+            try {
+                $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Header -Body $Body -PreserveAuthorizationOnRedirect
+                return $response
+            } catch {
+                throw $_
+            }
         }
     }
     <#
     .SYNOPSIS
     Combine multiple networks into a single network.
     .DESCRIPTION
-    Combine multipl Meraki networks into a single network.
+    Combine multiple Meraki networks into a single network.
     .PARAMETER Name
     The name of the combined network.
     .PARAMETER NetworkIds
@@ -228,7 +243,7 @@ function Merge-MerakiNetworks() {
     .PARAMETER EnrollmentString
     A unique identifier which can be used for device enrollment or easy access through the Meraki SM Registration page or the Self Service Portal. 
     Please note that changing this field may cause existing bookmarks to break. All networks that are part of this combined network will have their enrollment string appended by '-network_type'. 
-    If left empty, all exisitng enrollment strings will be deleted.
+    If left empty, all existing enrollment strings will be deleted.
     .PARAMETER OrgID
     The Organization ID
     .PARAMETER profileName
@@ -253,7 +268,7 @@ function Split-MerakiNetwork() {
 
     if ($PSCmdlet.ShouldProcess('Split',"Network $($Network.NAme)")) {
         try {
-            $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Header 
+            $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Header -PreserveAuthorizationOnRedirect
             return $response
         } catch {
             throw $_
@@ -290,8 +305,12 @@ function Get-MerakiNetworkDevices () {
     Process {
     
         $Uri = "{0}/networks/{1}/devices" -f $BaseURI, $id
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
-        return $response
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            return $response
+        } catch {
+            throw $_
+        }
     }
     <#
         .SYNOPSIS
@@ -307,7 +326,7 @@ Set-Alias -Name GMNetDevs -Value Get-MerakiNetworkDevices -Option ReadOnly
 
 
 function Get-MerakiNetworkEvents() {
-    [cmdletbinding()]
+    [CmdletBinding()]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -417,7 +436,7 @@ function Get-MerakiNetworkEvents() {
 
         $body = $oBody | ConvertTo-Json
 
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Body $body -Headers $Headers
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Body $body -Headers $Headers -PreserveAuthorizationOnRedirect
         if ($first -or $last -or $prev -or $next) {
             $paging.prev = $response.pageStartAt
             $paging.next = $response.pageEndAt
@@ -472,9 +491,9 @@ function Get-MerakiNetworkEvents() {
     .PARAMETER endingBefore
     Date time to pull events before.
     .PARAMETER first
-    Pull the forst page.
+    Pull the first page.
     .PARAMETER last
-    Pull ther last page.
+    Pull the last page.
     .PARAMETER prev
     Pull the previous page.
     .PARAMETER next
@@ -520,7 +539,7 @@ function Get-MerakiNetworkEventTypes() {
     $Uri = "{0}/networks/{1}/events/eventTypes" -f $BaseURI, $id
     $Headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
     return $response
     <#
@@ -546,30 +565,69 @@ function Get-MerakiNetworkClients () {
         [Alias("NetworkId")]
         [string]$id,
         [Parameter(ParameterSetName = 'dates')]
+        [Parameter(ParameterSetName = 'datesWithOrg')]
+        [Parameter(ParameterSetName = 'datesWithProfile')]
         [ValidateScript({$_ -is [DateTime]})]
+        [Alias('StartTime')]
         [datetime]$StartDate,
+
         [Parameter(ParameterSetName = 'dates')]
+        [Parameter(ParameterSetName = 'datesWithOrg', Mandatory)]
+        [Parameter(ParameterSetName = 'datesWithProfile', Mandatory)]
         [ValidateScript({$_ -is [DateTime]})]
+        [Alias('StartTime')]
         [datetime]$EndDate,
+
         [Parameter(ParameterSetName = 'days')]
+        [Parameter(ParameterSetName = 'daysWithOrg', Mandatory)]
+        [Parameter(ParameterSetName = 'daysWithProfile', Mandatory)]
         [ValidateScript({$_ -is [int]})]
+        [ValidateRange(1,31)]
         [int]$Days,
+
+        [ValidateScript({$_ -is [int]})]
+        [int]$PerPage,
+
+        [ValidateScript({$_ -is [int]})]
+        [ValidateRange(0,1000)]
+        [int]$Pages = 1,
+
         [string]$Statuses,
+
+        [ValidateScript({$_ -match "^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})|([0-9a-fA-F]{4}\\.[0-9a-fA-F]{4}\\.[0-9a-fA-F]{4})$"})]
         [string]$Mac,
+
+        [ValidateScript({$_ -match "\A(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\z"})]
         [string]$IP,
+
         [string]$OS,
         [string]$Description,
+
+        [ValidateScript({$_ -is [int]})]
+        [ValidateRange(1,4096)]
         [string]$VLAN,
-        [string[]]$recentDeviceConnections
+
+        [string[]]$recentDeviceConnections,
+
+        [Parameter(ParameterSetName = 'org', Mandatory)]
+        [Parameter(ParameterSetName = 'daysWithOrg', Mandatory)]
+        [Parameter(ParameterSetName = 'datesWithOrg', Mandatory)]
+        [string]$OrgID,
+
+        [Parameter(ParameterSetName = 'profile', Mandatory)]
+        [Parameter(ParameterSetName = 'daysWithProfile', Mandatory)]
+        [Parameter(ParameterSetName = 'datesWithProfile', Mandatory)]       
+        [string]$profileName
     )
     Begin {
-<#         if ($Days) {
+    <#
+         if ($Days) {
             if ($StartDate) {
-                Write-Host "The paramter StartDate cannot be used with the parameter Days" -ForegroundColor Red
+                Write-Host "The parameter StartDate cannot be used with the parameter Days" -ForegroundColor Red
                 return
             }
             if ($EndDate) {
-                Write-Host "The paramter EndDate cannot be used with the parameter Days" -ForegroundColor Red
+                Write-Host "The parameter EndDate cannot be used with the parameter Days" -ForegroundColor Red
                 return
             }
         }
@@ -580,10 +638,23 @@ function Get-MerakiNetworkClients () {
         }
     
         if ($EndDate -and (-not $StartDate)) {
-            Write-Host "The parameter endDate requires the prameter StartDate" -ForegroundColor Red
+            Write-Host "The parameter endDate requires the parameter StartDate" -ForegroundColor Red
             return
         }
- #>        
+    #>        
+        If (-not $OrgID) {
+            $config = Read-Config
+            if ($profileName) {
+                $OrgId = $config.profiles.$profileName
+                if (-not $OrgID) {
+                    throw "Invalid profile name!"
+                }
+            } else {
+                $OrgID = $config.profiles.default
+            }
+        }
+
+        $Results = [List[PsObject]]::New()
         $Headers = Get-Headers
         Set-Variable -Name Query 
         if ($StartDate) {
@@ -598,11 +669,11 @@ function Get-MerakiNetworkClients () {
             $Query += "t1={0}" -f $_endDate
         }
         if ($Days) {
-            $TS = [Timespan]::FromDays($Days)
+            $TS = [TimeSpan]::FromDays($Days)
             if ($Query) {
                 $Query += "&"
             }
-            Query += "timespan={0}" -f ($TS.TotalSeconds)
+            $Query += "timespan={0}" -f ($TS.TotalSeconds)
         }
         if ($Statuses) {
             if ($Query) {
@@ -646,25 +717,66 @@ function Get-MerakiNetworkClients () {
             }
             $Query += "recentDeviceConnections={0}" -f $recentDeviceConnections
         }
-   }
 
+        if ($PerPage) {
+            if ($Query) {
+                $Query += "&"
+            }
+            $Query += "perPage=1000"
+        }
+    
+   }
     
     Process {
         $Uri = "{0}/networks/{1}/clients" -f $BaseURI, $Id
         if ($Query) {
             $Uri += "?{0}" -f $Query
         }
-        try {
-            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers
-            $response | ForEach-Object {
-                if ($null -eq $_.description) {
-                    $_.description = $_.mac
-                }
+        try {            
+            #$response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers
+            $response = Invoke-WebRequest -Method Get -Uri $Uri -Headers $Headers
+            [List[PsObject]]$result = $response.Content | ConvertFrom-Json
+            if ($result) {
+                $Results.AddRange($result)
             }
-            return $response
+            $page = 1
+            if ($Pages -eq 1) {
+                return $Results.ToArray()
+            } else {
+                $done = $false
+                do {
+                    if ($response.RelationLink['next']) {
+                        $Uri = $response.RelationLink['next']
+                        $response = Invoke-WebRequest -Method Get -Uri $Uri -Headers $Headers
+                        [List[PsObject]]$result = $response.Content | ConvertFrom-Json
+                        if ($result) {
+                            $Results.AddRange($result)
+                        }
+                        $page += 1
+                        if ($page -eq $Pages) {
+                            $done = $true
+                        }
+                    } else {
+                        $done = $true
+                    }
+                } until ($done)
+            }
+
         } catch {
+            Write-Host $id
             throw $_
         }
+    }
+
+    End {
+        $Results | ForEach-Object {
+            if ($null -eq $_.description) {
+                $_.description = $_.mac
+            }
+            $_ | Add-Member -MemberType NoteProperty -Name NetworkId -Value $id
+            $_ | Add-Member -MemberType NoteProperty -Name ClientId -Value $_.id
+        }
+        return $Results.ToArray()
     }
     <#
     .SYNOPSIS 
@@ -678,7 +790,11 @@ function Get-MerakiNetworkClients () {
     .PARAMETER EndDate
     The ending date to retrieve client connections (cannot be more than 31 days from today)
     .PARAMETER Days
-    Number of days back from today to retrieve cleint connections. If specified do not specify StartDate or EndDate (cannot be more than 31 days from today)
+    Number of days back from today to retrieve client connections. If specified do not specify StartDate or EndDate (cannot be more than 31 days from today)
+    .PARAMETER PerPage
+    Sets the number of items returned per page. 
+    .PARAMETER Pages
+    Sets the number of pages returned. Default is 1, 0 returns all pages.
     .PARAMETER Statuses
     Filters clients based on status. Can be one of 'Online' or 'Offline'.
     .PARAMETER Mac
@@ -727,11 +843,11 @@ function Get-MerakiNetworkClientApplicationUsage() {
     Begin {
         if ($Days) {
             if ($StartDate) {
-                Write-Host "The paramter StartDate cannot be used with the parameter Days" -ForegroundColor Red
+                Write-Host "The parameter StartDate cannot be used with the parameter Days" -ForegroundColor Red
                 return
             }
             if ($EndDate) {
-                Write-Host "The paramter EndDate cannot be used with the parameter Days" -ForegroundColor Red
+                Write-Host "The parameter EndDate cannot be used with the parameter Days" -ForegroundColor Red
                 return
             }
         }
@@ -742,7 +858,7 @@ function Get-MerakiNetworkClientApplicationUsage() {
         }
     
         if ($EndDate -and (-not $StartDate)) {
-            Write-Host "The parameter endDate requires the prameter StartDate" -ForegroundColor Red
+            Write-Host "The parameter endDate requires the parameter StartDate" -ForegroundColor Red
             return
         }
     
@@ -798,7 +914,7 @@ function Get-MerakiNetworkClientApplicationUsage() {
         }
 
         try {
-            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
             throw $_
@@ -816,7 +932,7 @@ function Get-MerakiNetworkClientApplicationUsage() {
     .PARAMETER Clients
     A array of client keys, MACs or IPs.
     .PARAMETER SSIDNumber
-    An SSID number to include. If not specified, eveusage histories application usagents for all SSIDs will be returned.
+    An SSID number to include. If not specified, usage histories application usage for all SSIDs will be returned.
     .PARAMETER StartDate
     The starting date to retrieve date (Cannot be more than 31 days before today).
     .PARAMETER EndDate
@@ -857,11 +973,11 @@ function Get-MerakiNetworkClientBandwidthUsage() {
     Begin {
 <#         if ($Days) {
             if ($StartDate) {
-                Write-Host "The paramter StartDate cannot be used with the parameter Days" -ForegroundColor Red
+                Write-Host "The parameter StartDate cannot be used with the parameter Days" -ForegroundColor Red
                 return
             }
             if ($EndDate) {
-                Write-Host "The paramter EndDate cannot be used with the parameter Days" -ForegroundColor Red
+                Write-Host "The parameter EndDate cannot be used with the parameter Days" -ForegroundColor Red
                 return
             }
         }
@@ -872,7 +988,7 @@ function Get-MerakiNetworkClientBandwidthUsage() {
         }
     
         if ($EndDate -and (-not $StartDate)) {
-            Write-Host "The parameter endDate requires the prameter StartDate" -ForegroundColor Red
+            Write-Host "The parameter endDate requires the parameter StartDate" -ForegroundColor Red
             return
         }
  #>        
@@ -914,7 +1030,7 @@ function Get-MerakiNetworkClientBandwidthUsage() {
         }
 
         try {
-            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
             throw $_
@@ -924,21 +1040,50 @@ function Get-MerakiNetworkClientBandwidthUsage() {
     .SYNOPSIS
     Returns traffic consumption rates for all clients.
     .DESCRIPTION
-    Returns a timeseries of total traffic consumption rates for all clients on a network within a given timespan, in megabits per second.
+    Returns a time series of total traffic consumption rates for all clients on a network within a given timespan, in megabits per second.
     .PARAMETER id
     Network Id
     .PARAMETER StartTime
     The beginning of the timespan for the data. Must be no more than 31 days from today.
     .PARAMETER EndTime
-    The end time for the data. Must be nomore than 31 dats after StartTime.
+    The end time for the data. Must be no more than 31 days after StartTime.
     .PARAMETER Days
     Number fo days prior to today to return data.
     .PARAMETER perPage
     The number of entries per page returned. Acceptable range is 3 - 1000. Default is 1000.
     .OUTPUTS
-    Am array of useage statistics.
+    Am array of usage statistics.
     #>
 }
 
 Set-Alias -Name GMNetCltBWUsage -Value Get-MerakiNetworkClientBandwidthUsage -Option ReadOnly
 
+function Get-MerakiNetworkTraffic() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [int]$DaysBack = 1,
+        [ValidateSet('combined', 'wireless', 'switch', 'appliance')]
+        [string]$DeviceType = 'combined'
+    )
+
+    Begin {
+        $TimeSpan = [TimeSpan]::FromDays($DaysBack).TotalSeconds
+    }
+
+    Process {
+        $Uri = "{0}/networks/{1}/traffic?timespan={2}&deviceType={3}" -f $BaseURI, $Id, $TimeSpan, $DeviceType
+
+        try {
+            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+}

@@ -39,7 +39,8 @@ function ConvertFrom-UTime() {
 function Get-Headers() {
     $config = Read-Config
     $Headers = @{
-        "X-Cisco-Meraki-API-Key" = $config.APIKey
+        "Authorization" = "Bearer $($config.APIKey)"
+        "Accept" = 'application/json'
         "Content-Type" = 'application/json'
     }
     return $Headers

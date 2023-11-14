@@ -104,7 +104,7 @@ function Set-MerakiAPI() {
     .PARAMETER OrgID
     The ID of an organization to add to the profile.    
     .PARAMETER profileName
-    The name of the profile to create. If ommitted the OrgID is set as the default profile.
+    The name of the profile to create. If omitted the OrgID is set as the default profile.
     .NOTES
     If the OrgID and profileName parameters are omitted named profiles will be created based on the Organization names pulled from Meraki.
     This approach may not be the best as most of the time these names will have multiple words and spaces and just be too long.
@@ -159,7 +159,7 @@ function Get-MerakiOrganizations() {
     } else {
         $Headers = Get-Headers
     }
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
     
     return $response
     <#
@@ -205,7 +205,7 @@ function Get-MerakiOrganization() {
     $Uri = "{0}/organizations/{1}" -f $BaseURI, $OrgId
     $Headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
     return $response
     <#
@@ -252,7 +252,7 @@ function New-MerakiOrganization() {
     $body = $_Body | ConvertTo-Json -Depth 5 -Compress
 
     try {
-        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     }
     catch {
@@ -328,7 +328,7 @@ function Set-MerakiOrganization() {
     $body = $_Body | ConvertTo-Json -Depth 5 -Compress
 
     try {
-        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     }
     catch {
@@ -338,7 +338,7 @@ function Set-MerakiOrganization() {
     .SYNOPSIS
     Update an organization
     .DESCRIPTION
-    Update a erwki Organization
+    Update a Meraki Organization
     .PARAMETER OrgID
     The organization Id
     .PARAMETER profileName
@@ -387,7 +387,7 @@ function Get-MerakiNetworks() {
         }
     }
     $Uri = "{0}/organizations/{1}/networks" -f $BaseURI, $orgID
-    if ($ConfigTeplateId){
+    if ($ConfigTemplateId){
         $Uri = "{0}?configTemplateId=" -f $Uri, $ConfigTemplateId
     }
 
@@ -401,7 +401,7 @@ function Get-MerakiNetworks() {
 
     $Headers = Get-Headers
     try {
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
         If ($IncludeTemplates.IsPresent) {
             $templates = @{}
             Get-MerakiOrganizationConfigTemplates | ForEach-Object {
@@ -489,7 +489,7 @@ function Add-MerakiNetwork() {
     $body = $_Body | ConvertTo-Json -Depth 5 -Compress
 
     try {
-        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response        
     } catch {
         throw $_
@@ -512,62 +512,13 @@ function Add-MerakiNetwork() {
     .PARAMETER CopyFromNetworkId
     The ID of the network to copy configuration from. Other provided parameters will override the copied configuration, except type which must match this network's type exactly.
     .PARAMETER OrgId
-    Optional Organizational ID. if this parameter is notprovided the default Organization ID will be retrieved from the settings file.
-    If this prameter is provided it will override the default Organization ID in the settings file.
+    Optional Organizational ID. if this parameter is not provided the default Organization ID will be retrieved from the settings file.
+    If this parameter is provided it will override the default Organization ID in the settings file.
     .OUTPUTS
-    An object containing thenew network.
+    An object containing the new network.
     #>
 }
 
-function Merge-MerakiNetworks() {
-    [CmdletBinding(DefaultParameterSetName = 'default')]
-    Param(
-        [Parameter(Mandatory = $true)]
-        [string]$Name,
-        [Parameter(Mandatory = $true)]
-        [string[]]$NetworkIds,
-        [string]$EnrollmentString,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgID,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$profileName
-    )
-
-    If ($OrgId -and $profileName) {
-        Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
-        return
-    }
-
-    if (-not $orgID) {
-        $config = Read-Config
-        if ($profileName) {
-            $orgID = $config.profiles.$profileName
-            if (-not $orgID) {
-                throw "Invalid profile name!"
-            }
-        } else {
-            $orgID = $config.profiles.default
-        }
-    }
-    $Uri = "{0}/organizations/{1}/networks" -f $BaseURI, $orgID
-    $Headers = Get-Headers
-
-    $_Body = @{
-        name = $Name
-        networkIds = $NetworkIds
-    }
-
-    if ($EnrollmentString) { $_Body.Add("enrollmentString", $EnrollmentString) }
-
-    $body = $_Body | ConvertTo-Json -Depth 4 -Compress
-
-    try {
-        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers -$Headers -Body $body
-        return $response
-    } catch {
-        throw $_
-    }
-}
 #endregion
 
 function Get-MerakiOrganizationConfigTemplates() {
@@ -599,14 +550,14 @@ function Get-MerakiOrganizationConfigTemplates() {
     $Uri = "{0}/organizations/{1}/configTemplates" -f $BaseURI, $OrgID
     $headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $headers
+    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $headers -PreserveAuthorizationOnRedirect
 
     return $response
     <# 
     .SYNOPSIS
     Get the Organization Configuration Templates
     .DESCRIPTION
-    Get the cpnfiguration templates for a given organization.
+    Get the configuration templates for a given organization.
     .PARAMETER OrgID
     The Organization Id. If omitted uses the default profile.
     .PARAMETER profileName
@@ -619,45 +570,66 @@ function Get-MerakiOrganizationConfigTemplates() {
 Set-Alias -Name GMOrgTemplates -value Get-MerakiOrganizationConfigTemplates -Option ReadOnly
 
 function Get-MerakiOrganizationConfigTemplate () {
-    [CmdletBinding(DefaultParameterSetName = 'defaulr')]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
-        [Parameter(Mandatory = $true)]
-        [string]$TemplateId,
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('TemplateId')]
+        [string]$Id,
         [Parameter(ParameterSetName = 'org')]
         [string]$OrgID,
         [Parameter(ParameterSetName = 'profile')]
         [string]$profileName
     )
 
-    If ($OrgId -and $profileName) {
-        Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
-        return
+    Begin {
+        If ($OrgId -and $profileName) {
+            Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
+            return
+        }
+
+        if (-not $OrgID) {
+            $config = Read-Config
+            if ($profileName) {
+                $OrgID = $config.profiles.$profileName
+                if (-not $OrgID) {
+                    throw "Invalid profile name!"
+                }
+            } else {
+                $OrgID = $config.profiles.default
+            }
+        }
+
+        $Headers = Get-Headers
     }
 
-    if (-not $OrgID) {
-        $config = Read-Config
-        if ($profileName) {
-            $OrgID = $config.profiles.$profileName
-            if (-not $OrgID) {
-                throw "Invalid profile name!"
-            }
-        } else {
-            $OrgID = $config.profiles.default
+    Process {
+        $Uri = "{0}/organizations/{1}/configTemplates/{2}" -f $BaseURI, $OrgID, $Id
+
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            return $response
+        }
+        catch {
+            throw $_
         }
     }
-
-    $Headers = Get-Headers
-
-    $Uri = "{0}/organizations/{1}/configTemplates/{2}" -f $BaseURI, $OrgID, $TemplateId
-
-    try {
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
-        return $response
-    }
-    catch {
-        throw $_
-    }
-
+    <#
+    .SYNOPSIS
+    Retrieve a configuration Template
+    .DESCRIPTION
+    Retrieves the configuration template designated by the provided template Id.
+    .PARAMETER Id
+    The ID of the template to retrieve.
+    .PARAMETER OrgID
+    The Organization ID. Of omitted this is puled from the default configuration.
+    .PARAMETER profileName
+    The saved profile name to use. Cannot be used ith the OrgId parameter.
+    .OUTPUTS
+    A configuration template object.
+    #>
 }
 
 function Get-MerakiOrganizationDevices() {
@@ -677,7 +649,7 @@ function Get-MerakiOrganizationDevices() {
     If (-not $OrgID) {
         $config = Read-Config
         if ($profileName) {
-            $OrgID = $config.profiles.$profilename
+            $OrgID = $config.profiles.$profileName
             if (-not $OrgID) {
                 throw "Invalid profile name!"
             }
@@ -689,7 +661,7 @@ function Get-MerakiOrganizationDevices() {
     $Uri = "{0}/organizations/{1}/devices" -f $BaseURI, $OrgID
     $Headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
     return $response
     <#
@@ -698,9 +670,9 @@ function Get-MerakiOrganizationDevices() {
     .DESCRIPTION
     Get all devices in an organization.
     .PARAMETER OrgID
-    The Organization Id. If ommitted uses the default profile.
+    The Organization Id. If omitted uses the default profile.
     .PARAMETER profileName
-    Profile name to use to get the devices. If ommitted uses the default profile.
+    Profile name to use to get the devices. If omitted uses the default profile.
     .OUTPUTS
     AN array of Meraki Device objects.
     #>
@@ -709,7 +681,7 @@ function Get-MerakiOrganizationDevices() {
 Set-Alias GMOrgDevs -Value Get-MerakiOrganizationDevices -Option ReadOnly
 
 function Get-MerakiOrganizationAdmins() {
-    [CmdletBinding(DefaultParameterSetName = 'defaulr')]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(ParameterSetName = 'org')]
         [string]$OrgID,
@@ -737,16 +709,16 @@ function Get-MerakiOrganizationAdmins() {
     $Uri = "{0}/organizations/{1}/admins" -f $BaseURI, $OrgID
     $Headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $uri -Headers $Headers
+    $response = Invoke-RestMethod -Method GET -Uri $uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
     return $response
     <#
     .SYNOPSIS
     Get Organization Admins.
     .PARAMETER OrgID
-    The Organization ID. If ommitted uses the default profile.
+    The Organization ID. If omitted uses the default profile.
     .PARAMETER profileName
-    The profile name to get admins with. If ommitted used the default profile.
+    The profile name to get admins with. If omitted used the default profile.
     .OUTPUTS
     An array of Meraki Admin objects.
     #>
@@ -756,66 +728,53 @@ Set-Alias -name GMOrgAdmins -Value Get-MerakiOrganizationAdmins -Option ReadOnly
 
 
 function Get-MerakiOrganizationConfigurationChanges() {
-    [CmdletBinding(DefaultParameterSetName = 'default')]
-    Param(                      
+    [CmdletBinding(DefaultParameterSetName='default')]
+    Param(       
         [Parameter(ParameterSetName = 'dates')]
-        [Parameter(ParameterSetName = 'org1')]
-        [Parameter(ParameterSetName = 'profile1')]
+        [Parameter(ParameterSetName = 'datesWithOrg')]
+        [Parameter(ParameterSetName = 'datesWithProfile')]
         [ValidateScript({$_ -is [DateTime]})]
         [Alias('StartTime')]
         [datetime]$StartDate,
-        [Parameter(ParameterSetName = 'dates')]
-        [Parameter(ParameterSetName = 'org1')]
-        [Parameter(ParameterSetName = 'profile1')]
+
+        [Parameter(ParameterSetName = 'dates', Mandatory)]
+        [Parameter(ParameterSetName = 'datesWithOrg', Mandatory)]
+        [Parameter(ParameterSetName = 'datesWithProfile', Mandatory)]
         [ValidateScript({$_ -is [DateTime]})]
         [Alias('EndTime')]
-        [DateTime]$EndDate,        
-        [Parameter(ParameterSetName = 'days')]
-        [Parameter(ParameterSetName = 'org2')]
-        [Parameter(ParameterSetName = 'profile2')]
+        [DateTime]$EndDate,
+
+        [Parameter(ParameterSetName = 'days', Mandatory)]
+        [Parameter(ParameterSetName = 'daysWithOrg', Mandatory)]
+        [Parameter(ParameterSetName = 'daysWithProfile', Mandatory)]
         [ValidateScript({$_ -is [int32]})]
         [Alias('TimeSpan')]
+        [ValidateRange(0,31)]
         [Int]$Days,
+
         [ValidateScript({$_ -is [int]})]
+        [ValidateRange(1,1000)]
         [int]$PerPage,
+
+        [ValidateScript({$_ -is [int]})]
+        [ValidateRange(0,1000)]
+        [int]$Pages = 1,
+        
         [string]$NetworkID,
+        
         [string]$AdminID,
-        [Parameter(ParameterSetName = 'org')]
-        [Parameter(ParameterSetName = 'org1')]
-        [Parameter(ParameterSetName = 'org2')]
+        
+        [Parameter(ParameterSetName = 'org', Mandatory)]
+        [Parameter(ParameterSetName = 'daysWithOrg', Mandatory)]
+        [Parameter(ParameterSetName = 'datesWithOrg', Mandatory)]
         [string]$OrgID,
-        [Parameter(ParameterSetName = 'profile')]
-        [Parameter(ParameterSetName = 'profile1')]
-        [Parameter(ParameterSetName = 'profile2')]
-        [string]$profileName
+
+        [Parameter(ParameterSetName = 'profile', Mandatory)]
+        [Parameter(ParameterSetName = 'daysWithProfile', Mandatory)]
+        [Parameter(ParameterSetName = 'datesWithProfile', Mandatory)]
+        [string]$ProfileName
     )
-<#  
-    If ($OrgId -and $profileName) {
-        Write-Host "The parameters OrdId and ProfileName cannot be used together!" -ForegroundColor Red
-        return
-    }
 
-    if ($Days) {
-        if ($StartDate) {
-            Write-Host "The Days parameter cannot be used with the StartDate parameter." -BackgroundColor Red
-            return
-        }
-        if ($EndDate) {
-            Write-Host "The Days parameter cannot be used with the EndDate parameter." -BackgroundColor Red
-            return
-        }
-    }
-
-    if ($StartDate -and (-not $EndDate)) {
-        Write-Host "The EndDate Parameter is required with the StartDate Parameter." -BackgroundColor Red
-        return
-    }
-
-    if ($endDate -and (-not $StartDate)) {
-        Write-Host "The StartDate parameter is required with the EndDate parameter." -BackgroundColor Red
-        return
-    }
- #>
     If (-not $OrgID) {
         $config = Read-Config
         if ($profileName) {
@@ -827,6 +786,8 @@ function Get-MerakiOrganizationConfigurationChanges() {
             $OrgID = $config.profiles.default
         }
     }
+
+    $Results = [List[PsObject]]::New()
 
     $Uri = "{0}/organizations/{1}/configurationChanges" -f $BaseURI, $OrgID
     $Headers = Get-Headers
@@ -840,11 +801,6 @@ function Get-MerakiOrganizationConfigurationChanges() {
     if ($EndTime) {
         $T1 = "{0:s}" -f $EndTime
         $psBody.add("t1", $T1)
-    }
-
-    if ($TimeSpan) {
-        $seconds = [timespan]::FromDays($timespan).TotalSeconds
-        $psBody.Add("timespan", $seconds)
     }
 
     if ($PerPage) {
@@ -861,26 +817,56 @@ function Get-MerakiOrganizationConfigurationChanges() {
 
     $Body = $psBody | ConvertTo-Json
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -body $Body -Headers $Headers
+    try {
+        $response = Invoke-WebRequest -Method GET -Uri $Uri -body $Body -Headers $Headers -PreserveAuthorizationOnRedirect
+        [List[PsObject]]$result = $response.Content | ConvertFrom-Json
+        if ($result) {
+            $Results.AddRange($result)
+        }
+        $page = 1
+        if ($Pages -ne 1) {
+            $done = $false
+            do {
+                if ($response.RelationLink['next']) {
+                    $Uri = $response.RelationLink['next']
+                    $response = Invoke-WebRequest -Method GET -Uri $Uri -Headers $Headers
+                    [List[PsObject]]$result = $response.Content | ConvertFrom-Json
+                    if ($result) {
+                        $Results.AddRange($result)
+                    }
+                    $page += 1
+                    if ($page -gt $Pages) {
+                        $done = $true
+                    }
+                } else {
+                    $done = $true
+                }
+            } until ($done)
+        }
 
-    return $response
+        return $Result.ToArray()
+     } catch {
+        throw $_
+     }
     <#
     .SYNOPSIS 
     Get Organization Configuration Changes
     .DESCRIPTION
-    Gets configuration chenges made to an organization's network.
+    Gets configuration changes made to an organization's network.
     .PARAMETER OrgID
-    The Organization Id. If ommitted used th default profile.
+    The Organization Id. If omitted used th default profile.
     .PARAMETER profileName
-    The profile name to use to get the changes. If ommitted used th default profile.
+    The profile name to use to get the changes. If omitted used th default profile.
     .PARAMETER StartTime
     The start time to pull changes.
     .PARAMETER EndTime
     The end time to pull changes.
-    .PARAMETER TimeSpan
-    A timespan to pull changes.
+    .PARAMETER Days
+    Number of days to pull changes
     .PARAMETER PerPage
     Number of records to pull per page.
+    .PARAMETER Pages
+    Number of pages to retrieve. 0 = all pages. Default is 1.
     .PARAMETER NetworkID
     Filter results by Network ID.
     .PARAMETER AdminID
@@ -930,7 +916,7 @@ function Get-MerakiOrganizationThirdPartyVpnPeers() {
     $Headers = Get-Headers
 
     try {
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
     
         return $response.peers 
     } catch {
@@ -938,11 +924,11 @@ function Get-MerakiOrganizationThirdPartyVpnPeers() {
     }
     <#
     .SYNOPSIS
-    Get Organization 3rd paty VPNs.
+    Get Organization 3rd party VPNs.
     .PARAMETER OrgID
-    Organization ID. If ommitted used th default profile.
+    Organization ID. If omitted used th default profile.
     .PARAMETER profileName
-    Profile Name to use. If ommitted used th default profile.
+    Profile Name to use. If omitted used th default profile.
     .OUTPUTS
     An array of VPN-peer objects.
     #>
@@ -958,7 +944,7 @@ function Set-MerakiOrganizationThirdPartyVpnPeer() {
         [Parameter(Mandatory = $true)]
         [string]$Secret,
         [ValidateSet('1', '2')]
-        [string]$IkeVerson,
+        [string]$IkeVersion,
         [ValidateSet('default', 'aws', 'azure')]
         [string]$IpsecPoliciesPreset,
         [string]$LocalId,
@@ -1004,7 +990,7 @@ function Set-MerakiOrganizationThirdPartyVpnPeer() {
         throw "Peer $Name is not found!"
     }
 
-    if ($IkeVerson) { $Peers[$Name].ikeVerson = $IkeVerson }
+    if ($IkeVersion) { $Peers[$Name].ikeVersion = $IkeVersion }
     if ($IpsecPoliciesPreset) { $Peers[$Name].IpsecPoliciesPreset = $IpsecPoliciesPreset } 
     if ($LocalId) { $Peers[$Name].localId = $LocalId }
     if ($publicIp) { $Peers[$Name].publicIp = $PublicIp }
@@ -1022,7 +1008,7 @@ function Set-MerakiOrganizationThirdPartyVpnPeer() {
     $Body = $_Body | ConvertTo-Json -Depth 5 -Compress
 
     try {
-        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $Body
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $Body -PreserveAuthorizationOnRedirect
 
         return $response
     } catch {
@@ -1038,7 +1024,7 @@ function New-MerakiOrganizationThirdPartyVpnPeer() {
         [Parameter(Mandatory = $true)]
         [string]$Secret,
         [ValidateSet('1', '2')]
-        [string]$IkeVerson,
+        [string]$IkeVersion,
         [ValidateSet('default', 'aws', 'azure')]
         [string]$IpsecPoliciesPreset,
         [string]$LocalId,
@@ -1082,7 +1068,7 @@ function New-MerakiOrganizationThirdPartyVpnPeer() {
         secret = $Secret
         privateSubnet = $PrivateSubnets
     }
-    if ($IkeVerson) { $Peer.Add("ikeVersion", $IkeVerson) }
+    if ($IkeVersion) { $Peer.Add("ikeVersion", $IkeVersion) }
     if ($IpsecPoliciesPreset) { $Peer.Add("ipsecPoliciesPreset", $IpsecPoliciesPreset) }
     if ($LocalId) { $Peer.Add("localId", $LocalId) }
     if ($PublicIp) { $Peer.Add("publicIp", $PublicIp) }
@@ -1097,7 +1083,7 @@ function New-MerakiOrganizationThirdPartyVpnPeer() {
     $Body = $_Body | ConvertTo-Json -Depth 5 -Compress
 
     try {
-        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $Body
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $Body -PreserveAuthorizationOnRedirect
 
         return $response
     } catch {
@@ -1134,16 +1120,16 @@ function Get-MerakiOrganizationInventoryDevices() {
     $Uri = "{0}/organizations/{1}/inventoryDevices" -f $BaseURI, $OrgID
     $Headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
     return $response
     <#
     .SYNOPSIS
     Get the organization device inventory 
     .PARAMETER OrgID
-    Organization ID. If ommitted used th default profile.
+    Organization ID. If omitted used th default profile.
     .PARAMETER profileName
-    Profile name to use. If ommitted used th default profile.
+    Profile name to use. If omitted used th default profile.
     .OUTPUTS
     An array of inventory objects.
     #>
@@ -1155,29 +1141,40 @@ function Get-MerakiOrganizationSecurityEvents() {
     [CmdLetBinding(DefaultParameterSetName='Default')]
     Param(
         [ValidateScript({$_ -is [datetime]})]
-        [Parameter(ParameterSetName = 'dates')]
-        [Parameter(ParameterSetName = 'org1')]
-        [Parameter(ParameterSetName ='profile1')]        
+        [Parameter(ParameterSetName = 'dates', Mandatory)]
+        [Parameter(ParameterSetName = 'datesWithOrg', Mandatory)]
+        [Parameter(ParameterSetName ='datesWithProfiles', Mandatory)]                
         [datetime]$StartDate,
+
         [ValidateScript({$_ -is [datetime]})]
-        [Parameter(ParameterSetName = 'dates')]
-        [Parameter(ParameterSetName = 'org1')]
-        [Parameter(ParameterSetName ='profile1')]
+        [Parameter(ParameterSetName = 'dates', Mandatory)]
+        [Parameter(ParameterSetName = 'datesWithOrg', Mandatory)]
+        [Parameter(ParameterSetName ='datesWithProfile', Mandatory)]
         [datetime]$EndDate,
-        [Parameter(ParameterSetName = 'days')]
-        [Parameter(ParameterSetName = 'org2')]
-        [Parameter(ParameterSetName ='profile2')]
+
+        [Parameter(ParameterSetName = 'days', Mandatory)]
+        [Parameter(ParameterSetName = 'daysWithOrg', Mandatory)]
+        [Parameter(ParameterSetName = 'daysWithProfile', Mandatory)]
         [ValidateScript({$_ -is [int]})]
+        [ValidateRange(0,31)]
         [int]$Days,
+
+        [ValidateScript({$_ -is [int]})]
         [ValidateRange(3, 1000)]
         [int]$PerPage,
-        [Parameter(ParameterSetName = 'org')]
-        [Parameter(ParameterSetName = 'org1')]
-        [Parameter(ParameterSetName = 'org2')]
+
+        [ValidateScript({$_ -is [int]})]
+        [ValidateRange(0,1000)]
+        [int]$Pages,
+
+        [Parameter(ParameterSetName = 'org', Mandatory)]
+        [Parameter(ParameterSetName = 'datesWithOrg', Mandatory)]
+        [Parameter(ParameterSetName = 'daysWithOrg', Mandatory)]
         [string]$OrgId,
+
         [Parameter(ParameterSetName = 'profile')]
-        [Parameter(ParameterSetName = 'profile1')]
-        [Parameter(ParameterSetName = 'profile2')]
+        [Parameter(ParameterSetName = 'datesWithProfile')]
+        [Parameter(ParameterSetName = 'daysWithProfile')]
         [string]$ProfileName
     )
 <# 
@@ -1221,6 +1218,8 @@ function Get-MerakiOrganizationSecurityEvents() {
         }        
     }
 
+    $Results = [List[PsObject]]::New()
+
     $Uri = "{0}/organizations/{1}/appliance/security/events" -f $BaseURI, $OrgId
 
     Set-Variable -Name Query
@@ -1236,7 +1235,7 @@ function Get-MerakiOrganizationSecurityEvents() {
         $Query += "t1={0}" -f $_endDate
     }
     if ($Days) {
-        $ts = [timespan]::FromDays($Days)
+        $ts = [TimeSpan]::FromDays($Days)
         if ($Query) {
             $Query += "&"
         }
@@ -1254,7 +1253,31 @@ function Get-MerakiOrganizationSecurityEvents() {
     }
 
     try {
-        $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers
+        $response = Invoke-WebRequest -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+        [List[PsObject]]$result = $response.Content | ConvertFrom-Json
+        if ($result) {
+            $Results.AddRange($result)
+        }
+        $page = 1
+        if ($Pages -ne 1) {
+            $done = $false
+            do {
+                if ($response.RelationLink['next']) {
+                    $Uri = $response.RelationLink['next']
+                    $response = Invoke-WebRequest -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+                    [List[PsObject]]$result = $response.Content | ConvertFrom-Json
+                    if ($result) {
+                        $Results.AddRange($result)
+                    }
+                    $page += 1
+                    if ($page -gt $Pages) {
+                        $done = $true
+                    }
+                } else {
+                    $done = $true
+                }
+            } until ($done)
+        }
         return $response
     } catch {
         throw $_
@@ -1275,7 +1298,7 @@ function Get-MerakiOrganizationSecurityEvents() {
     .PARAMETER Days
     The number if days back from today to retrieve data, Cannot be more than 365.
     .PARAMETER PerPage
-    Number of entries per page to retrieve. Acceptable range is 3-1000. Default is 100. NOTE: Paging is not immplemented. 
+    Number of entries per page to retrieve. Acceptable range is 3-1000. Default is 100. NOTE: Paging is not implemented. 
     .OUTPUTS
     A collection of security event objects.
     #>
@@ -1331,7 +1354,7 @@ function Get-MerakiOrganizationFirmwareUpgrades() {
     }
 
     try {
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
         return $response
     } catch {
         throw $_
@@ -1342,7 +1365,7 @@ function Get-MerakiOrganizationFirmwareUpgrades() {
     .DESCRIPTION
     Get firmware upgrade information for an organization
     .PARAMETER OrgId
-    The Organization Id. If ommitted the retrieved from the default profile.
+    The Organization Id. If omitted the retrieved from the default profile.
     .PARAMETER ProfileName
     The profile to retrieve the the Organization ID from.
     .PARAMETER Status
@@ -1419,7 +1442,7 @@ function Get-MerakiOrganizationFirmwareUpgradesByDevice() {
     }
 
     Try {
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
         return $response
     } catch {
@@ -1435,7 +1458,7 @@ function Get-MerakiOrganizationFirmwareUpgradesByDevice() {
     .PARAMETER ProfileName
     The saved profile name.
     .PARAMETER NetworkIds
-    An array of netword Ids to retrieve upgrades for
+    An array of network Ids to retrieve upgrades for
     .PARAMETER Serials
     An array of serials to retrieve upgrades for
     .PARAMETER Macs
@@ -1517,7 +1540,7 @@ function Get-MerakiOrganizationDeviceUplinks() {
         }
 
         try {
-            $response = Invoke-RestMethod @Params
+            $response = Invoke-RestMethod @Params -PreserveAuthorizationOnRedirect
             return $response
         } catch {
             throw $_
@@ -1591,7 +1614,7 @@ function Get-MerakiOrganizationDeviceStatus() {
         }
 
         try {
-            $response = Invoke-RestMethod @Params
+            $response = Invoke-RestMethod @Params -PreserveAuthorizationOnRedirect
             $response | ForEach-Object {
                 $Network = Get-MerakiNetwork -networkID $_.networkId
                 $_ | Add-Member -MemberType NoteProperty -Name "NetworkName" -Value $Network.Name
@@ -1627,7 +1650,7 @@ Function Get-MerakiOrganizationApplianceVpnStatuses() {
     $Uri = "{0}/organizations/{1}/appliance/vpn/statuses" -f $BaseURI, $OrgId
 
     try {
-        $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers
+        $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
         return $response
     } catch {
         throw $_
