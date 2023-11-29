@@ -97,7 +97,7 @@ function Set-MerakiAPI() {
     .SYNOPSIS 
     Set the configuration file.
     .DESCRIPTION
-    Sets up the configuration file. this can be the initial configuration or creating named profiles.
+    Sets up the configuration file. This can be the initial configuration or creating named profiles.
     .PARAMETER APIKey
     Your Meraki API key. If a configuration file exists and this key does not match the key in the file a 
     new file will be created overwriting the existing file.
@@ -147,8 +147,6 @@ function Get-MerakiOrganizations() {
         [string]$APIKey
     )
 
-
-
     $Uri = "{0}/organizations" -f $BaseURI
     
     If ($APIKey) {
@@ -159,9 +157,14 @@ function Get-MerakiOrganizations() {
     } else {
         $Headers = Get-Headers
     }
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
-    
-    return $response
+
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+        
+        return $response
+    } catch {
+        throw $_
+    }
     <#
     .SYNOPSIS 
     Get Meraki Organizations
@@ -205,9 +208,13 @@ function Get-MerakiOrganization() {
     $Uri = "{0}/organizations/{1}" -f $BaseURI, $OrgId
     $Headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
-    return $response
+        return $response
+    } catch {
+        throw $_
+    }
     <#
     .SYNOPSIS 
     Get Meraki Organization
@@ -550,9 +557,13 @@ function Get-MerakiOrganizationConfigTemplates() {
     $Uri = "{0}/organizations/{1}/configTemplates" -f $BaseURI, $OrgID
     $headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $headers -PreserveAuthorizationOnRedirect
+    try{
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $headers -PreserveAuthorizationOnRedirect
 
-    return $response
+        return $response
+    } catch {
+        throw $_
+    }
     <# 
     .SYNOPSIS
     Get the Organization Configuration Templates
@@ -661,9 +672,13 @@ function Get-MerakiOrganizationDevices() {
     $Uri = "{0}/organizations/{1}/devices" -f $BaseURI, $OrgID
     $Headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
-    return $response
+        return $response
+    } catch {
+        throw $_
+    }
     <#
     .SYNOPSIS
     Get organization Devices.
@@ -709,9 +724,13 @@ function Get-MerakiOrganizationAdmins() {
     $Uri = "{0}/organizations/{1}/admins" -f $BaseURI, $OrgID
     $Headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $uri -Headers $Headers -PreserveAuthorizationOnRedirect
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
-    return $response
+        return $response
+    }catch {
+        throw $_
+    }
     <#
     .SYNOPSIS
     Get Organization Admins.
@@ -1120,9 +1139,13 @@ function Get-MerakiOrganizationInventoryDevices() {
     $Uri = "{0}/organizations/{1}/inventoryDevices" -f $BaseURI, $OrgID
     $Headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
-    return $response
+        return $response
+    } catch {
+        throw $_
+    }
     <#
     .SYNOPSIS
     Get the organization device inventory 
@@ -1156,7 +1179,7 @@ function Get-MerakiOrganizationSecurityEvents() {
         [Parameter(ParameterSetName = 'daysWithOrg', Mandatory)]
         [Parameter(ParameterSetName = 'daysWithProfile', Mandatory)]
         [ValidateScript({$_ -is [int]})]
-        [ValidateRange(0,31)]
+        [ValidateRange(1,31)]
         [int]$Days,
 
         [ValidateScript({$_ -is [int]})]
@@ -1164,48 +1187,23 @@ function Get-MerakiOrganizationSecurityEvents() {
         [int]$PerPage,
 
         [ValidateScript({$_ -is [int]})]
-        [ValidateRange(0,1000)]
         [int]$Pages,
+
+        [switch]$Descending,
 
         [Parameter(ParameterSetName = 'org', Mandatory)]
         [Parameter(ParameterSetName = 'datesWithOrg', Mandatory)]
         [Parameter(ParameterSetName = 'daysWithOrg', Mandatory)]
         [string]$OrgId,
 
-        [Parameter(ParameterSetName = 'profile')]
-        [Parameter(ParameterSetName = 'datesWithProfile')]
-        [Parameter(ParameterSetName = 'daysWithProfile')]
+        [Parameter(ParameterSetName = 'profile', Mandatory)]
+        [Parameter(ParameterSetName = 'datesWithProfile', Mandatory)]
+        [Parameter(ParameterSetName = 'daysWithProfile', Mandatory)]
         [string]$ProfileName
     )
-<# 
-    If ($OrgId -and $profileName) {
-        Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
-        return
-    }
-
-    if ($Days) {
-        if ($StartDate) {
-            Write-Host "The Days parameter cannot be used with the StartDate parameter." -BackgroundColor Red
-            return
-        }
-        if ($EndDate) {
-            Write-Host "The Days parameter cannot be used with the EndDate parameter." -BackgroundColor Red
-            return
-        }
-    }
-
-    if ($StartDate -and (-not $EndDate)) {
-        Write-Host "The EndDate Parameter is required with the StartDate Parameter." -BackgroundColor Red
-        return
-    }
-
-    if ($endDate -and (-not $StartDate)) {
-        Write-Host "The StartDate parameter is required with the EndDate parameter." -BackgroundColor Red
-        return
-    }
-
- #>    
+    
     $Headers = Get-Headers
+
     if (-not $OrgID) {
         $config = Read-Config
         if ($profileName) {
@@ -1224,32 +1222,29 @@ function Get-MerakiOrganizationSecurityEvents() {
 
     Set-Variable -Name Query
     if ($StartDate) {
-        $_startDate = "{0:s}" -f $StartDate
-        $Query += "t0={0}" -f $_startDate
+        $Query = "t0={0}" -f ($StartDate.ToString(")"))
     }
     if ($EndDate) {
-        $_endDate = "{0:s}" -f $EndDate
-        if ($Query) {
-            $Query += "&"
-        }
-        $Query += "t1={0}" -f $_endDate
+        if ($Query) {$Query += "&"}
+        $Query = "{0}t1={0}" -f $Query, ($EndDate.ToString("O"))
     }
     if ($Days) {
-        $ts = [TimeSpan]::FromDays($Days)
-        if ($Query) {
-            $Query += "&"
-        }
-        $Query += "timestamp={0}" -f ($ts.TotalSeconds)
+        $Seconds = [TimeSpan]::FromDays($Days).TotalSeconds
+        if ($Query) {$Query += "&"}
+        $Query = "{0}timestamp={1}" -f $Seconds
     }
     if ($PerPage) {
-        if ($Query) {
-            $Query += "&"
-        }
-        $Query += "perPage={0}" -f $PerPage
+        if ($Query) {$Query += "&"}
+        $Query = "{0}perPage={1}" -f $Query, $PerPage
+    }
+
+    if ($Descending) {
+        if ($Query) {$Query += '&'}
+        $Query = "{0}sortOrder=descending" -f $Query
     }
 
     if ($Query) {
-        $Uri = "?{0}" -f $Query
+        $Uri = "{0}?{1}" -f $Uri, $Query
     }
 
     try {
@@ -1309,57 +1304,117 @@ Set-Alias -Name GMNetSecEvents -Value Get-MerakiOrganizationSecurityEvents
 function Get-MerakiOrganizationFirmwareUpgrades() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
-        [string]$Status,
-        [string]$ProductType,
+        [switch]$IncludePending,
+        [switch]$includeStarted,
+        [switch]$IncludeCompleted,
+        [switch]$IncludeCanceled,
+        [switch]$IncludeSkipped,
+        [switch]$IncludeAppliances,
+        [switch]$IncludeCameras,
+        [switch]$IncludeCellularGateways,
+        [switch]$IncludeSensors,
+        [switch]$IncludeSwitches,
+        [switch]$IncludeSystemsManagers,
+        [switch]$IncludeWireless,
+        [ValidateScript({$_ -is [int]})]
+        [ValidateSet(3, 1000)]
+        [int]$PerPage,
         [Parameter(ParameterSetName = 'org')]
         [string]$OrgId,
         [Parameter(ParameterSetName = 'profile')]
         [string]$ProfileName
     )
-<# 
-    If ($OrgId -and $profileName) {
-        Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
-        return
-    }
- #>
-    if (-not $OrgID) {
-        $config = Read-Config
-        if ($profileName) {
-            $OrgID = $config.profiles.$profileName
-            if (-not $OrgID) {
-                throw "Invalid profile name!"
-            }
-        } else {
-            $OrgID = $config.profiles.default
-        }        
-    }
 
-    $Headers = Get-Headers
-
-    Set-Variable -name Query
-
-    if ($Status) {
-        $Query = "status={0}" -f $Status
-    }
-    if ($ProductType) {
-        if ($Query) {
-            $Query += "&"
+    Begin {
+        if (-not $OrgID) {
+            $config = Read-Config
+            if ($profileName) {
+                $OrgID = $config.profiles.$profileName
+                if (-not $OrgID) {
+                    throw "Invalid profile name!"
+                }
+            } else {
+                $OrgID = $config.profiles.default
+            }        
         }
-        $Query += "productType={0}" -f $ProductType
+
+        $Headers = Get-Headers
+
+        if ($PerPage) {
+            $Query = "perPage={0}" -f $PerPage
+        }
+
+        $Statuses = [List[string]]::New()
+        if ($IncludePending) {$Statuses.Add("pending")}
+        if ($includeStarted) {$Statuses.Add("started")}
+        if ($IncludeCanceled) {$Statuses.Add("started")}
+        if ($IncludeSkipped) {$Statuses.Add("skipped")}
+        if ($IncludeCompleted) {$Statuses.Add("completed")}
+        
+        if ($Statuses.Count -gt 0) {
+            if ($Query) {$Query += "&"}
+            $Query = "{0}status[]={1}" -f $Query, ($Statuses.ToArray() -join ',')            
+        }
+
+        $ProductTypes = [List[string]]::New()
+        if ($IncludeAppliances) {$ProductTypes.Add("appliance")}
+        if ($IncludeCameras) {$ProductTypes.Add("camera")}
+        if ($IncludeCellularGateways) {$ProductTypes.Add("cellularGateway")}
+        if ($IncludeSensors) {$ProductTypes.Add("sensors")}
+        if ($IncludeSwitches) {$ProductTypes.Add("switch")}
+        if ($IncludeSystemsManagers) {$ProductTypes.Add("systemsManager")}
+        if ($IncludeWireless) {$ProductTypes.Add("wireless")}
+
+
+        if ($ProductTypes.Count -gt 0) {
+            if ($Query) {$Query += "&"} else {$Query += "?"}
+            $Query = "{0}productTypes[]={1}" -f $Query, ($ProductTypes.ToArray() -join ",")
+        }
+
     }
 
-    $Uri = "{0}/organizations/{1}/firmware/upgrades" -f $BaseURI, $OrgId
-    if ($Query) {
-        $URI += "?{0}" -f $Query
-    }
+    Process{
 
-    try {
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
-        return $response
-    } catch {
-        throw $_
+        $Uri = "{0}/organizations/{1}/firmware/upgrades" -f $BaseURI, $OrgId
+
+        if ($Query) {
+            $URI = "{0}?{1}" -f $Uri, $Query
+        }
+
+        $Results = [List[PsObject]]::New()
+
+        try {
+            $response = Invoke-WebRequest -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            [List[PsObject]]$result = $response.Content | ConvertFrom-Json
+            if ($result) {
+                $Results.AddRange($result)
+            }
+            $page = 1
+            if ($Pages -ne 1) {
+                $done = $false
+                do {
+                    if ($response.RelationLink['next']) {
+                        $Uri = $response.RelationLink['next']
+                        $response = Invoke-WebRequest -Method Get -Uri $Uri -Headers $Header -PreserveAuthorizationOnRedirect
+                        [List[PsObject]]$result = $response.Content | ConvertFrom-Json
+                        if ($result) {
+                            $Result.AddRange($result)
+                        }
+                        $page += 1
+                        if ($page -gt $Pages) {
+                            $done = $true
+                        }
+                    } else {
+                        $done = $true
+                    }
+                } until ($done)
+            }
+            return $Results.ToArray()
+        } catch {
+            throw $_
+        }
     }
-    <#
+        <#
     .SYNOPSIS
     Get firmware upgrade information.
     .DESCRIPTION
@@ -1381,11 +1436,19 @@ Set-Alias -name GMOFirmwareUpgrades -Value Get-MerakiOrganizationFirmwareUpgrade
 function Get-MerakiOrganizationFirmwareUpgradesByDevice() {
     [CmdletBinding(DefaultParameterSetName='default')]
     Param(
-        [string[]]$NetworkIds,
-        [string[]]$Serials,
+        [Parameter(ValueFromPipelineByPropertyName)]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [Parameter(ValueFromPipelineByPropertyName)]
+        [string]$Serial,
         [string[]]$Macs,
         [string[]]$FirmwareUpgradeIds,
         [string[]]$FirmwareUpgradeBatchIds,
+        [ValidateScript({$_ -is [int]})]
+        [ValidateRange(3,1000)]
+        [int]$PerPage,
+        [ValidateScript({$_ -is [int]})]
+        [int]$Pages=1,
         [Parameter(ParameterSetName = 'org')]
         [string]$OrgId,
         [Parameter(ParameterSetName = 'profile')]
@@ -1397,56 +1460,105 @@ function Get-MerakiOrganizationFirmwareUpgradesByDevice() {
         return
     }
  #>
-    $Headers = Get-Headers
+    Begin {
+        $NetworkIds = [List[string]]::New()
+        $Serials = [List[string]]::New()
 
-    $Uri = "{0}/organizations/{1}/firmware/upgrades/byDevice" -f $BaseURI, $OrgId
+        If (-not $OrgID) {
+            $config = Read-Config
+            if ($profileName) {
+                $OrgId = $config.profiles.$profileName
+                if (-not $OrgID) {
+                    throw "Invalid profile name!"
+                }
+            } else {
+                $OrgID = $config.profiles.default
+            }
+        }
 
-    if ($NetworkIds) {
-        $Uri = "{0}?networkIds={1}" -f $Uri, ($NetworkIds -join ",")
+        $Headers = Get-Headers
+
+        if ($PerPage) {
+            $Query = "perPage={0}" -f $PerPage
+        }
+        
+        if ($Macs) {
+            if ($Query) {$Query += '&'}
+            $Query = "macs[]={0}" -f ($Macs -join ',')            
+        }
+
+        if ($FirmwareUpgradeIds) {
+            if ($Query) {$Query += '&'}
+            $Query = "{0}firmwareUpgradeIds[]={1}" -f $Query, ($FirmwareUpgradeIds -join ',')            
+        }
+
+        if ($FirmwareUpgradeBatchIds) {
+            if ($Query) {$Query += '&'}
+            $Query = "{0}firmwareUpgradeBatchIds[]={1}" -f $Query, $FirmwareUpgradeBatchIds
+        }
+        
+        $Uri = "{0}/organizations/{1}/firmware/upgrades/byDevice" -f $BaseURI, $OrgId
     }
     
-    if ($Serials) {
-        if ($Uri.Contains("?")) {
-            $Uri = "{0}&" -f $Uri
-        } else {
-            $Uri = "{0}?" -f $Uri
+    Process {
+        if ($Id) {
+            $NetworkIds.Add($Id)
         }
-        $Uri = "{0}serials={1}" -f $Uri, ($serials -join ",")
+    
+        if ($Serial) {
+            $Serials.Add($Serial)
+        }
     }
 
-    if ($Macs) {
-        if ($Uri.Contains("?")) {
-            $Uri = "{0}&" -f $Uri
-        } else {
-            $Uri = "{0}?" -f $Uri
+    End {
+
+        if ($NetworkIds.Count -gt 0) {
+            if ($Query) {$Query += '&'}
+            $Query = "{0}networkIds[]={1}" -f $Query, ($NetworkIds.ToArray() -join ',')
         }
-        $Uri = "{0}macs={1}" -f $Uri, ($Macs -join ",")
-    }
 
-    if ($FirmwareUpgradeIds) {
-        if ($Uri.Contains("?")) {
-            $Uri = "{0}&" -f $Uri
-        } else {
-            $Uri = "{0}?" -f $Uri
+        if ($Serials.Count -gt 0) {
+            if ($Query) {$Query += "&"}
+            $Query = "{0}serials[]={1}" -f $Query, ($Serials.ToArray() -join ',')
         }
-        $Uri = "{0}firmwareUpgradeIds={1}" -f $Uri, ($FirmwareUpgradeIds -join ",")
-    }
 
-    if ($FirmwareUpgradeBatchIds) {
-        if ($Uri.Contains("?")) {
-            $Uri = "{0}&" -f $Uri
-        } else {
-            $Uri = "{0}?" -f $Uri
+        if ($Query) {
+            $Uri = "{0}?{1}" -f $Uri, $Query
         }
-        $Uri = "{0}firmwareUpgradeBatchIds={1}" -f $Uri, ($FirmwareUpgradeBatchIds -join ",")
-    }
 
-    Try {
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+        $Results = [List[PsObject]]::New()
 
-        return $response
-    } catch {
-        throw $_
+        Try {
+            $response = Invoke-WebRequest -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            [List[PsObject]]$result = $response.Content | ConvertFrom-Json
+            if ($result) {
+                $Results.AddRange($result)
+            }
+            $page = 1
+            if ($Pages -ne 1) {
+                $done = $false
+                do {
+                    if ($response.RelationLink['next']) {
+                        $Uri = $response.RelationLink['next']
+                        $response = Invoke-WebRequest -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+                        [List[PsObject]]$result = $response.Content | ConvertFrom-Json
+                        if ($result) {
+                            $Results.AddRange($result)
+                        }
+                        $page += 1
+                        if ($page -gt $Pages) {
+                            $done = $true
+                        }
+                    } else {
+                        $done = $true
+                    }
+                } until ($done)
+            }
+
+            return $Results.ToArray()
+        } catch {
+            throw $_
+        }
     }
     <#
     .SYNOPSIS
@@ -1457,14 +1569,16 @@ function Get-MerakiOrganizationFirmwareUpgradesByDevice() {
     The organization Id
     .PARAMETER ProfileName
     The saved profile name.
-    .PARAMETER NetworkIds
+    .PARAMETER PerPage
+    Number of entries per page.
+    .PARAMETER Id
     An array of network Ids to retrieve upgrades for
-    .PARAMETER Serials
+    .PARAMETER Serial
     An array of serials to retrieve upgrades for
     .PARAMETER Macs
     An array of MAC Addresses to retrieve upgrades for
     .PARAMETER FirmwareUpgradeIds
-    An array of Upgrade Ids ro retrieve upgrades for
+    An array of Upgrade Ids to retrieve upgrades for
     .PARAMETER FirmwareUpgradeBatchIds
     An array of Firmware Upgrade Batch Ids to retrieve upgrades for
     .OUTPUTS
@@ -1482,6 +1596,21 @@ function Get-MerakiOrganizationDeviceUplinks() {
         [string]$Id,
         [Parameter(ValueFromPipelineByPropertyName)]
         [string]$Serial,
+        [ValidateScript({$_ -is [int]})]
+        [ValidateRange(3,1000)]
+        [int]$PerPage,
+        [ValidateScript({$_ -is [int]})]
+        [int]$Pages,
+        [switch]$IncludeAppliances,
+        [switch]$IncludeCameras,
+        [switch]$IncludeCellularGateways,
+        [switch]$IncludeSensors,
+        [switch]$IncludeSwitches,
+        [switch]$IncludeSystemsManagers,
+        [switch]$IncludeWireless,
+        [string[]]$Tags,
+        [ValidateSet("withAllTags","withAnyTags")]
+        [string]$TagFilterType,
         [string]$OrgId,
         [string]$ProfileName
     )
@@ -1501,6 +1630,31 @@ function Get-MerakiOrganizationDeviceUplinks() {
             } else {
                 $OrgID = $config.profiles.default
             }        
+        }
+        if ($PerPage) {
+            $Query = "?perPage={0}" -f $PerPage
+        }
+
+        $ProductTypes = [List[string]]::New()
+        if ($IncludeAppliances) {$ProductTypes.Add("appliance")}
+        if ($IncludeCameras) {$ProductTypes.Add("camera")}
+        if ($IncludeCellularGateways) {$ProductTypes.Add("cellularGateway")}
+        if ($IncludeSensors) {$ProductTypes.Add("sensors")}
+        if ($IncludeSwitches) {$ProductTypes.Add("switch")}
+        if ($IncludeSystemsManagers) {$ProductTypes.Add("systemsManager")}
+        if ($IncludeWireless) {$ProductTypes.Add("wireless")}
+
+        if ($ProductTypes.Count -gt 0) {
+            if ($Query) {$Query += "&"} else {$Query += "?"}
+            $Query = "{0}productTypes[]={1}" -f $Query, ($ProductTypes.ToArray() -join ',')
+        }
+
+        if ($Tags) {
+            if ($Query) {$Query += "&"} else {$Query += "?"}
+            $Query = "{0}tags[]={1}" -f $Query, ($Tags -join ',')
+            if ($TagFilterType) {
+                $Query = "{0}&tagFilterType={1}" -f $Query, $TagFilterType
+            }
         }
 
         $Uri = "{0}/organizations/{1}/devices/uplinks/addresses/byDevice" -f $BaseURI, $OrgId
@@ -1516,36 +1670,105 @@ function Get-MerakiOrganizationDeviceUplinks() {
         }
     }
 
-    end {        
-
-        $_Body = @{}
+    End {
 
         if ($NetworkIds.Count -gt 0) {
-            $_Body.Add("networkIds", $NetworkIds.ToArray())
+            if ($Query) {$Query += "&"} else {$Query += "?"}
+            $Query = "{0}networkIds[]={1}" -f $Query, ($NetworkIds.ToArray() -join ',')
         }
 
         if ($Serials.Count -gt 0) {
-            $_Body.Add("serials", $Serials.ToArray())
+            if ($Query) {$Query += "&"} else {$Query += "?"}
+            $Query = "{0}serials[]={1}" -f $Query, ($NetworkIds.ToArray() -join ',')
         }
 
-        $Params = @{
-            Method = "Get"
-            Uri = $Uri
-            Headers = $Headers
+        if ($Query) {
+            $Uri = "{0}{1}" -f $Uri, $Query
         }
-
-        if ($_Body.Keys.Count -gt 0) {
-            $body = $_Body | ConvertTo-Json -Depth 10 -Compress
-            $Params.Add("Body", $body)
-        }
+        $Results = [List[PsObject]]::New()
 
         try {
-            $response = Invoke-RestMethod @Params -PreserveAuthorizationOnRedirect
-            return $response
+            $response = Invoke-WebRequest -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            [List[PsObject]]$result = $response.Content | ConvertFrom-Json
+            if ($result) {
+                $Results.AddRange($result)
+            }
+            $page = 1
+            if ($Pages -ne 1) {
+                $done = $false
+                do {
+                    if ($response.RelationLink['next']) {
+                        $Uri = $response.RelationLink['next']
+                        $response = Invoke-WebRequest -Method Get -Uri $Uri -Headers $Headers
+                        [List[PsObject]]$result = $response.Content | ConvertFrom-Json
+                        if ($result) {
+                            $Results.AddRange($result)
+                        }
+                        $page += 1
+                        if ($page -gt $Pages) {
+                            $done = $true
+                        }
+                    } else {
+                        $done = $true
+                    }
+                } until ($done)
+            }
+
+            $Networks = @{}
+            Get-MerakiNetworks | ForEach-Object{
+                $Networks.Add($_.id, $_.name)
+            }
+            $Results | ForEach-Object {
+                $NetworkName = $Networks[$_.network.id]
+                $_.network | Add-Member -MemberType NoteProperty -Name Name -Value $NetworkName 
+            }
+            return $Results.ToArray()
         } catch {
             throw $_
         }
     }
+        <#
+        .SYNOPSIS
+        List the current uplink addresses for devices in an organization.
+        .DESCRIPTION
+        List the current uplink addresses for devices in an organization. This can be filtered by
+        Networks, Product Types, Serials, and Tags.
+        .PARAMETER Id
+        Optional parameter to filter device uplinks by network ID. 
+        .PARAMETER Serial
+        Optional parameter to filter device uplinks by device product types.
+        .PARAMETER PerPage
+        The number of entries per page returned. Acceptable range is 3 - 1000. Default is 1000
+        .PARAMETER Pages
+        Number of pages to return. Default is 1, 0 = all pages.
+        .PARAMETER IncludeAppliances
+        Include Appliances
+        .PARAMETER IncludeCameras
+        Include Cameras
+        .PARAMETER IncludeCellularGateways
+        Include Cellular Gateways
+        .PARAMETER IncludeSensors
+        Include Sensors
+        .PARAMETER IncludeSwitches
+        Include Switches
+        .PARAMETER IncludeSystemsManagers
+        Include Systems Managers
+        .PARAMETER IncludeWireless
+        Include Wireless
+        .PARAMETER Tags
+        An optional parameter to filter devices by tags. The filtering is case-sensitive.
+        .PARAMETER TagFilterType
+        An optional parameter of value 'withAnyTags' or 'withAllTags' to indicate whether to return devices which contain ANY or ALL of the included tags. If no type is included, 'withAnyTags' will be selected.
+        .PARAMETER OrgId
+        Organization Id to use.
+        .PARAMETER ProfileName
+        Named profile to use.
+        .OUTPUTS
+        An array of device uplink objects.
+        .NOTES
+        If no include parameters are given then all product typed are returned.
+        If one or more include parameters are given then the results are restricted to those product types.
+        #>
 }
 
 function Get-MerakiOrganizationDeviceStatus() {
@@ -1556,8 +1779,32 @@ function Get-MerakiOrganizationDeviceStatus() {
         [string]$Id,
         [Parameter(ValueFromPipelineByPropertyName)]
         [string]$Serial,
+        [Parameter(ParameterSetName = 'org')]
         [string]$OrgId,
-        [string]$ProfileName
+        [Parameter(ParameterSetName = 'Profile')]
+        [string]$ProfileName,
+        [ValidateScript({$_ -is [int]})]
+        [ValidateRange(1, 1000)]
+        [int]$PerPage,
+        [ValidateScript({$_ -is [int]})]
+        [int]$Pages = 1,
+        [switch]$IncludeAlerting,
+        [switch]$includeDormant,
+        [switch]$IncludeOffline,
+        [switch]$IncludeOnline,
+        [switch]$IncludeAppliances,
+        [switch]$IncludeCameras,
+        [switch]$IncludeCellularGateways,
+        [switch]$IncludeSensors,
+        [switch]$IncludeSwitches,
+        [switch]$IncludeSystemsManagers,
+        [switch]$IncludeWireless,
+        [string[]]$Models,
+        [string[]]$Tags,
+        [ValidateSet("withAllTags","withAnyTags")]
+        [string]$TagFilterType,
+        [datetime]$ConfigUpdatedAfter
+
     )
 
     Begin {
@@ -1576,12 +1823,62 @@ function Get-MerakiOrganizationDeviceStatus() {
                 $OrgID = $config.profiles.default
             }        
         }
+        
+        $Query = ""
+        if ($PerPage) {
+            $Query = "perPage={0}" -f $PerPage
+        }
 
+        $Statuses = [List[string]]::New()
+        if ($IncludeAlerting) { $Statuses.Add("alerting")}
+        if ($includeDormant) {$Statuses.Add("dormant")}
+        if ($IncludeOffline) {$Statuses.Add("offline")}
+        if ($IncludeOnline) {$Statuses.Add("online")}
+
+        if ($Statuses.Count -gt 0) {
+            if ($Query) {$Query += "&"}
+            $Query = "{0}statuses[]={1}" -f $Query, ($Statuses.ToArray() -join ",")
+        }
+
+        $ProductTypes = [List[string]]::New()
+        if ($IncludeAppliances) {$ProductTypes.Add("appliance")}
+        if ($IncludeCameras) {$ProductTypes.Add("camera")}
+        if ($IncludeCellularGateways) {$ProductTypes.Add("cellularGateway")}
+        if ($IncludeSensors) {$ProductTypes.Add("sensors")}
+        if ($IncludeSwitches) {$ProductTypes.Add("switch")}
+        if ($IncludeSystemsManagers) {$ProductTypes.Add("systemsManager")}
+        if ($IncludeWireless) {$ProductTypes.Add("wireless")}
+
+        if ($ProductTypes.Count -gt 0) {
+            if ($Query) {$Query += "&"}
+            $Query = "{0}productTypes[]={1}" -f $Query, ($ProductTypes.ToArray() -join ",")
+        }
+
+        if ($Models) {
+            if ($Query) {$Query += "&"}
+            $Query = "{0}models[]={1}" -f $Query, ($Models -join ",")
+        }
+
+        if ($Tags) {
+            if ($Query) {$Query += "&"}
+            $Query = "{0}tags[]={1}" -f ($Tags -join ",")
+
+            if ($TagFilterType) {
+                $Query = "{0}&tagFilterType=" -f $Query, $TagFilterType
+            }
+        }
+
+        if ($ConfigUpdatedAfter) {
+            if ($Query) {$Query += "&"}
+            $Query = "{0}configurationUpdatedAfter={1}" -f $Query, ($ConfigUpdatedAfter.ToString("O"))
+        }
+        
         $Uri = "{0}/organizations/{1}/devices/statuses" -f $BaseUri, $OrgId
+
     }
 
     Process {
-        if ($id) {
+        if ($id) {            
             $NetworkIds.Add($Id)
         }
 
@@ -1592,14 +1889,18 @@ function Get-MerakiOrganizationDeviceStatus() {
 
     End {
 
-        $_Body = @{}
-
         if ($NetworkIds.Count -gt 0) {
-            $_Body.Add("networkIds", $NetworkIds.ToArray())
+            if ($Query) {$Query += "&"}
+            $Query = "{0}networkIds[]={1}" -f $Query, ($NetworkIds.ToArray() -join ",")
         }
 
         if ($Serials.Count -gt 0) {
-            $_Body.Add("serials", $Serials.ToArray())
+            if ($Query) {$Query += "&"}
+            $Query = "{0}serials[]={1}" -f $Query, ($Serials.ToArray() -join ",")
+        }
+
+        if ($Query) {
+            $Uri = "{0}?{1}" -f $Uri, $Query
         }
 
         $Params = @{
@@ -1608,51 +1909,163 @@ function Get-MerakiOrganizationDeviceStatus() {
             Headers = $Headers
         }
 
-        if ($_Body.Keys.Count -gt 0) {
-            $body = $_Body | ConvertTo-Json -Depth 10 -Compress
-            $Params.Add("Body", $body)
-        }
+        $Results = [List[PsObject]]::New()
 
         try {
-            $response = Invoke-RestMethod @Params -PreserveAuthorizationOnRedirect
-            $response | ForEach-Object {
-                $Network = Get-MerakiNetwork -networkID $_.networkId
-                $_ | Add-Member -MemberType NoteProperty -Name "NetworkName" -Value $Network.Name
+            $response = Invoke-WebRequest @Params -PreserveAuthorizationOnRedirect
+            [List[PsObject]]$result = $response.Content | ConvertFrom-Json
+            if ($result) {
+                $Results.AddRange($result)
             }
-            return $response
+            $page = 1
+            if ($Pages -ne 1) {
+                $done = $false
+                do {
+                    if ($response.RelationLink['next']) {
+                        $Uri = $response.RelationLink['next']
+                        $response = Invoke-WebRequest -Method Get -Uri $Uri -Headers $Headers
+                        [List[PsObject]]$result = $response.Content | ConvertFrom-Json
+                        if ($result) {
+                            $Results.AddRange($result)
+                        }
+                        $page += 1
+                        if ($page -gt $Pages) {
+                            $done = $true
+                        }
+                    } else {
+                        $done = $true
+                    }
+                } until ($done)
+            }
+            $Results | ForEach-Object {
+                $NetworkName = (Get-MerakiNetwork -networkID $_.networkId).name
+                $_ | Add-Member -MemberType NoteProperty -Name "NetworkName" -Value $NetworkName
+            }
+            return $Results.ToArray()
         } catch {
             throw $_
         }
     }
+    <#
+    .SYNOPSIS
+    List the status of every Meraki device in the organization.
+    .DESCRIPTION
+    List the status of every Meraki device in the organization. Can be filtered by Network or Serial number.
+    .PARAMETER Id
+    The ID of the Network to retrieve device status from.
+    .PARAMETER Serial
+    Then serial number of the device to retrieve status from.
+    .PARAMETER OrgId
+    The organization Id to use.
+    .PARAMETER ProfileName
+    The named profile to use.
+    .OUTPUTS
+    An array of device status objects
+    #>
 }
 
-Function Get-MerakiOrganizationApplianceVpnStatuses() {
+function Get-MerakiOrganizationApplianceVpnStatuses() {
     [CmdletBinding()]
     Param(
+        [Parameter(ValueFromPipelineByPropertyName)]
+        [Alias('NetworkId')]
+        [string]$id,
+        [ValidateScript({$_ -is [int]})]
+        [ValidateSet(3,300)]
+        [int]$PerPage,
+        [ValidateScript({$_ -is [int]})]
+        [int]$Pages = 1,
+        [Parameter(ParameterSetName = 'org')]
         [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
         [string]$ProfileName
     )
 
-    $Headers = Get-Headers
+    Begin {
+        $Headers = Get-Headers
 
-    if (-not $OrgID) {
-        $config = Read-Config
-        if ($profileName) {
-            $OrgID = $config.profiles.$profileName
-            if (-not $OrgID) {
-                throw "Invalid profile name!"
+        if (-not $OrgID) {
+            $config = Read-Config
+            if ($profileName) {
+                $OrgID = $config.profiles.$profileName
+                if (-not $OrgID) {
+                    throw "Invalid profile name!"
+                }
+            } else {
+                $OrgID = $config.profiles.default
+            }        
+        }
+
+        $NetworkIds = [List[String]]::New()
+
+        if ($PerPage) {
+            $Query = "?perPage={0}" -f $PerPage
+        }
+
+        $Uri = "{0}/organizations/{1}/appliance/vpn/statuses" -f $BaseURI, $OrgId
+    }
+
+    Process {
+        if ($id) {
+            $NetworkIds.Add($Id)
+        }
+    }
+
+    End {
+        $Results = [List[PsObject]]::New()
+
+        if ($NetworkIds.Count -gt 0) {
+            if ($Query) {$Query += "&"} else {$Query += "?"}
+            $Query = "{0}networkIds[]={1}" -f $Query, ($NetworkIds.ToArray() -join ',')
+        }
+
+        try {
+            $response = Invoke-WebRequest -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            [List[PsObject]]$result = $response.Content | ConvertFrom-Json
+            if ($result) {
+                $Results.AddRange($result)
             }
-        } else {
-            $OrgID = $config.profiles.default
-        }        
+            $page = 1
+            if ($Pages -ne 1) {
+                $done = $false
+                do {
+                    if ($response.RelationLink['next']) {
+                        $Uri = $response.RelationLink['next']
+                        $response = Invoke-WebRequest -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+                        [List[PsObject]]$result = $response.Content | ConvertFrom-Json
+                        if ($result) {
+                            $Results.AddRange($result)
+                        }
+                        $page += 1
+                        if ($page =gt $Pages) {
+                            $done = $true
+                        }
+                    } else {
+                        $done = $true
+                    }
+                 } until ($done)
+            }
+            return $Results.ToArray()
+        } catch {
+            throw $_
+        }
     }
-
-    $Uri = "{0}/organizations/{1}/appliance/vpn/statuses" -f $BaseURI, $OrgId
-
-    try {
-        $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
-        return $response
-    } catch {
-        throw $_
-    }
+    <#
+    .SYNOPSIS 
+    List VPN status for networks in an organization
+    .DESCRIPTION
+    Show VPN status for networks in an organization. can be filtered by Networks.
+    .PARAMETER id
+    The network ID to get VPN status for.
+    .PARAMETER PerPage
+    The number of entries per page returned. Acceptable range is 3 - 300. Default is 300.
+    .PARAMETER Pages
+    The number of pages to return. Default is 1, 0 = return all pages.
+    .PARAMETER OrgId
+    The organization to use.
+    .PARAMETER ProfileName
+    The named profile to use.
+    .OUTPUTS
+    An array of VPN statuses.
+    #>
 }

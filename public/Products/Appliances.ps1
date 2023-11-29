@@ -14,9 +14,13 @@ function Get-MerakiNetworkApplianceContentFilteringCategories() {
     $Uri = "{0}/networks/{1}/appliance/contentFiltering/categories" -f $BaseURI, $id
     $Headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
-    return $response
+        return $response
+    } catch {
+        throw $_
+    }
     <#
     .SYNOPSIS
     Returns the content filtering categories for this network.*
@@ -49,9 +53,13 @@ function Get-MerakiNetworkApplianceContentFiltering() {
     $Uri = "{0}/networks/{1}/appliance/contentFiltering" -f $BaseURI, $id
     $headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $headers -PreserveAuthorizationOnRedirect
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $headers -PreserveAuthorizationOnRedirect
 
-    return $response    
+        return $response    
+    } catch {
+        throw $_
+    }
     <#
     .SYNOPSIS
     Get the content filtering settings for this appliance.
@@ -304,8 +312,13 @@ function Get-MerakiAppliancePorts() {
 
     Process {
         $Uri = "{0}/networks/{1}/appliance/ports" -f $BaseURI, $id
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
-        return $response
+
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            return $response
+        }catch {
+            throw $_
+        }
     }
     <#
     .SYNOPSIS
@@ -333,9 +346,13 @@ function Get-MerakiNetworkApplianceStaticRoutes() {
     $uri = "{0}/networks/{1}/appliance/staticRoutes" -f $BaseURI, $id
     $Headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
-    return $response
+        return $response
+    } catch {
+        throw $_
+    }
     <#
     .SYNOPSIS 
     Returns the stauc routes for this network appliance.
@@ -364,8 +381,13 @@ function Get-MerakiNetworkApplianceVLANS() {
 
     Process {
         $Uri = "{0}/networks/{1}/appliance/vlans" -f $BaseURI, $id
-        $response =  Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
-        return $response
+
+        try {
+            $response =  Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            return $response
+        } catch {
+            throw $_
+        }
     }
     <#
     .SYNOPSIS
@@ -397,9 +419,13 @@ function Get-MerakiNetworkApplianceVLAN() {
     $Uri = "{0}/networks/{1}/appliance/vlans/{2}" -f $BaseURI, $networkId, $id
     $Headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
-    return $response
+        return $response
+    } catch {
+        throw $_
+    }
     <#
     .SYNOPSIS
     Returns a network appliance VLAN
@@ -669,37 +695,41 @@ function Get-MerakiNetworkApplianceSiteToSiteVPN() {
     $Uri = "{0}/networks/{1}/appliance/vpn/siteToSiteVpn" -f $BaseURI, $id
     $Headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
-    if ($hr) {
-        $heading = [pscustomobject][ordered]@{
-            network = (Get-MerakiNetwork -networkID $id).name
-            mode = $response.mode
-        }
-        Write-Output $heading | Format-List
-        Write-Output "Hubs:"
-        if ($response.mode = "spoke") {
-            $hubs = @()
-            $response.hubs | ForEach-Object {
-                $Hub = [PSCustomObject][ordered]@{
-                    Name = (Get-MerakiNetwork -networkID $_.HubId).name
-                    DefaultRoute = $_.useDefaultRoute
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+        if ($hr) {
+            $heading = [pscustomobject][ordered]@{
+                network = (Get-MerakiNetwork -networkID $id).name
+                mode = $response.mode
+            }
+            Write-Output $heading | Format-List
+            Write-Output "Hubs:"
+            if ($response.mode = "spoke") {
+                $hubs = @()
+                $response.hubs | ForEach-Object {
+                    $Hub = [PSCustomObject][ordered]@{
+                        Name = (Get-MerakiNetwork -networkID $_.HubId).name
+                        DefaultRoute = $_.useDefaultRoute
+                    }
+                    $Hubs += $Hub
                 }
-                $Hubs += $Hub
+                Write-Output $hubs | Format-Table
             }
-            Write-Output $hubs | Format-Table
-        }
-        Write-Output "Subnets:"
-        $subnets = @()
-        $response.subnets | ForEach-Object {
-            $subnet = [PSCustomObject][ordered]@{
-                localSubnet = $_.localSubnet
-                useVpn = $_.useVpn
+            Write-Output "Subnets:"
+            $subnets = @()
+            $response.subnets | ForEach-Object {
+                $subnet = [PSCustomObject][ordered]@{
+                    localSubnet = $_.localSubnet
+                    useVpn = $_.useVpn
+                }
+                $subnets += $subnet
             }
-            $subnets += $subnet
+            Write-Output $subnets | Format-Table
+        } else {
+            return $response
         }
-        Write-Output $subnets | Format-Table
-    } else {
-        return $response
+    } catch {
+        throw $_
     }
     <#
     .SYNOPSIS
@@ -860,9 +890,13 @@ function Get-MerakiApplianceUplinkStatuses() {
     $Uri = "{0}/organizations/{1}/appliance/uplink/statuses" -f $BaseURI, $OrgID
     $Headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
-    return $response | Where-Object {$_.networkID -like $networkID -and $_.serial -like $serial}
+        return $response | Where-Object {$_.networkID -like $networkID -and $_.serial -like $serial}
+    } catch {
+        throw $_
+    }
     <#
     .SYNOPSIS
     Returns the Uplink status of Meraki Networks.
@@ -934,33 +968,37 @@ function Get-MerakiNetworkApplianceVpnStats() {
 
         $Uri = "{0}?perPage={1}&networkIds%5B%5D={2}&timespan={3}" -f $Uri, $timespan, $id, $TimeSpan_Seconds
 
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
-        
-        $peers = $response.merakiVpnPeers
-        $PeerNetworks = New-object System.Collections.Generic.List[psobject]
-        foreach ($peer in $peers) {
-            $P = [vpnPeer]::New()
-            $P.networkID = $id
-            $P.networkName = $Network.name
-            $P.peerNetworkId = $peer.networkId
-            $P.peerNetworkName = $peer.networkName
-            $P.receivedKilobytes = $peer.usageSummary.receivedInKilobytes
-            $P.sentKiloBytes = $peer.usageSummary.sentInKilobytes
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            
+            $peers = $response.merakiVpnPeers
+            $PeerNetworks = New-object System.Collections.Generic.List[psobject]
+            foreach ($peer in $peers) {
+                $P = [vpnPeer]::New()
+                $P.networkID = $id
+                $P.networkName = $Network.name
+                $P.peerNetworkId = $peer.networkId
+                $P.peerNetworkName = $peer.networkName
+                $P.receivedKilobytes = $peer.usageSummary.receivedInKilobytes
+                $P.sentKiloBytes = $peer.usageSummary.sentInKilobytes
 
-            $PeerNetworks.Add($P)
-        }
-        $vpnPeers = $PeerNetworks.ToArray()
+                $PeerNetworks.Add($P)
+            }
+            $vpnPeers = $PeerNetworks.ToArray()
 
-        if ($Sumarize) {   
-            $summary = [summaryVpnPeer]::New()
-            $summary.networkID = $id
-            $Summary.networkName = $Network.name
-            $summary.totalReceivedKilobytes = ($vpnPeers | Measure-Object -Property receivedKilobytes -Sum).Sum
-            $summary.totalSentKilobytes = ($vpnPeers | Measure-Object -Property sentKilobytes -Sum).Sum            
+            if ($Sumarize) {   
+                $summary = [summaryVpnPeer]::New()
+                $summary.networkID = $id
+                $Summary.networkName = $Network.name
+                $summary.totalReceivedKilobytes = ($vpnPeers | Measure-Object -Property receivedKilobytes -Sum).Sum
+                $summary.totalSentKilobytes = ($vpnPeers | Measure-Object -Property sentKilobytes -Sum).Sum            
 
-            return $summary
-        } else {
-            $vpnPeers
+                return $summary
+            } else {
+                $vpnPeers
+            }
+        } catch {
+            throw $_
         }
     }
     <#

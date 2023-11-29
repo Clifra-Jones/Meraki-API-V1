@@ -82,9 +82,13 @@ function Get-MerakiSwitchStackRoutingInterface() {
     Process {
         $uri = "{0}/networks/{1}/switch/stacks/{2}/routing/interfaces/{3}" -f $BaseUri, $networkId, $stackId, $interfaceId
 
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $headers -PreserveAuthorizationOnRedirect
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $headers -PreserveAuthorizationOnRedirect
 
-        return $response
+            return $response
+        } catch {
+            throw $_
+        }
     }
     <#
     .SYNOPSIS
@@ -353,11 +357,15 @@ function Get-MerakiSwitchStackRoutingStaticRoutes() {
 
         $Uri = "{0}/networks/{1}/switch/stacks/{2}/routing/staticRoutes" -f $BaseURI, $networkId, $id
 
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
-        $response | ForEach-Object {
-            $_ | Add-Member -MemberType NoteProperty -Name "Stack" -Value $StackName
-            $responses.add($_)
+            $response | ForEach-Object {
+                $_ | Add-Member -MemberType NoteProperty -Name "Stack" -Value $StackName
+                $responses.add($_)
+            }
+        } catch {
+            throw $_
         }
     }
 
@@ -522,28 +530,32 @@ function Get-MerakiSwitchStackRoutingInterfaceDHCP() {
         $interfaceName = (Get-MerakiSwitchStackRoutingInterface -networkId $networkId -stackId $stackId -interfaceId $interfaceId).Name
 
         $Uri = "{0}/networks/{1}/switch/stacks/{2}/routing/interfaces/{3}/dhcp" -f $BaseURI, $networkId, $stackId, $interfaceId
-        
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
-        $Dhcp = [PSCustomObject]@{
-            networkId = $networkId
-            networkName = $NetworkName            
-            stackId = $stackId
-            stackName = $StackName
-            interfaceId = $interfaceid
-            interfaceName = $interfaceName
-            dhcpMode = $response.dhcpMode
-            dhcpLeaseTime = $response.dhcpLeaseTime
-            dnsNameServersOption = $response.dnsNameServersOption
-            dnsCustomNameServers = $response.dnsCustomNameServers
-            dhcpOptions = $response.dhcpOptions
-            reservedIpRanges = $response.reservedIpRanges
-            fixedIpAssignments = $response.fixedIpAssignments
-            bootOptionsEnabled = $response.bootOptionsEnabled
-            bootFileName = $response.bootFileName
-            bootNextServer = $response.bootNextServer
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+
+            $Dhcp = [PSCustomObject]@{
+                networkId = $networkId
+                networkName = $NetworkName            
+                stackId = $stackId
+                stackName = $StackName
+                interfaceId = $interfaceid
+                interfaceName = $interfaceName
+                dhcpMode = $response.dhcpMode
+                dhcpLeaseTime = $response.dhcpLeaseTime
+                dnsNameServersOption = $response.dnsNameServersOption
+                dnsCustomNameServers = $response.dnsCustomNameServers
+                dhcpOptions = $response.dhcpOptions
+                reservedIpRanges = $response.reservedIpRanges
+                fixedIpAssignments = $response.fixedIpAssignments
+                bootOptionsEnabled = $response.bootOptionsEnabled
+                bootFileName = $response.bootFileName
+                bootNextServer = $response.bootNextServer
+            }
+            return $Dhcp
+        } catch {
+            throw $_
         }
-        return $Dhcp
     }
     <#
     .SYNOPSIS
@@ -674,9 +686,13 @@ function Get-MerakiSwitchRoutingInterface() {
     $Uri = "{0}/devices/{1}/switch/routing/interfaces/{2}" -f $BaseUri, $serial, $interfaceId
     $Headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
-    return $response
+        return $response
+    } catch {
+        throw $_
+    }
     <#
     .SYNOPSIS
     Returns an interface for a Meraki switch.
@@ -1389,23 +1405,27 @@ function Get-MerakiNetworkSwitchLAG() {
 
     Process {
         $Uri = "{0}/networks/{1}/switch/linkAggregations" -f $BaseUri, $Id
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
-        $Lnum = 1
-        $response | ForEach-Object {
-            $lagID = $_.Id
-            $_.switchPorts | foreach-Object {
-                $switchName = (Get-MerakiDevice -serial $_.serial).Name
-                $portName = (Get-MerakiDeviceSwitchPort -serial $_.serial -portId $_.portId).Name
-                $Lag = [PSCustomObject]@{
-                    lagID = $LagID
-                    lagNumber = $Lnum
-                    Switch = $SwitchName
-                    Port = $_.PortId
-                    portName = $portName
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            $Lnum = 1
+            $response | ForEach-Object {
+                $lagID = $_.Id
+                $_.switchPorts | foreach-Object {
+                    $switchName = (Get-MerakiDevice -serial $_.serial).Name
+                    $portName = (Get-MerakiDeviceSwitchPort -serial $_.serial -portId $_.portId).Name
+                    $Lag = [PSCustomObject]@{
+                        lagID = $LagID
+                        lagNumber = $Lnum
+                        Switch = $SwitchName
+                        Port = $_.PortId
+                        portName = $portName
+                    }
+                    $responses.Add($Lag)
                 }
-                $responses.Add($Lag)
+                $lnum += 1
             }
-            $lnum += 1
+        } catch {
+            throw $_
         }
     }
 
@@ -1609,9 +1629,13 @@ function Get-MerakiSwitchStack() {
     $Uri = "{0}/networks/{1}/switch/stacks/{2}" -f $BaseURI, $networkId, $stackId
     $Headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $uri -Headers $Headers -PreserveAuthorizationOnRedirect
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
-    return $response
+        return $response
+    } catch {
+        throw $_
+    }
     <#
     .SYNOPSIS
     Returns a Meraki network switch stack.
@@ -1816,10 +1840,14 @@ function Get-MerakiSwitchPorts() {
     Process {
         $switchName = (Get-MerakiDevice -Serial $serial).Name
         $Uri = "{0}/devices/{1}/switch/ports" -f $BaseURI, $serial
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
-        $response | ForEach-Object {
-            $_ | Add-Member -MemberType NoteProperty -Name "switch" -Value $switchname
-            $responses.Add($_)
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            $response | ForEach-Object {
+                $_ | Add-Member -MemberType NoteProperty -Name "switch" -Value $switchname
+                $responses.Add($_)
+            }
+        } catch {
+            throw $_
         }
     }
 
@@ -1854,9 +1882,13 @@ function Get-MerakiSwitchPort() {
     $Uri = "{0}/devices/{1}/switch/ports/{2}" -f $BaseURI, $serial, $portId
     $Headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
-    return $response
+        return $response
+    } catch {
+        throw $_
+    }
     <#
     .SYNOPSIS
     Returns the port configuration for a Meraki switch port.
@@ -2066,9 +2098,13 @@ function Reset-MerakiSwitchPorts() {
 
     $body = $psBody | ConvertTo-JSON
 
-    $response = Invoke-RestMethod -Method POST -Uri $Uri -body $body -header $Headers -PreserveAuthorizationOnRedirect
+    try {
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -body $body -header $Headers -PreserveAuthorizationOnRedirect
 
-    return $response
+        return $response
+    } catch {
+        throw $_
+    }
     <#
     .SYNOPSIS
     Resets (cycles) a Meraki switch port.
@@ -2113,11 +2149,9 @@ function Get-MerakiSwitchPortsStatus() {
             $Query = "t0={0}" -f $_startDate
         }
         if ($Days) {
-            $ts = [timespan]::FromDays($Days)
-            if ($Query) {
-                $Query += "&"
-            }
-            $Query += "timespan" -f ($ts.TotalSeconds)
+            $Seconds = [TimeSpan]::FromDays($Days).TotalSeconds
+            if ($Query) {$Query += "&"}
+            $Query = "{0}timespan={1}" -f $Query, $Seconds
         }
     }
 
@@ -2754,7 +2788,7 @@ function Get-MerakiSwitchQosRulesOrder() {
     #>
 }
 
-function Set-MerakiSwitchQosruleOrder() {
+function Set-MerakiSwitchQosRuleOrder() {
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
