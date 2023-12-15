@@ -1,6 +1,3 @@
-
-![Balfour Logo](https://www.balfourbeattyus.com/Balfour-dev.allata.com/media/content-media/2017-Balfour-Beatty-Logo-Blue.svg?ext=.svg)
-
 # Meraki-API-V1
 
 This module allows you to interact and manage your Meraki network using Powershell.

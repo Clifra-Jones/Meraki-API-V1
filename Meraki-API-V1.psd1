@@ -14,7 +14,7 @@
 RootModule = '.\Meraki-API-V1.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.3'
+ModuleVersion = '1.0.3'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -32,7 +32,7 @@ CompanyName = 'Balfour Beatty US'
 Copyright = '(c) Balfour Beatty US All rights reserved.'
 
 # Description of the functionality provided by this module
-# Description = ''
+Description = 'Powershell module to use with the Meraki API to manage your Meraki Organization.'
 
 # Minimum version of the PowerShell engine required by this module
 PowerShellVersion = '6.0'
@@ -85,11 +85,11 @@ FunctionsToExport = @(`
     'Get-MerakiDeviceClients',
     'Get-MerakiDeviceApplianceUplinks',
     'Get-MerakiNetwork',
-    'Set-MerakiNetwork',
+    #'Set-MerakiNetwork',
     'Connect-MerakiNetworkToTemplate',
     'Disconnect-MerakiNetworkFromTemplate',
-    'Merge-MerakiNetworks',
-    'Split-MerakiNetwork',
+    #'Merge-MerakiNetworks',
+    #'Split-MerakiNetwork',
     'Get-MerakiNetworkDevices ',
     'Get-MerakiNetworkEvents',
     'Get-MerakiNetworkEventTypes',
@@ -101,17 +101,17 @@ FunctionsToExport = @(`
     'Set-MerakiProfile ',
     'Get-MerakiOrganizations',
     'Get-MerakiOrganization',
-    'New-MerakiOrganization',
-    'Set-MerakiOrganization',
+    #'New-MerakiOrganization',
+    #'Set-MerakiOrganization',
     'Get-MerakiNetworks',
-    'Add-MerakiNetwork',
+    #'Add-MerakiNetwork',
     'Get-MerakiOrganizationConfigTemplates',
     'Get-MerakiOrganizationConfigTemplate ',
     'Get-MerakiOrganizationDevices',
     'Get-MerakiOrganizationAdmins',
     'Get-MerakiOrganizationConfigurationChanges',
     'Get-MerakiOrganizationThirdPartyVpnPeers',
-    'Set-MerakiOrganizationThirdPartyVpnPeer',
+    #'Set-MerakiOrganizationThirdPartyVpnPeer',
     'New-MerakiOrganizationThirdPartyVpnPeer',
     'Get-MerakiOrganizationInventoryDevices',
     'Get-MerakiOrganizationSecurityEvents',
@@ -129,88 +129,88 @@ FunctionsToExport = @(`
     'Get-MerakiNetworkApplianceStaticRoutes',
     'Get-MerakiNetworkApplianceVLANS',
     'Get-MerakiNetworkApplianceVLAN',
-    'Add-MerakiNetworkApplianceVlan',
+    #'Add-MerakiNetworkApplianceVlan',
     'Function Remove-MerakiNetworkApplianceVlan',
-    'Set-MerakiNetworkApplianceVLAN',
+    #'Set-MerakiNetworkApplianceVLAN',
     'Get-MerakiNetworkApplianceSiteToSiteVPN',
-    'Set-MerakiNetworkApplianceSiteToSiteVpn',
+    #'Set-MerakiNetworkApplianceSiteToSiteVpn',
     'Get-MerakiApplianceUplinkStatuses',
     'Get-MerakiNetworkApplianceVpnStats',
     'Get-MerakiNetworkApplianceDhcpSubnets',
     'Get-MerakiNetworkApplianceCellularFirewallRules ',
-    'Set-MerakiNetworkApplianceCellularFirewallRules',
-    'Set-MerakiNetworkApplianceCellularFirewallRule',
-    'Add-MerakiNetworkApplianceCellularFirewallRule',
-    'Remove-MerakiNetworkApplianceCellularFirewallRule',
+    #'Set-MerakiNetworkApplianceCellularFirewallRules',
+    #'Set-MerakiNetworkApplianceCellularFirewallRule',
+    #'Add-MerakiNetworkApplianceCellularFirewallRule',
+    #'Remove-MerakiNetworkApplianceCellularFirewallRule',
     'Get-MerakiNetworkApplianceFirewalledServices',
-    'Function Get-MerakiApplianceL3FirewallRules',
+    'Get-MerakiApplianceL3FirewallRules',
     'Set-MerakiApplianceL3FirewallRules',
     'Add-MerakiApplianceL3FirewallRule',
     'Set-MerakiApplianceL3FirewallRule',
     'Remove-MerakiApplianceL3FirewallRule',
     'Get-MerakiSwitchStackRoutingInterfaces',
     'Get-MerakiSwitchStackRoutingInterface',
-    'Add-MerakiSwitchStackRoutingInterface',
+    #'Add-MerakiSwitchStackRoutingInterface',
     'Function Remove-MerakiSwitchStackRoutingInterface',
-    'Set-MerakiSwitchStackRoutingInterface',
+    #'Set-MerakiSwitchStackRoutingInterface',
     'Get-MerakiSwitchStackRoutingStaticRoutes',
     'Get-MerakiSwitchStackRoutingStaticRoute',
-    'Set-MerakiNetworkSwitchStackRoutingStaticRoute',
-    'Remove-MerakiSwitchStackRoutingStaticRoute',
+    #'Set-MerakiNetworkSwitchStackRoutingStaticRoute',
+    #'Remove-MerakiSwitchStackRoutingStaticRoute',
     'Get-MerakiSwitchStackRoutingInterfaceDHCP',
-    'Set-MerakiSwitchStackRoutingInterfaceDhcp',
+    #'Set-MerakiSwitchStackRoutingInterfaceDhcp',
     'Get-MerakiSwitchRoutingInterfaces',
     'Get-MerakiSwitchRoutingInterface',
-    'Add-MerakiSwitchRoutingInterface',
-    'Set-MerakiSwitchRoutingInterface',
-    'Remove-MerakiSwitchRoutingInterface',
+    #'Add-MerakiSwitchRoutingInterface',
+    #'Set-MerakiSwitchRoutingInterface',
+    #'Remove-MerakiSwitchRoutingInterface',
     'Get-MerakiSwitchRoutingInterfaceDHCP',
-    'Set-MerakiSwitchRoutingInterfaceDhcp',
+    #'Set-MerakiSwitchRoutingInterfaceDhcp',
     'Get-MerakiSwitchRoutingStaticRoutes',
     'Get-MerakiSwitchRoutingStaticRoute',
-    'Add-MerakiSwitchRoutingStaticRoute',
-    'Set-MerakiSwitchRoutingStaticRoute',
-    'Remove-MerakiSwitchStaticRoute',
+    #'Add-MerakiSwitchRoutingStaticRoute',
+    #'Set-MerakiSwitchRoutingStaticRoute',
+    #'Remove-MerakiSwitchStaticRoute',
     'Get-MerakiNetworkSwitchLAG',
-    'Add-MerakiNetworkSwitchLAG',
-    'Set-MerakiNetworkSwitchLAG',
+    #'Add-MerakiNetworkSwitchLAG',
+    #'Set-MerakiNetworkSwitchLAG',
     'Remove-MerakiNetworkSwitchLAG',
     'Get-MerakiNetworkSwitchStacks',
     'Get-MerakiSwitchStack',
-    'New-MerakiSwitchStack',
-    'Add-MerakiSwitchStackSwitch',
-    'Remove-MerakiSwitchStackSwitch',
-    'Remove-MerakiSwitchStack',
+    #'New-MerakiSwitchStack',
+    #'Add-MerakiSwitchStackSwitch',
+    #'Remove-MerakiSwitchStackSwitch',
+    #'Remove-MerakiSwitchStack',
     'Get-MerakiSwitchPorts',
     'Get-MerakiSwitchPort',
-    'Set-MerakiSwitchPort',
+    #'Set-MerakiSwitchPort',
     'Reset-MerakiSwitchPorts',
     'Get-MerakiSwitchPortsStatus',
     'Get-MerakiSwitchPortsPacketCounters',
     'Get-MerakiSwitchPortSchedules',
-    'Add-MerakiSwitchPortSchedule(){',
-    'Set-MerakiSwitchPortSchedule',
-    'Remove-MerakiSwitchPortSchedule',
+    #'Add-MerakiSwitchPortSchedule(){',
+    #'Set-MerakiSwitchPortSchedule',
+    #'Remove-MerakiSwitchPortSchedule',
     'Get-MerakiSwitchQosRules',
     'Get-MerakiSwitchQosRule',
-    'Add-MerakiSwitchQosRule',
-    'Set-MerakiSwitchQosRule',
-    'Remove-MerakiSwitchQosRule',
+    #'Add-MerakiSwitchQosRule',
+    #'Set-MerakiSwitchQosRule',
+    #'Remove-MerakiSwitchQosRule',
     'Get-MerakiSwitchQosRulesOrder',
-    'Set-MerakiSwitchQosRuleOrder',
+    #'Set-MerakiSwitchQosRuleOrder',
     'Get-MerakiSwitchAccessPolicies',
     'Get-MerakiSwitchAccessPolicy',
-    'Add-MerakiSwitchAccessPolicy',
-    'Set-MerakiSwitchAccessPolicy',
-    'Remove-MerakiSwitchAccessPolicy',
+    #'Add-MerakiSwitchAccessPolicy',
+    #'Set-MerakiSwitchAccessPolicy',
+    #'Remove-MerakiSwitchAccessPolicy',
     'Get-MerakiSwitchRoutingMulticast',
-    'Set-MerakiSwitchRoutingMulticast',
+    #'Set-MerakiSwitchRoutingMulticast',
     'Get-MerakiSwitchRoutingOspf',
-    'Set-MerakiSwitchRoutingOspf',
+    #'Set-MerakiSwitchRoutingOspf',
     'Get-MerakiSwitchAccessControlList',
-    'Add-MerakiSwitchAccessControlEntry',
-    'Remove-MerakiSwitchAccessControlEntry',
-    'Set-MerakiSwitchAccessControlEntry',
+    #'Add-MerakiSwitchAccessControlEntry',
+    #'Remove-MerakiSwitchAccessControlEntry',
+    #'Set-MerakiSwitchAccessControlEntry',
     'Get-MerakiSSIDs',
     'Get-MerakiSSID',
     'Get-MerakiWirelessStatus',
@@ -318,13 +318,13 @@ PrivateData = @{
     PSData = @{
 
         # Tags applied to this module. These help with module discovery in online galleries.
-        # Tags = @()
+        Tags = @('Meraki')
 
         # A URL to the license for this module.
-        # LicenseUri = ''
+        LicenseUri = 'https://opensource.org/license/ms-pl-html/'
 
         # A URL to the main website for this project.
-        # ProjectUri = ''
+        ProjectUri = 'https://github.com/Clifra-Jones/Meraki-API-V1'
 
         # A URL to an icon representing this module.
         # IconUri = ''
@@ -346,7 +346,7 @@ PrivateData = @{
 } # End of PrivateData hashtable
 
 # HelpInfo URI of this module
-# HelpInfoURI = ''
+HelpInfoURI = 'https://clifra-jones.github.io/Meraki-API-V1/docs/reference.html'
 
 # Default prefix for commands exported from this module. Override the default prefix using Import-Module -Prefix.
 # DefaultCommandPrefix = ''
