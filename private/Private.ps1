@@ -2,12 +2,6 @@
 
 $BaseURI = "https://api.meraki.com/api/v1"
 
-$paging = @{
-    next = $null
-    prev = $null
-    first = $null
-    last = $null
-}
 
 #Private function
 function Read-Config () {
@@ -39,7 +33,8 @@ function ConvertFrom-UTime() {
 function Get-Headers() {
     $config = Read-Config
     $Headers = @{
-        "X-Cisco-Meraki-API-Key" = $config.APIKey
+        "Authorization" = "Bearer $($config.APIKey)"
+        "Accept" = 'application/json'
         "Content-Type" = 'application/json'
     }
     return $Headers

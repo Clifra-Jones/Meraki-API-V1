@@ -5,14 +5,15 @@ function Get-MerakiSwitchStackRoutingInterfaces() {
     Param(
         [Parameter(
             Mandatory = $true,
-            ValueFromPipeline = $true,
             ValueFromPipelineByPropertyName = $true
         )]
+        [Alias('StackId')]
         [String]$Id,
         [Parameter(
-            Mandatory=$true
+            Mandatory,
+            ValueFromPipelineByPropertyName
         )]
-        [String]$networkId
+        [String]$NetworkId
     )
 
     Begin{
@@ -20,11 +21,22 @@ function Get-MerakiSwitchStackRoutingInterfaces() {
     }
 
     Process {
-        $Uri = "{0}/networks/{1}/switch/stacks/{2}/routing/interfaces" -f $BaseURI, $networkId, $Id
+        $Uri = "{0}/networks/{1}/switch/stacks/{2}/routing/interfaces" -f $BaseURI, $NetworkId, $Id
 
-        $response = Invoke-RestMethod -Method Get -Uri $uri -Headers $Headers 
+        $Stack = Get-MerakiSwitchStack -stackId $id -networkId $NetworkId
 
-        return $response
+        try {
+            $response = Invoke-RestMethod -Method Get -Uri $uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            $response | foreach-Object {
+                $_ | Add-Member -MemberType NoteProperty -Name "stackId" -Value $Id
+                $_ | Add-Member -MemberType NoteProperty -Name "stackName" -Value $Stack.Name
+                $_ | Add-Member -MemberType NoteProperty -Name "networkId" -Value $NetworkId
+            }
+
+            return $response
+        } catch {
+            throw $_
+        }
     }
     <#
     .SYNOPSIS
@@ -70,9 +82,13 @@ function Get-MerakiSwitchStackRoutingInterface() {
     Process {
         $uri = "{0}/networks/{1}/switch/stacks/{2}/routing/interfaces/{3}" -f $BaseUri, $networkId, $stackId, $interfaceId
 
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $headers
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $headers -PreserveAuthorizationOnRedirect
 
-        return $response
+            return $response
+        } catch {
+            throw $_
+        }
     }
     <#
     .SYNOPSIS
@@ -146,7 +162,7 @@ function Add-MerakiSwitchStackRoutingInterface() {
 
     $body = $_Body | ConvertTo-Json -Depth 5 -Compress
     try {
-        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
         throw $_
@@ -177,7 +193,7 @@ Function Remove-MerakiSwitchStackRoutingInterface() {
 
     if ($PSCmdlet.ShouldProcess("Delete","Stack: $($Stack.name)")) {
         try {
-            $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers
+            $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
             throw $_
@@ -257,7 +273,7 @@ function Set-MerakiSwitchStackRoutingInterface() {
 
     $body = $_Body | ConvertTo-Json -Depth 5 -Compress
     try {
-        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
         throw $_
@@ -266,52 +282,53 @@ function Set-MerakiSwitchStackRoutingInterface() {
 
 Set-Alias -Name SetMSStkRteInt -Value Set-MerakiSwitchStackRoutingInterface
 
-function Get-MerakiSwitchStackRoutingInterfacesDHCP() {
-    [CmdletBinding()]
-    Param(
-        #Stack Id
-        [Parameter(
-            Mandatory = $true,
-            ValueFromPipeline = $true,
-            ValueFromPipelineByPropertyName = $true
-        )]
-        [string]$id,
-        #network ID
-        [Parameter(
-            Mandatory = $true            
-        )]
-        [string]$networkId
-    )
 
-    Begin {
-        #$Headers = Get-Headers
-        $responses = New-Object 'System.Collections.Generic.List[psobject]'
-    }
+# function Get-MerakiSwitchStackRoutingInterfacesDHCP() {
+#     [CmdletBinding()]
+#     Param(
+#         #Stack Id
+#         [Parameter(
+#             Mandatory = $true,
+#             ValueFromPipeline = $true,
+#             ValueFromPipelineByPropertyName = $true
+#         )]
+#         [string]$id,
+#         #network ID
+#         [Parameter(
+#             Mandatory = $true            
+#         )]
+#         [string]$networkId
+#     )
 
-    Process {
-        $interfaces = Get-MerakiSwitchStackRoutingInterfaces -Id $id -networkId $networkId
-        $InterfaceDHCP = $interfaces | Get-MerakiSwitchStackRoutingInterfaceDHCP -stackId $id -networkId $networkId
-        $InterfaceDHCP | ForEach-Object {
-            $responses.add($_)
-        }
-    }
+#     Begin {
+#         #$Headers = Get-Headers
+#         $responses = New-Object 'System.Collections.Generic.List[psobject]'
+#     }
 
-    End {
-        return $responses.ToArray()
-    }
-    <#
-    .SYNOPSIS
-    Returns the DHCP Settings for a switch stack interface.
-    .PARAMETER id
-    The stack Id.
-    .PARAMETER networkId
-    The network Id.
-    .OUTPUTS
-    An array of Meraki DHCP objects.
-    #>
-}
+#     Process {
+#         $interfaces = Get-MerakiSwitchStackRoutingInterfaces -Id $id -networkId $networkId
+#         $InterfaceDHCP = $interfaces | Get-MerakiSwitchStackRoutingInterfaceDHCP -stackId $id -networkId $networkId
+#         $InterfaceDHCP | ForEach-Object {
+#             $responses.add($_)
+#         }
+#     }
 
-Set-Alias GMSwStRteIntsDHCP -Value Get-MerakiSwitchStackRoutingInterfacesDHCP
+#     End {
+#         return $responses.ToArray()
+#     }
+#     <#
+#     .SYNOPSIS
+#     Returns the DHCP Settings for a switch stack interface.
+#     .PARAMETER id
+#     The stack Id.
+#     .PARAMETER networkId
+#     The network Id.
+#     .OUTPUTS
+#     An array of Meraki DHCP objects.
+#     #>
+# }
+
+# Set-Alias GMSwStRteIntsDHCP -Value Get-MerakiSwitchStackRoutingInterfacesDHCP
 
 function Get-MerakiSwitchStackRoutingStaticRoutes() {
     [CmdletBinding()]
@@ -340,11 +357,15 @@ function Get-MerakiSwitchStackRoutingStaticRoutes() {
 
         $Uri = "{0}/networks/{1}/switch/stacks/{2}/routing/staticRoutes" -f $BaseURI, $networkId, $id
 
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
-        $response | ForEach-Object {
-            $_ | Add-Member -MemberType NoteProperty -Name "Stack" -Value $StackName
-            $responses.add($_)
+            $response | ForEach-Object {
+                $_ | Add-Member -MemberType NoteProperty -Name "Stack" -Value $StackName
+                $responses.add($_)
+            }
+        } catch {
+            throw $_
         }
     }
 
@@ -389,7 +410,7 @@ function Get-MerakiSwitchStackRoutingStaticRoute() {
         $Uri = "{0}/networks/{1}/switch/stacks/{2}/routing/staticRoutes/{3}" -f $BaseURI, $NetworkId, $StackId, $StaticRouteId
 
         try {
-            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers
+            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
             throw $_
@@ -427,7 +448,7 @@ function Set-MerakiNetworkSwitchStackRoutingStaticRoute() {
     $body = $_Body | ConvertTo-Json -Depth 5 -Compress
 
     try {
-        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Header -Body $body
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Header -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
         throw $_
@@ -455,7 +476,7 @@ function Remove-MerakiSwitchStackRoutingStaticRoute() {
 
     if ($PSCmdlet.ShouldProcess("Delete","Static Route: $($Staticroute.Name)")) {
         try {
-            $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers
+            $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
             throw $_
@@ -483,58 +504,58 @@ function Get-MerakiSwitchStackRoutingInterfaceDHCP() {
     [CmdletBinding()]
     Param(
         [Parameter(
-            Mandatory = $true,
-            ValueFromPipeline = $true,
-            ValueFromPipelineByPropertyName = $true
+            Mandatory,
+            ValueFromPipelineByPropertyName
         )]
         [string]$interfaceId,
         [Parameter(
-            Mandatory = $true
+            Mandatory,
+            ValueFromPipelineByPropertyName
         )]
         [string]$networkId,
         [Parameter(
-            Mandatory = $true
+            Mandatory,
+            ValueFromPipelineByPropertyName
         )]
         [string]$stackId
     )
 
     Begin{
         $Headers = Get-Headers
-        $interfaceDHCPs = New-Object 'System.Collections.Generic.List[psobject]'
-        $NetworkName = (Get-MerakiNetwork -networkID $networkId).name
-        $StackName = (Get-MerakiNetworkSwitchStack -networkId $networkId -stackId $stackId).Name
     }
 
     Process {
+        $NetworkName = (Get-MerakiNetwork -networkID $networkId).name
+        $StackName = (Get-MerakiNetworkSwitchStack -networkId $networkId -stackId $stackId).Name
         $interfaceName = (Get-MerakiSwitchStackRoutingInterface -networkId $networkId -stackId $stackId -interfaceId $interfaceId).Name
 
         $Uri = "{0}/networks/{1}/switch/stacks/{2}/routing/interfaces/{3}/dhcp" -f $BaseURI, $networkId, $stackId, $interfaceId
-        
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
 
-        $Dhcp = [PSCustomObject]@{
-            networkId = $networkId
-            networkName = $NetworkName            
-            stackId = $stackId
-            stackName = $StackName
-            interfaceId = $interfaceid
-            interfaceName = $interfaceName
-            dhcpMode = $response.dhcpMode
-            dhcpLeaseTime = $response.dhcpLeaseTime
-            dnsNameServersOption = $response.dnsNameServersOption
-            dnsCustomNameServers = $response.dnsCustomNameServers
-            dhcpOptions = $response.dhcpOptions
-            reservedIpRanges = $response.reservedIpRanges
-            fixedIpAssignments = $response.fixedIpAssignments
-            bootOptionsEnabled = $response.bootOptionsEnabled
-            bootFileName = $response.bootFileName
-            bootNextServer = $response.bootNextServer
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+
+            $Dhcp = [PSCustomObject]@{
+                networkId = $networkId
+                networkName = $NetworkName            
+                stackId = $stackId
+                stackName = $StackName
+                interfaceId = $interfaceid
+                interfaceName = $interfaceName
+                dhcpMode = $response.dhcpMode
+                dhcpLeaseTime = $response.dhcpLeaseTime
+                dnsNameServersOption = $response.dnsNameServersOption
+                dnsCustomNameServers = $response.dnsCustomNameServers
+                dhcpOptions = $response.dhcpOptions
+                reservedIpRanges = $response.reservedIpRanges
+                fixedIpAssignments = $response.fixedIpAssignments
+                bootOptionsEnabled = $response.bootOptionsEnabled
+                bootFileName = $response.bootFileName
+                bootNextServer = $response.bootNextServer
+            }
+            return $Dhcp
+        } catch {
+            throw $_
         }
-        $interfaceDHCPs.Add($Dhcp)
-    }
-
-    End {
-        return $interfaceDHCPs.ToArray()
     }
     <#
     .SYNOPSIS
@@ -551,6 +572,7 @@ function Get-MerakiSwitchStackRoutingInterfaceDHCP() {
 }
 
 Set-Alias GMSwStRoutIntDHCP -Value Get-MerakiSwitchStackRoutingInterfaceDHCP
+Set-Alias -Name Get-MerakiSwitchStackRoutingInterfacesDHCP -Value Get-MerakiSwitchStackRoutingInterfaceDHCP
 
 function Set-MerakiSwitchStackRoutingInterfaceDhcp() {
     Param(
@@ -596,7 +618,7 @@ function Set-MerakiSwitchStackRoutingInterfaceDhcp() {
     $body = $_body | ConvertTo-Json -Depth 10 -Compress
      
     try{
-        $result = Invoke-RestMethod -Method PUT -Headers $Headers -Uri $Uri -Body $body
+        $result = Invoke-RestMethod -Method PUT -Headers $Headers -Uri $Uri -Body $body -PreserveAuthorizationOnRedirect
         return $result
     } catch {
         throw $_
@@ -623,9 +645,18 @@ function Get-MerakiSwitchRoutingInterfaces() {
     Process {
         $Uri = "{0}/devices/{1}/switch/routing/interfaces" -f $BaseUri, $serial
 
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            $response | ForEach-Object {
+                $Switch = Get-MerakiDevice -Serial $serial
+                $_ | Add-Member -MemberType NoteProperty -Name "switchName" -Value $switch.Name
+                $_ | Add-Member -MemberType NoteProperty -Name "serial" -Value $serial
+            }
 
-        return $response
+            return $response
+        } catch {
+            throw $_
+        }
     }
     <#
     .SYNOPSIS
@@ -655,9 +686,13 @@ function Get-MerakiSwitchRoutingInterface() {
     $Uri = "{0}/devices/{1}/switch/routing/interfaces/{2}" -f $BaseUri, $serial, $interfaceId
     $Headers = Get-Headers
 
-    $response = Invoke-RestMethod -Mestod GET -Uri $Uri -Headers $Headers`
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
-    return $response
+        return $response
+    } catch {
+        throw $_
+    }
     <#
     .SYNOPSIS
     Returns an interface for a Meraki switch.
@@ -743,7 +778,7 @@ function Add-MerakiSwitchRoutingInterface() {
     $body = $_Body | ConvertTo-Json -Depth 5 -Compress
 
     try {
-        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
         throw $_
@@ -867,7 +902,7 @@ function Set-MerakiSwitchRoutingInterface() {
     $body = $_Body | ConvertTo-Json -Depth 5 -Compress
 
     try {
-        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
         Throw $_
@@ -939,7 +974,7 @@ function Remove-MerakiSwitchRoutingInterface() {
 
     if ($PSCmdlet.ShouldProcess('Delete', "Interface $($interface.name)")) {
         try {
-            $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers
+            $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
             throw $_
@@ -963,20 +998,49 @@ function Get-MerakiSwitchRoutingInterfaceDHCP() {
     [CmdletBinding()]
     param (
         [Parameter(
-            Mandatory = $true            
+            Mandatory,
+            ValueFromPipelineByPropertyName   
         )]
         [String]$serial,
         [Parameter(
-            Mandatory = $true
+            Mandatory,
+            ValueFromPipelineByPropertyName
         )]
         [String]$interfaceId
     )
 
-        $Uri = "{0}/devices/{1}/switch/routing/interfaces/{2}/dhcp" -f $BaseUri, $serial, $interfaceId
+    Begin {
         $Headers = Get-Headers       
+    }
 
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
-        return $response
+    Process {
+        $interface = Get-MerakiSwitchRoutingInterface -interfaceId $interfaceId -serial $serial
+        $Switch = Get-MerakiDevice -Serial $serial
+
+        $Uri = "{0}/devices/{1}/switch/routing/interfaces/{2}/dhcp" -f $BaseUri, $serial, $interfaceId
+        
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            
+            $DHCP = [PSCustomObject]@{
+                    interfaceId = $interfaceId
+                    interfaceName = $interface.Name
+                    switchSerial = $serial
+                    switchName = $switch.Name                    
+                    dhcpMode = $response.dhcpMode
+                    dhcpLeaseTime        = $response.dhcpLeaseTime
+                    dnsNameserversOption = $response.dnsNameserversOption
+                    dnsCustomNameservers = $response.bootOptionsEnabled
+                    bootOptionsEnabled   = $response.dhcpOptionEnabled
+                    dhcpOptions          = $response.dhcpOptions
+                    reservedIpRanges     = $response.reservedIpRanges
+                    fixedIpAssignments   = $response.fixedIpAssignments
+                }
+            return $dhcp
+        } catch {
+            throw $_
+        }
+    }
     <#
     .SYNOPSIS
     Return DHCP settings for a Meraki switch interface.
@@ -985,7 +1049,7 @@ function Get-MerakiSwitchRoutingInterfaceDHCP() {
     .PARAMETER interfaceId
     The interface Id.
     .OUTPUTS
-    A Meraki wwitch interface DHCP Settings.
+    A Meraki switch interface DHCP Settings.
     #>
 }
 
@@ -1039,7 +1103,7 @@ function Set-MerakiSwitchRoutingInterfaceDhcp() {
     $body = $_Body | ConvertTo-Json -Depth 5 -Compress
 
     try {
-        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
         throw $_
@@ -1107,15 +1171,28 @@ function Get-MerakiSwitchRoutingStaticRoutes() {
         [String]$serial        
     )
 
-    $Uri = "{0}/devices/{1}/switch/routing/staticRoutes" -f $BaseUri, $serial
-    $Headers = Get-Headers
-    $device = Get-MerakiDevice -Serial $serial
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
-    $response | foreach-Object {
-        $_ | Add-Member -MemberType NoteProperty -Name "switch" -Value $device.name
+    Begin {
+        $Headers = Get-Headers
     }
 
-    return $response
+    Process {
+
+        $Uri = "{0}/devices/{1}/switch/routing/staticRoutes" -f $BaseUri, $serial
+        $device = Get-MerakiDevice -Serial $serial
+
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            $response | foreach-Object {
+                $_ | Add-Member -MemberType NoteProperty -Name "switch" -Value $device.name
+                $_ | Add-Member -MemberType NoteProperty -Name 'serial' -Value $serial
+            }
+
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+
     <#
     .SYNOPSIS
     Returns the static routes for a Meraki switch.
@@ -1141,7 +1218,7 @@ function Get-MerakiSwitchRoutingStaticRoute() {
     $Uri = "{0}/devices/{1}/switch/routing/staticRoutes/{2}" -f $BaseURI, $Serial, $StaticRouteId
 
     try {
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
         return $response
     } catch {
         throw $_
@@ -1189,7 +1266,7 @@ function Add-MerakiSwitchRoutingStaticRoute() {
     $body = $_Body | ConvertTo-Json -Depth 5 -Compress
 
     try {
-        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
         throw $_
@@ -1242,7 +1319,7 @@ function Set-MerakiSwitchRoutingStaticRoute() {
     $body = $_Body | ConvertTo-Json -Depth 5 -Compress
 
     try {
-        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
         throw $_
@@ -1288,7 +1365,7 @@ function Remove-MerakiSwitchStaticRoute() {
 
     if ($PSCmdlet.ShouldProcess('Delete', "StaticRoute $($StaticRoute.Name)") ) {
         try {
-            $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers -Body $body
+            $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
             return $response
         } catch {
             throw $_
@@ -1328,23 +1405,27 @@ function Get-MerakiNetworkSwitchLAG() {
 
     Process {
         $Uri = "{0}/networks/{1}/switch/linkAggregations" -f $BaseUri, $Id
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
-        $Lnum = 1
-        $response | ForEach-Object {
-            $lagID = $_.Id
-            $_.switchPorts | foreach-Object {
-                $switchName = (Get-MerakiDevice -serial $_.serial).Name
-                $portName = (Get-MerakiDeviceSwitchPort -serial $_.serial -portId $_.portId).Name
-                $Lag = [PSCustomObject]@{
-                    lagID = $LagID
-                    lagNumber = $Lnum
-                    Switch = $SwitchName
-                    Port = $_.PortId
-                    portName = $portName
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            $Lnum = 1
+            $response | ForEach-Object {
+                $lagID = $_.Id
+                $_.switchPorts | foreach-Object {
+                    $switchName = (Get-MerakiDevice -serial $_.serial).Name
+                    $portName = (Get-MerakiDeviceSwitchPort -serial $_.serial -portId $_.portId).Name
+                    $Lag = [PSCustomObject]@{
+                        lagID = $LagID
+                        lagNumber = $Lnum
+                        Switch = $SwitchName
+                        Port = $_.PortId
+                        portName = $portName
+                    }
+                    $responses.Add($Lag)
                 }
-                $responses.Add($Lag)
+                $lnum += 1
             }
-            $lnum += 1
+        } catch {
+            throw $_
         }
     }
 
@@ -1382,7 +1463,7 @@ function Add-MerakiNetworkSwitchLAG() {
     $body = $Aggregations | ConvertTo-Json -Depth 5 -Compress
 
     try {
-        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
         throw $_
@@ -1431,7 +1512,7 @@ function Set-MerakiNetworkSwitchLAG() {
     $body = $Aggregations | ConvertTo-Json -Depth 5 -Compress
 
     try {
-        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
         throw $_
@@ -1468,7 +1549,7 @@ function Remove-MerakiNetworkSwitchLAG() {
 
     if ($PSCmdlet.ShouldProcess("Delete","LAG ID:$LinkAggregationId")) {
         try {
-            Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers
+            Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
         } catch {
             throw $_
         }
@@ -1506,10 +1587,17 @@ function Get-MerakiNetworkSwitchStacks() {
     $Network = Get-MerakiNetwork -networkID $id
 
     if ($network.productTypes -contains "switch") {
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            $response | ForEach-Object {
+                $_ | Add-Member -MemberType NoteProperty -Name NetworkId -Value $Network.Id
+                $_ | Add-Member -MemberType NoteProperty -Name NetworkName -Value $Network.Name
+            }
 
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
-
-        return $response
+            return $response
+        } catch {
+            throw $_
+        }
     } else {
         return $null
     }
@@ -1541,9 +1629,13 @@ function Get-MerakiSwitchStack() {
     $Uri = "{0}/networks/{1}/switch/stacks/{2}" -f $BaseURI, $networkId, $stackId
     $Headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $uri -Headers $Headers
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
-    return $response
+        return $response
+    } catch {
+        throw $_
+    }
     <#
     .SYNOPSIS
     Returns a Meraki network switch stack.
@@ -1580,7 +1672,7 @@ function New-MerakiSwitchStack() {
     $body = $_Body | ConvertTo-Json -Depth 3 -Compress
 
     try {
-        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
         throw $_
@@ -1624,7 +1716,7 @@ function Add-MerakiSwitchStackSwitch() {
     $body = $_Body | ConvertTo-Json -Compress
 
     try {
-        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
         throw $_
@@ -1670,7 +1762,7 @@ function Remove-MerakiSwitchStackSwitch() {
 
     if ($PSCmdlet.ShouldProcess('Remove', "Stack member switch $Serial") ) {
         try {
-            $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body
+            $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
             return $response
         } catch {
             throw $_
@@ -1709,7 +1801,7 @@ function Remove-MerakiSwitchStack() {
 
     if ($PSCmdlet.ShouldProcess('Delete',"Switch stack $($stack.name)") ) {
         try {
-            $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers 
+            $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
             throw $_
@@ -1748,10 +1840,14 @@ function Get-MerakiSwitchPorts() {
     Process {
         $switchName = (Get-MerakiDevice -Serial $serial).Name
         $Uri = "{0}/devices/{1}/switch/ports" -f $BaseURI, $serial
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
-        $response | ForEach-Object {
-            $_ | Add-Member -MemberType NoteProperty -Name "switch" -Value $switchname
-            $responses.Add($_)
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            $response | ForEach-Object {
+                $_ | Add-Member -MemberType NoteProperty -Name "switch" -Value $switchname
+                $responses.Add($_)
+            }
+        } catch {
+            throw $_
         }
     }
 
@@ -1786,9 +1882,13 @@ function Get-MerakiSwitchPort() {
     $Uri = "{0}/devices/{1}/switch/ports/{2}" -f $BaseURI, $serial, $portId
     $Headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
-    return $response
+        return $response
+    } catch {
+        throw $_
+    }
     <#
     .SYNOPSIS
     Returns the port configuration for a Meraki switch port.
@@ -1907,7 +2007,7 @@ function Set-MerakiSwitchPort() {
     $body = $_Body | ConvertTo-Json -Depth 5 -Compress
 
     try {
-        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
         throw $_
@@ -1998,9 +2098,13 @@ function Reset-MerakiSwitchPorts() {
 
     $body = $psBody | ConvertTo-JSON
 
-    $response = Invoke-RestMethod -Method POST -Uri $Uri -body $body -header $Headers
+    try {
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -body $body -header $Headers -PreserveAuthorizationOnRedirect
 
-    return $response
+        return $response
+    } catch {
+        throw $_
+    }
     <#
     .SYNOPSIS
     Resets (cycles) a Meraki switch port.
@@ -2045,11 +2149,9 @@ function Get-MerakiSwitchPortsStatus() {
             $Query = "t0={0}" -f $_startDate
         }
         if ($Days) {
-            $ts = [timespan]::FromDays($Days)
-            if ($Query) {
-                $Query += "&"
-            }
-            $Query += "timespan" -f ($ts.TotalSeconds)
+            $Seconds = [TimeSpan]::FromDays($Days).TotalSeconds
+            if ($Query) {$Query += "&"}
+            $Query = "{0}timespan={1}" -f $Query, $Seconds
         }
     }
 
@@ -2060,7 +2162,7 @@ function Get-MerakiSwitchPortsStatus() {
             $Uri += "?{0}" -f $Query
         }
         try {
-            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers
+            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
             throw $_
@@ -2119,7 +2221,7 @@ function Get-MerakiSwitchPortsPacketCounters() {
         }
 
         try {
-            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
             throw $_
@@ -2162,7 +2264,7 @@ function Get-MerakiSwitchPortSchedules() {
         $Uri = "{0}/networks/{1}/switch/portSchedules" -f $BaseURI, $Id
 
         try {
-            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
             throw $_
@@ -2201,7 +2303,7 @@ function Add-MerakiSwitchPortSchedule(){
     $body = $_Body | ConvertTo-Json -Depth 5 -Compress
 
     try {
-        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
         throw $_
@@ -2297,7 +2399,7 @@ function Set-MerakiSwitchPortSchedule() {
     $body = $_body | ConvertTo-Json -Depth 5 -Compress
 
     try {
-        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
         return $response
@@ -2337,7 +2439,7 @@ function Remove-MerakiSwitchPortSchedule() {
     
     if ($PSCmdlet.ShouldProcess('Delete',"Port Schedule $($PortSchedule.Name)")) {
         try {
-            $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers
+            $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
             throw $_
@@ -2379,7 +2481,7 @@ function Get-MerakiSwitchQosRules() {
         $Uri = "{0}/networks/{1}/switch/qosRules" -f $BaseURI, $id
 
         try {
-            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers 
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
             throw $_
@@ -2415,7 +2517,7 @@ function Get-MerakiSwitchQosRule() {
     $Uri = "{0}/networks/{1}/switch/qosRules/{2}" -f $BaseURI, $Id, $QosRuleId
 
     try {
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
         return $response
     } catch {
         throw $_
@@ -2496,7 +2598,7 @@ function Add-MerakiSwitchQosRule() {
     $body = $_Body | ConvertTo-Json -Compress
 
     try {
-        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
         throw $_
@@ -2571,7 +2673,7 @@ function Set-MerakiSwitchQosRule() {
     $body = $_Body | ConvertTo-Json -Compress
 
     try {
-        $response = Invoke-RestMethod -Method Put -Uri $Uri -Headers $Headers -Body $body
+        $response = Invoke-RestMethod -Method Put -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
         throw $_
@@ -2619,7 +2721,7 @@ function Remove-MerakiSwitchQosRule() {
 
     if ($PSCmdlet.ShouldProcess('Delete',"QOS Rule: $QosRuleId")) {
         try {
-            $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers
+            $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
             throw $_
@@ -2662,7 +2764,7 @@ function Get-MerakiSwitchQosRulesOrder() {
         $Network = Get-MerakiNetwork -networkID $NetworkId
 
         try {
-            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             $response | Add-Member -MemberType NoteProperty -Name "NetworkId" -Value $Network.ID
             $response | Add-Member -MemberType NoteProperty -Name "NetworkName" -Value $Network.Name
             $Rules.Add($response)
@@ -2686,7 +2788,7 @@ function Get-MerakiSwitchQosRulesOrder() {
     #>
 }
 
-function Set-MerakiSwitchQosruleOrder() {
+function Set-MerakiSwitchQosRuleOrder() {
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
@@ -2705,7 +2807,7 @@ function Set-MerakiSwitchQosruleOrder() {
     $body = $_Body | ConvertTo-Json -Compress
 
     try {
-        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
         throw $_
@@ -2752,7 +2854,7 @@ function Get-MerakiSwitchAccessPolicies() {
 
         try {
             $policyid = 1
-            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers
+            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             $response | ForEach-Object {
                 $_ | Add-Member -MemberType NoteProperty -Name "policyId" -Value $pid
                 $policyid += 1
@@ -2797,7 +2899,7 @@ function Get-MerakiSwitchAccessPolicy() {
     $Uri = "{0}/network/{1}/switch/accessPolicies/{2}" -f $BaseURI, $NetworkId, $AccessPolicyNumber
 
     try {
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
         return $response
     } catch {
         throw $_
@@ -2903,7 +3005,7 @@ function Add-MerakiSwitchAccessPolicy() {
     $body = $_Body | ConvertTo-Json -Depth 10 -Compress
 
     try {
-        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     }
     catch {
@@ -3100,7 +3202,7 @@ function Set-MerakiSwitchAccessPolicy() {
     $body = $_Body | ConvertTo-Json -Depth 10 -Compress
 
     try {
-        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     }
     catch {
@@ -3167,7 +3269,7 @@ function Remove-MerakiSwitchAccessPolicy() {
 
     if ($PSCmdlet.ShouldProcess('Delete', "Access Policy: $($AccessPolicy.Name)")) {
         try {
-            $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers
+            $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         }
         catch {
@@ -3209,7 +3311,7 @@ function Get-MerakiSwitchRoutingMulticast() {
         $Uri = "{0}/networks/{1}/switch/routing/milticast" -f $Id
         $Network = Get-MerakiNetwork -networkID $Id
         try {
-            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             $Multicast = [PSCustomObject]@{
                 NetworkId = $Network.Id
                 NetworkName = $Network.Name
@@ -3263,7 +3365,7 @@ function Set-MerakiSwitchRoutingMulticast() {
     $body = $_Body | ConvertTo-Json -Depth 5 -Compress
     
     try {
-        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response        
     } catch {
         throw $_
@@ -3313,7 +3415,7 @@ function Get-MerakiSwitchRoutingOspf() {
         $Uri = "{0}/networks/{1}/switch/routing/ospf" -f $BaseURI, $Id
 
         try {
-            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
             throw $_
@@ -3388,7 +3490,7 @@ function Set-MerakiSwitchRoutingOspf() {
     $body = $_Body | ConvertTo-Json -Depth 5 -Compress
 
     try {
-        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
         throw $_
@@ -3462,7 +3564,7 @@ function Get-MerakiSwitchAccessControlList() {
 
             try {
                 $id = 1
-                $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+                $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
                 $Rules = [List[psobject]]::New()
                 $response | ForEach-Object {
                     $_.rules | Add-Member -MemberType NoteProperty -Name "Id" -Value $id
@@ -3535,7 +3637,7 @@ function Add-MerakiSwitchAccessControlEntry() {
 
     try {
         $id = 1
-        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         $response | ForEach-Object {
             $_ | Add-Member -MemberType NoteProperty -Name "Id" -Value $id
             $Id += 1
@@ -3567,7 +3669,7 @@ function Remove-MerakiSwitchAccessControlEntry() {
 
     try {
         $Id = 1
-        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         $response | ForEach-Object {
             $_ | Add-Member -MemberType NoteProperty -Name "Id" -Value $Id
             $Id += 1
@@ -3628,7 +3730,7 @@ function Set-MerakiSwitchAccessControlEntry() {
 
     Try {
         $id = 1
-        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         $response | ForEach-Object {
             $_ | Add-Member -MemberType NoteProperty -Name "Id" -Value Id
             $Id += 1

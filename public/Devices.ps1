@@ -14,9 +14,13 @@ function Get-MerakiDevice() {
     $Uri = "{0}/devices/{1}" -f $BaseURI, $Serial
     $Headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
-    return $response
+        return $response
+    } catch {
+        throw $_
+    }
     <#
     .SYNOPSIS
     Returns a Meraki Device.
@@ -58,10 +62,13 @@ function Start-MerakiDeviceBlink() {
     }
     $body = $psBody | ConvertTo-Json
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Body $body -Headers $Headers
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Body $body -Headers $Headers -PreserveAuthorizationOnRedirect
 
-    return $response
-
+        return $response
+    } catch {
+        throw $_
+    }
     <#
     .SYNOPSIS 
     Starts the LED blinking on a Meraki Device.
@@ -91,12 +98,12 @@ function Restart-MerakiDevice() {
     $Uri = "{0}/devices/{1}/reboot" -f $BaseURI, $serial
     $headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method POST -Uri $Uri -Headera $Headers
+    try {
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
-    if ($response.success) {
-        return $true
-    } else {
-        return $false
+        return $response
+    } catch {
+        throw $_
     }
     <#
     .SYNOPSIS
@@ -119,28 +126,59 @@ function Get-MerakiDeviceClients() {
             ValueFromPipelineByPropertyName = $true
         )]
         [string]$serial,
-        [ValidateScript(
-            {
-                $_ -le 31
-            }
-        )]
-        [int]$Days=31
+        [ValidateScript({$_ -is [datetime]})]
+        [Parameter(ParameterSetName = 'dates', Mandatory)]
+        [Parameter(ParameterSetName = 'datesWithOrg', Mandatory)]
+        [Parameter(ParameterSetName ='datesWithProfiles', Mandatory)]                
+        [datetime]$StartDate,
+
+        [Parameter(ParameterSetName = 'days', Mandatory)]
+        [Parameter(ParameterSetName = 'daysWithOrg', Mandatory)]
+        [Parameter(ParameterSetName = 'daysWithProfile', Mandatory)]
+        [ValidateScript({$_ -is [int]})]
+        [ValidateRange(1,31)]
+        [int]$Days,
+
+        [Parameter(ParameterSetName = 'org', Mandatory)]
+        [Parameter(ParameterSetName = 'datesWithOrg', Mandatory)]
+        [Parameter(ParameterSetName = 'daysWithOrg', Mandatory)]
+        [string]$OrgId,
+
+        [Parameter(ParameterSetName = 'profile', Mandatory)]
+        [Parameter(ParameterSetName = 'datesWithProfile', Mandatory)]
+        [Parameter(ParameterSetName = 'daysWithProfile', Mandatory)]
+        [string]$ProfileName
     )
 
     Begin {
-        $Headers = Get-Headers
-        $_body = @{}
-        if ($Days) {
-            $ts = [timespan]::FromDays($Days)
-            $_body.Add("timespan", $ts.TotalSeconds)
+        if (-not $OrgID) {
+            $config = Read-Config
+            if ($profileName) {
+                $OrgID = $config.profiles.$profileName
+                if (-not $OrgID) {
+                    throw "Invalid profile name!"
+                }
+            } else {
+                $OrgID = $config.profiles.default
+            }        
         }
-        $body = $_body | ConvertTo-Json -Compress
+
+        $Headers = Get-Headers
+
+        if ($StartDate) {
+            $Query = "t0={0}" -f ($StartDate.ToString("O"))
+        }
+        if ($Days) {
+            if ($Query) {$Query += '&'}
+            $Seconds = [TimeSpan]::FromDays($Days).TotalSeconds
+            $Query = "{0}timespan={1}" -f $Query, $Seconds
+        }
     }
 
     Process {
         $Uri = "{0}/devices/{1}/clients" -f $BaseURI, $serial
         try {
-            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -Body $body
+            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
             $response | ForEach-Object {
                 if ($null -eq $_.description) {
                     $_.description = $_.mac
@@ -170,7 +208,7 @@ function Get-MerakiDeviceApplianceUplinks() {
     $Uri = "{0}/devices/{1}/appliance/uplinks/settings" -f $BaseURI, $Serial
 
     try {
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
         return $response
     } catch {
         throw $_

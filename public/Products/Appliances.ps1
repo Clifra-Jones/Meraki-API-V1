@@ -14,9 +14,13 @@ function Get-MerakiNetworkApplianceContentFilteringCategories() {
     $Uri = "{0}/networks/{1}/appliance/contentFiltering/categories" -f $BaseURI, $id
     $Headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
-    return $response
+        return $response
+    } catch {
+        throw $_
+    }
     <#
     .SYNOPSIS
     Returns the content filtering categories for this network.*
@@ -49,9 +53,13 @@ function Get-MerakiNetworkApplianceContentFiltering() {
     $Uri = "{0}/networks/{1}/appliance/contentFiltering" -f $BaseURI, $id
     $headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $headers
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $headers -PreserveAuthorizationOnRedirect
 
-    return $response    
+        return $response    
+    } catch {
+        throw $_
+    }
     <#
     .SYNOPSIS
     Get the content filtering settings for this appliance.
@@ -136,7 +144,7 @@ function Update-MerakiNetworkApplianceContentFiltering() {
     $body = $psBody | ConvertTo-Json -Compress -Depth 6
 
     try {
-        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Body $body -Headers $Headers
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Body $body -Headers $Headers -PreserveAuthorizationOnRedirect
         return  $response
     } catch {
         throw $_
@@ -304,8 +312,13 @@ function Get-MerakiAppliancePorts() {
 
     Process {
         $Uri = "{0}/networks/{1}/appliance/ports" -f $BaseURI, $id
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
-        return $response
+
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            return $response
+        }catch {
+            throw $_
+        }
     }
     <#
     .SYNOPSIS
@@ -333,9 +346,13 @@ function Get-MerakiNetworkApplianceStaticRoutes() {
     $uri = "{0}/networks/{1}/appliance/staticRoutes" -f $BaseURI, $id
     $Headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
-    return $response
+        return $response
+    } catch {
+        throw $_
+    }
     <#
     .SYNOPSIS 
     Returns the stauc routes for this network appliance.
@@ -364,8 +381,13 @@ function Get-MerakiNetworkApplianceVLANS() {
 
     Process {
         $Uri = "{0}/networks/{1}/appliance/vlans" -f $BaseURI, $id
-        $response =  Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers 
-        return $response
+
+        try {
+            $response =  Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            return $response
+        } catch {
+            throw $_
+        }
     }
     <#
     .SYNOPSIS
@@ -397,9 +419,13 @@ function Get-MerakiNetworkApplianceVLAN() {
     $Uri = "{0}/networks/{1}/appliance/vlans/{2}" -f $BaseURI, $networkId, $id
     $Headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
-    return $response
+        return $response
+    } catch {
+        throw $_
+    }
     <#
     .SYNOPSIS
     Returns a network appliance VLAN
@@ -465,7 +491,7 @@ function Add-MerakiNetworkApplianceVlan() {
     $body = $_Body | ConvertTo-Json -Depth 5 -Compress
 
     try {
-        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body
+        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
         throw $_
@@ -487,7 +513,7 @@ Function Remove-MerakiNetworkApplianceVlan() {
 
     if ($PSCmdlet.ShouldProcess("Delete", "VLAN ID $VlanId")) {
         try {
-            $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers
+            $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
             throw $_
@@ -621,7 +647,7 @@ function Set-MerakiNetworkApplianceVLAN() {
     $body = $_body | ConvertTo-Json -Depth 10 -Compress
 
     Try {
-        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
         Throw $_
@@ -669,37 +695,41 @@ function Get-MerakiNetworkApplianceSiteToSiteVPN() {
     $Uri = "{0}/networks/{1}/appliance/vpn/siteToSiteVpn" -f $BaseURI, $id
     $Headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
-    if ($hr) {
-        $heading = [pscustomobject][ordered]@{
-            network = (Get-MerakiNetwork -networkID $id).name
-            mode = $response.mode
-        }
-        Write-Output $heading | Format-List
-        Write-Output "Hubs:"
-        if ($response.mode = "spoke") {
-            $hubs = @()
-            $response.hubs | ForEach-Object {
-                $Hub = [PSCustomObject][ordered]@{
-                    Name = (Get-MerakiNetwork -networkID $_.HubId).name
-                    DefaultRoute = $_.useDefaultRoute
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+        if ($hr) {
+            $heading = [pscustomobject][ordered]@{
+                network = (Get-MerakiNetwork -networkID $id).name
+                mode = $response.mode
+            }
+            Write-Output $heading | Format-List
+            Write-Output "Hubs:"
+            if ($response.mode = "spoke") {
+                $hubs = @()
+                $response.hubs | ForEach-Object {
+                    $Hub = [PSCustomObject][ordered]@{
+                        Name = (Get-MerakiNetwork -networkID $_.HubId).name
+                        DefaultRoute = $_.useDefaultRoute
+                    }
+                    $Hubs += $Hub
                 }
-                $Hubs += $Hub
+                Write-Output $hubs | Format-Table
             }
-            Write-Output $hubs | Format-Table
-        }
-        Write-Output "Subnets:"
-        $subnets = @()
-        $response.subnets | ForEach-Object {
-            $subnet = [PSCustomObject][ordered]@{
-                localSubnet = $_.localSubnet
-                useVpn = $_.useVpn
+            Write-Output "Subnets:"
+            $subnets = @()
+            $response.subnets | ForEach-Object {
+                $subnet = [PSCustomObject][ordered]@{
+                    localSubnet = $_.localSubnet
+                    useVpn = $_.useVpn
+                }
+                $subnets += $subnet
             }
-            $subnets += $subnet
+            Write-Output $subnets | Format-Table
+        } else {
+            return $response
         }
-        Write-Output $subnets | Format-Table
-    } else {
-        return $response
+    } catch {
+        throw $_
     }
     <#
     .SYNOPSIS
@@ -767,7 +797,7 @@ function Set-MerakiNetworkApplianceSiteToSiteVpn() {
     }
 
     try {
-        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $Body
+        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $Body -PreserveAuthorizationOnRedirect
         return $response
     }
     catch {
@@ -860,9 +890,13 @@ function Get-MerakiApplianceUplinkStatuses() {
     $Uri = "{0}/organizations/{1}/appliance/uplink/statuses" -f $BaseURI, $OrgID
     $Headers = Get-Headers
 
-    $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
-    return $response | Where-Object {$_.networkID -like $networkID -and $_.serial -like $serial}
+        return $response | Where-Object {$_.networkID -like $networkID -and $_.serial -like $serial}
+    } catch {
+        throw $_
+    }
     <#
     .SYNOPSIS
     Returns the Uplink status of Meraki Networks.
@@ -934,33 +968,37 @@ function Get-MerakiNetworkApplianceVpnStats() {
 
         $Uri = "{0}?perPage={1}&networkIds%5B%5D={2}&timespan={3}" -f $Uri, $timespan, $id, $TimeSpan_Seconds
 
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
-        
-        $peers = $response.merakiVpnPeers
-        $PeerNetworks = New-object System.Collections.Generic.List[psobject]
-        foreach ($peer in $peers) {
-            $P = [vpnPeer]::New()
-            $P.networkID = $id
-            $P.networkName = $Network.name
-            $P.peerNetworkId = $peer.networkId
-            $P.peerNetworkName = $peer.networkName
-            $P.receivedKilobytes = $peer.usageSummary.receivedInKilobytes
-            $P.sentKiloBytes = $peer.usageSummary.sentInKilobytes
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            
+            $peers = $response.merakiVpnPeers
+            $PeerNetworks = New-object System.Collections.Generic.List[psobject]
+            foreach ($peer in $peers) {
+                $P = [vpnPeer]::New()
+                $P.networkID = $id
+                $P.networkName = $Network.name
+                $P.peerNetworkId = $peer.networkId
+                $P.peerNetworkName = $peer.networkName
+                $P.receivedKilobytes = $peer.usageSummary.receivedInKilobytes
+                $P.sentKiloBytes = $peer.usageSummary.sentInKilobytes
 
-            $PeerNetworks.Add($P)
-        }
-        $vpnPeers = $PeerNetworks.ToArray()
+                $PeerNetworks.Add($P)
+            }
+            $vpnPeers = $PeerNetworks.ToArray()
 
-        if ($Sumarize) {   
-            $summary = [summaryVpnPeer]::New()
-            $summary.networkID = $id
-            $Summary.networkName = $Network.name
-            $summary.totalReceivedKilobytes = ($vpnPeers | Measure-Object -Property receivedKilobytes -Sum).Sum
-            $summary.totalSentKilobytes = ($vpnPeers | Measure-Object -Property sentKilobytes -Sum).Sum            
+            if ($Sumarize) {   
+                $summary = [summaryVpnPeer]::New()
+                $summary.networkID = $id
+                $Summary.networkName = $Network.name
+                $summary.totalReceivedKilobytes = ($vpnPeers | Measure-Object -Property receivedKilobytes -Sum).Sum
+                $summary.totalSentKilobytes = ($vpnPeers | Measure-Object -Property sentKilobytes -Sum).Sum            
 
-            return $summary
-        } else {
-            $vpnPeers
+                return $summary
+            } else {
+                $vpnPeers
+            }
+        } catch {
+            throw $_
         }
     }
     <#
@@ -1001,7 +1039,7 @@ function Get-MerakiNetworkApplianceDhcpSubnets() {
     Process {
         $Url = "{0}/devices/{1}/appliance/dhcp/subnets" -f $BaseURI, $Serial
         try {
-            $response = Invoke-RestMethod -Method GET -Uri $Url -Headers $Headers
+            $response = Invoke-RestMethod -Method GET -Uri $Url -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
             throw $_
@@ -1041,7 +1079,7 @@ function Get-MerakiNetworkApplianceCellularFirewallRules () {
         $Network = Get-MerakiNetwork -networkID $Id
 
         try {
-            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             $response | Add-Member -MemberType NoteProperty -Name "NetworkId" -Value $Id
             $response | Add-Member -MemberType NoteProperty -Name "NetworkName" -Value $Network.Name
             return $response
@@ -1069,7 +1107,7 @@ function Set-MerakiNetworkApplianceCellularFirewallRules() {
     $body = $Rules | ConvertTo-Json -Depth 4 -Compress
 
     try {
-        $response = Invoke-RestMethod -Method Put -Uri $Uri -Headers $Headers -Body $body
+        $response = Invoke-RestMethod -Method Put -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
         throw $_
@@ -1185,7 +1223,7 @@ function Add-MerakiNetworkApplianceCellularFirewallRule() {
     }
 }
 
-function Remove-MerakiNetworkAplianceCelularFirewallRule() {
+function Remove-MerakiNetworkApplianceCellularFirewallRule() {
     [CmdletBinding(SupportsShouldProcess)]
     Param(
         [Parameter(Mandatory = $true)]
@@ -1235,13 +1273,279 @@ function Get-MerakiNetworkApplianceFirewalledServices() {
         $Uri = "{0}/networks/{1}/appliance/firewall/firewalledServices" -f $BaseURI, $Id
         $Network = Get-MerakiNetwork -networkID $Id
         try {
-            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers
+            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             $response | Add-Member -MemberType NoteProperty -Name "NetworkId" -Value $Id
             $response | Add-Member -MemberType NoteProperty -Name "NetworkName" -Value $Network.Name
             return $response
         }
         catch {
             Throw $_
+        }
+    }
+}
+#endregion
+
+#region L3 Firewall Rules
+Function Get-MerakiApplianceL3FirewallRules() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$id
+    )
+
+    $Uri = "{0}/networks/{1}/appliance/firewall/l3FirewallRules" -f $BaseURI, $Id
+
+    $Headers = Get-Headers
+
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+        $rules = $response.Rules
+        $ruleId = 1
+        $rules | Foreach-Object {
+            $_ | Add-Member -MemberType NoteProperty -Name "RuleId" -Value $ruleId
+            $RuleId += 1
+        }
+        return $rules
+    } catch {
+        Throw $_
+    }
+}
+
+function Set-MerakiApplianceL3FirewallRules() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [Parameter(
+            Mandatory
+        )]
+        [psobject[]]$Rules,
+        [switch]$PassThru
+    )    
+
+    Begin {
+        $Headers = Get-Headers
+
+        # The below statements are used if rules are being copied from another network/
+
+        # Remove the RuleId property. This is added and used by this module and is not part of the Meraki configuration.
+        if ($Rules[0].PSObject.Properties.Name -contains 'RuleId') {
+            $Rules = $Rules | Select-Object -Property * -ExcludeProperty RuleId
+        }
+
+        # remove the default rule if it exists.
+        $Rules = $Rules | Where-Object {$_.comment -ne 'Default rule'}
+    }
+    Process {
+    
+        $Uri = "{0}/networks/{1}/appliance/firewall/l3FirewallRules" -f $BaseUri, $id
+        $_body = @{"rules" = $Rules}
+        $body = $_body | ConvertTo-Json -Depth 5 -Compress
+
+        try {
+            $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
+            return $response.rules
+        } catch {
+            throw $_
+        }
+    }
+}
+
+function Add-MerakiApplianceL3FirewallRule() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [ValidateSet('allow','deny')]
+        [string]$Policy,
+        [string]$Comment,
+        [ValidateSet('tcp', 'udp', 'icmp', 'icmp6', 'any')]
+        [string]$Protocol,
+        [ValidateScript(
+            {
+                $subnetPart = $_.split("/")
+                $_ -eq "any" -or ([IPAddress]$subnetPart[0] -is [IPAddress] -and $SubnetPart[1] -In 0..32)
+            }
+        )]
+        [string]$SourceCIDR,
+        [string]$SourcePort = 'any',
+        [ValidateScript(
+            {
+                $subnetPart = $_.split("/")
+                $_ -eq "any" -or [IPAddress]$subnetPart[0] -is [IPAddress] -and $SubnetPart[1] -In 0..32
+            }
+        )]
+        [string]$DestinationCIDR,
+        [string]$DestinationPort = 'any',
+        [switch]$SyslogEnabled,
+        [switch]$PassThru
+    )
+
+    Begin {
+        $Headers = Get-Headers
+    }
+    
+    Process {
+
+        $Uri = "{0}/networks/{1}/appliance/firewall/l3FirewallRules" -f $BaseUri, $Id
+
+
+        $Rules = Get-MerakiApplianceL3FirewallRules -id $Id | Select-Object * -ExcludeProperty RuleId
+
+        # Remove the default rule
+        $Rules = $Rules | Where-Object {$_.comment -ne "Default rule"}
+
+        $NewRule = [PSCustomObject]@{
+            policy = $policy
+            comment = $Comment
+            protocol = $Protocol
+            destPort = $DestinationPort
+            destCidr = $DestinationCIDR
+            srcPort = $SourcePort
+            srcCidr = $SourceCIDR
+            syslogEnabled = $SyslogEnabled.IsPresent
+        }
+        $Rules += $NewRule
+        
+        $_Body = @{rules = $Rules}
+        $body = $_body | ConvertTo-JSON -Depth 5 -Compress
+
+        try {
+            $response = Invoke-RestMethod -Method Put -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
+            return $response.rules
+        } catch {
+            throw $_
+        }
+    }
+}
+
+function Set-MerakiApplianceL3FirewallRule() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory
+        )]
+        [string]$NetworkId,
+        [int]$RuleId,
+        [ValidateSet('allow','deny')]
+        [string]$Policy,
+        [string]$Comment,
+        [ValidateSet('tcp', 'udp', 'icmp', 'icmp6', 'any')]
+        [string]$Protocol,
+        [ValidateScript(
+            {
+                $subnetPart = $_.split("/")
+                [IPAddress]$subnetPart[0] -is [IPAddress] -and $SubnetPart[1] -In 0..32
+            }
+        )]
+        [string]$SourceCIDR,
+        [string]$SourcePort,
+        [ValidateScript(
+            {
+                $subnetPart = $_.split("/")
+                [IPAddress]$subnetPart[0] -is [IPAddress] -and $SubnetPart[1] -In 0..32
+            }
+        )]
+        [string]$DestinationCIDR,
+        [string]$DestinationPort,
+        [switch]$SyslogEnabled
+    )
+
+    $Uri = "{0}/networks/{1}/appliance/firewall/l3FirewallRules" -f $BaseUri, $NetworkId
+
+    $Headers = Get-Headers
+
+    $Rules = Get-MerakiApplianceL3FirewallRules -id $NetworkId
+
+    # Remove the Default Rule
+    $Rules = $Rules | Where-Object {$_.comment -ne "Default rule"}
+    
+    $Rule = $Rules | Where-Object {$_.RuleId -eq $RuleId}
+    if (-not $Rule) {
+        throw "Invalid Rule Id"
+    }
+
+    $Rules = $Rules | Where-Object {$_.RuleId -ne $RuleId}
+
+    If ($Policy) {$Rule.policy = $Policy}
+    if ($Comment) {$Rule.comment = $Comment}
+    if ($Protocol) {$Rule.protocol = $Protocol}
+    if ($SourceCIDR) {$Rule.srcCIDR - $SourceCIDR}
+    if ($SourcePort) { $Rule.srcPort = $SourcePort}
+    if ($DestinationCIDR) {$Rule.destCIDR = $DestinationCIDR}
+    if ($DestinationPort) {$Rule.destPort = $DestinationPort}
+    if ($SyslogEnabled) {$Rule.syslogEnabled = $SyslogEnabled}
+
+
+    $Rules += $Rule
+
+    # Remove the RuleId Property
+    $newRules = $Rules | Select-Object * -ExcludeProperty RuleId
+
+    $_Body = @{rules = $newRules}
+
+    $body = $_Body | ConvertTo-Json
+
+    try {
+        $response = Invoke-RestMethod -Method PUT -Uri $uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
+        return $response.rules  
+    } catch {
+        throw $_
+    }
+}
+
+function Remove-MerakiApplianceL3FirewallRule() {
+    [CmdletBinding(SupportsShouldProcess)]
+    Param(
+        [Parameter(
+            Mandatory
+        )]
+        [string]$NetworkId,
+        [Parameter(Mandatory)]
+        [string]$RuleId,
+        [switch]$PassThru
+    )
+    $Uri = "{0}/networks/{1}/appliance/firewall/l3FirewallRules" -f $BaseUri, $NetworkId
+
+    $Headers = Get-Headers
+
+    $Rules = Get-MerakiApplianceL3FirewallRules -id $NetworkId
+
+    # Remove the Default Rule
+    $Rules = $Rules | Where-Object {$_.comment -ne "Default rule"}
+
+    $Rule = $Rules | Where-Object {$_.RuleId -eq $RuleId}
+    if (-not $Rule) {
+        throw "Invalid Rule Id"
+    }
+
+    # Remove the Rule to be deleted
+    $Rules = $Rules | Where-Object {$_.RuleId -ne $RuleId}
+
+    # Remove the Rule Property
+    $Rules = $Rules | Select-Object -Property * -ExcludeProperty RuleId
+
+    $_Body = @{rules = $Rules}
+
+    $body = $_Body | ConvertTo-Json -Depth 5 -Compress
+    if ($PSCmdlet.ShouldProcess("Delete","Rule:$($Rule.Comment)")) {
+        try {
+            $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
+            return $response.rules
+        } catch {
+            throw $_
         }
     }
 }
