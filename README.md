@@ -3,11 +3,9 @@
 This module allows you to interact and manage your Meraki network using Powershell.
 This module uses the Version 1 REST API.
 
-!!!Note
-    The majority of the function in this module are read (Get-) functions.
-    I have not had the opportunity to test these as our Meraki Organization is in production.
-
-    The code for most of the writable function is in the source code. They are disabled in the Module Manifest. You can test them by uncommenting the function name int he module Manifest. I hold no responsibility is you damage you Meraki Organization. You are warned!
+>[!Note]
+The majority of the function in this module are read (Get-) functions.
+I have not had the opportunity to test the writable functions (New-, Add-, Set-) as my Meraki Organization is in production. The code for most of the writable function is in the source code. They are disabled in the Module Manifest. You can test them by uncommenting the function name in the module Manifest. I hold no responsibility if you damage your Meraki Organization/Networks. You are warned!
 
 [Module Reference](https://clifra-jones.github.io/Meraki-API-V1/docs/reference.html)
 
