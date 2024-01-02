@@ -927,7 +927,7 @@ function Get-MerakiNetworkClientBandwidthUsage() {
         [datetime]$StartDate,
 
         [ValidateScript({$_ -is [DateTime]})]
-        [Alias('StartTime')]
+        [Alias('EndTime')]
         [Parameter(ParameterSetName = 'dates', Mandatory)]
         [Parameter(ParameterSetName = 'datesWithOrg', Mandatory)]
         [Parameter(ParameterSetName ='datesWithProfiles', Mandatory)] 
