@@ -1429,6 +1429,32 @@ function Add-MerakiApplianceL3FirewallRule() {
             throw $_
         }
     }
+    <#
+    .SYNOPSIS
+    Add a Level 3 Firewall rule.
+    .DESCRIPTION
+    Adds a Level 3 firewall rule to a Meraki Appliance.
+    .PARAMETER Id
+    The Network ID.
+    .PARAMETER Policy
+    The Policy for this rule.
+    .PARAMETER Comment
+    Description of the rule.
+    .PARAMETER Protocol
+    The protocol to use
+    .PARAMETER SourceCIDR
+    Comma-separated list of source IP address(es) (in IP or CIDR notation), or 'any' (note: FQDN not supported for source addresses)
+    .PARAMETER SourcePort
+    Comma-separated list of source port(s) (integer in the range 1-65535), or 'any'
+    .PARAMETER DestinationCIDR
+    Comma-separated list of destination IP address(es) (in IP or CIDR notation), fully-qualified domain names (FQDN) or 'any'
+    .PARAMETER DestinationPort
+    Comma-separated list of destination port(s) (integer in the range 1-65535), or 'any'
+    .PARAMETER SyslogEnabled
+    Log this rule to syslog - only applicable if a syslog has been configured (optional)
+    .PARAMETER PassThru
+    Return the newly created rule.
+    #>
 }
 
 function Set-MerakiApplianceL3FirewallRule() {
@@ -1504,6 +1530,14 @@ function Set-MerakiApplianceL3FirewallRule() {
     } catch {
         throw $_
     }
+
+    <#
+    .SYNOPSIS
+    Update an existing level 3 firewall rule.
+    .DESCRIPTION
+    Update an existing Level 3 firewall rule on a meraki Appliance.
+    .PARAMETER 
+    #>
 }
 
 function Remove-MerakiApplianceL3FirewallRule() {
