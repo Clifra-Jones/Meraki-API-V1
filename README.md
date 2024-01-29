@@ -29,7 +29,7 @@ Once you have your API key you need to obtain the Organization ID for the Organi
 Open Powershell
 
 ```powershell
-Import-Module Meraki-API
+Import-Module Meraki-API-V1
 Get-MerakiOrganizations -APIKey '{key string}'
 ```
 
