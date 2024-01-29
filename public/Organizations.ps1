@@ -1772,45 +1772,21 @@ function Get-MerakiOrganizationDeviceUplinks() {
 }
 
 function Get-MerakiOrganizationDeviceStatus() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName='default')]
     Param(
-        [Parameter(ValueFromPipelineByPropertyName)]
         [Alias('NetworkId')]
         [string]$Id,
-        [Parameter(ValueFromPipelineByPropertyName)]
         [string]$Serial,
         [Parameter(ParameterSetName = 'org')]
         [string]$OrgId,
         [Parameter(ParameterSetName = 'Profile')]
-        [string]$ProfileName,
-        [ValidateScript({$_ -is [int]})]
-        [ValidateRange(1, 1000)]
-        [int]$PerPage,
-        [ValidateScript({$_ -is [int]})]
-        [int]$Pages = 1,
-        [switch]$IncludeAlerting,
-        [switch]$includeDormant,
-        [switch]$IncludeOffline,
-        [switch]$IncludeOnline,
-        [switch]$IncludeAppliances,
-        [switch]$IncludeCameras,
-        [switch]$IncludeCellularGateways,
-        [switch]$IncludeSensors,
-        [switch]$IncludeSwitches,
-        [switch]$IncludeSystemsManagers,
-        [switch]$IncludeWireless,
-        [string[]]$Models,
-        [string[]]$Tags,
-        [ValidateSet("withAllTags","withAnyTags")]
-        [string]$TagFilterType,
-        [datetime]$ConfigUpdatedAfter
-
+        [string]$ProfileName
     )
 
     Begin {
         $Headers = Get-Headers
-        $NetworkIds = [List[string]]::New()
-        $Serials = [List[string]]::New()
+        #$NetworkIds = [List[string]]::New()
+        #$Serials = [List[string]]::New()
 
         if (-not $OrgID) {
             $config = Read-Config
@@ -1824,84 +1800,11 @@ function Get-MerakiOrganizationDeviceStatus() {
             }        
         }
         
-        $Query = ""
-        if ($PerPage) {
-            $Query = "perPage={0}" -f $PerPage
-        }
-
-        $Statuses = [List[string]]::New()
-        if ($IncludeAlerting) { $Statuses.Add("alerting")}
-        if ($includeDormant) {$Statuses.Add("dormant")}
-        if ($IncludeOffline) {$Statuses.Add("offline")}
-        if ($IncludeOnline) {$Statuses.Add("online")}
-
-        if ($Statuses.Count -gt 0) {
-            if ($Query) {$Query += "&"}
-            $Query = "{0}statuses[]={1}" -f $Query, ($Statuses.ToArray() -join ",")
-        }
-
-        $ProductTypes = [List[string]]::New()
-        if ($IncludeAppliances) {$ProductTypes.Add("appliance")}
-        if ($IncludeCameras) {$ProductTypes.Add("camera")}
-        if ($IncludeCellularGateways) {$ProductTypes.Add("cellularGateway")}
-        if ($IncludeSensors) {$ProductTypes.Add("sensors")}
-        if ($IncludeSwitches) {$ProductTypes.Add("switch")}
-        if ($IncludeSystemsManagers) {$ProductTypes.Add("systemsManager")}
-        if ($IncludeWireless) {$ProductTypes.Add("wireless")}
-
-        if ($ProductTypes.Count -gt 0) {
-            if ($Query) {$Query += "&"}
-            $Query = "{0}productTypes[]={1}" -f $Query, ($ProductTypes.ToArray() -join ",")
-        }
-
-        if ($Models) {
-            if ($Query) {$Query += "&"}
-            $Query = "{0}models[]={1}" -f $Query, ($Models -join ",")
-        }
-
-        if ($Tags) {
-            if ($Query) {$Query += "&"}
-            $Query = "{0}tags[]={1}" -f ($Tags -join ",")
-
-            if ($TagFilterType) {
-                $Query = "{0}&tagFilterType=" -f $Query, $TagFilterType
-            }
-        }
-
-        if ($ConfigUpdatedAfter) {
-            if ($Query) {$Query += "&"}
-            $Query = "{0}configurationUpdatedAfter={1}" -f $Query, ($ConfigUpdatedAfter.ToString("O"))
-        }
-        
         $Uri = "{0}/organizations/{1}/devices/statuses" -f $BaseUri, $OrgId
 
     }
 
     Process {
-        if ($id) {            
-            $NetworkIds.Add($Id)
-        }
-
-        if ($Serial) {
-            $Serials.Add($Serial)
-        }
-    }
-
-    End {
-
-        if ($NetworkIds.Count -gt 0) {
-            if ($Query) {$Query += "&"}
-            $Query = "{0}networkIds[]={1}" -f $Query, ($NetworkIds.ToArray() -join ",")
-        }
-
-        if ($Serials.Count -gt 0) {
-            if ($Query) {$Query += "&"}
-            $Query = "{0}serials[]={1}" -f $Query, ($Serials.ToArray() -join ",")
-        }
-
-        if ($Query) {
-            $Uri = "{0}?{1}" -f $Uri, $Query
-        }
 
         $Params = @{
             Method = "Get"
@@ -1913,35 +1816,17 @@ function Get-MerakiOrganizationDeviceStatus() {
 
         try {
             $response = Invoke-WebRequest @Params -PreserveAuthorizationOnRedirect
-            [List[PsObject]]$result = $response.Content | ConvertFrom-Json
-            if ($result) {
-                $Results.AddRange($result)
-            }
-            $page = 1
-            if ($Pages -ne 1) {
-                $done = $false
-                do {
-                    if ($response.RelationLink['next']) {
-                        $Uri = $response.RelationLink['next']
-                        $response = Invoke-WebRequest -Method Get -Uri $Uri -Headers $Headers
-                        [List[PsObject]]$result = $response.Content | ConvertFrom-Json
-                        if ($result) {
-                            $Results.AddRange($result)
-                        }
-                        $page += 1
-                        if ($page -gt $Pages) {
-                            $done = $true
-                        }
-                    } else {
-                        $done = $true
-                    }
-                } until ($done)
+            $Results = $response.Content | ConvertFrom-Json
+            
+            $Networks = @{}
+            Get-MerakiNetworks | ForEach-Object {
+                $Networks.Add($_.Id, $_)                
             }
             $Results | ForEach-Object {
-                $NetworkName = (Get-MerakiNetwork -networkID $_.networkId).name
+                $NetworkName = $Networks[$_.NetworkId].Name
                 $_ | Add-Member -MemberType NoteProperty -Name "NetworkName" -Value $NetworkName
             }
-            return $Results.ToArray()
+            return $Results
         } catch {
             throw $_
         }
