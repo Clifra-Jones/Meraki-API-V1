@@ -1780,13 +1780,7 @@ function Get-MerakiOrganizationDeviceStatus() {
         [Parameter(ParameterSetName = 'org')]
         [string]$OrgId,
         [Parameter(ParameterSetName = 'Profile')]
-        [string]$ProfileName,
-        [ValidateScript({$_ -is [int]})]
-        [ValidateRange(1, 1000)]
-        [int]$PerPage,
-        [ValidateScript({$_ -is [int]})]
-        [int]$Pages = 1
-
+        [string]$ProfileName
     )
 
     Begin {
