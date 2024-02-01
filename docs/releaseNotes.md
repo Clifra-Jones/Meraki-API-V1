@@ -1,5 +1,14 @@
 ## Release Notes
 
+### 02/01/2024
+
+Added support for the OrgId and Profile name to all commands. This allows you to operate on multiple Meraki Organizations that your API
+key has access to without resetting your default profile.
+
+Updated the help text for all commands.
+
+Added additional monitoring commands for wireless. See the module reference for more details.
+
 ### 11/14/2023
 
 Updated calls to API endpoints that support paging. These function now use the Invoke-WebRequest cmdlet to pull data.
