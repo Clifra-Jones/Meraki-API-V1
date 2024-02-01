@@ -1,7 +1,7 @@
 #Meraki Switch Functions
 using namespace System.Collections.Generic
 function Get-MerakiSwitchStackRoutingInterfaces() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -13,10 +13,27 @@ function Get-MerakiSwitchStackRoutingInterfaces() {
             Mandatory,
             ValueFromPipelineByPropertyName
         )]
-        [String]$NetworkId
+        [String]$NetworkId,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
 
     Begin{
+
+        if (-not $OrgID) {
+            $config = Read-Config
+            if ($profileName) {
+                $OrgID = $config.profiles.$profileName
+                if (-not $OrgID) {
+                    throw "Invalid profile name!"
+                }
+            } else {
+                $OrgID = $config.profiles.default
+            }        
+        }
+
         $Headers = Get-Headers       
     }
 
@@ -45,6 +62,10 @@ function Get-MerakiSwitchStackRoutingInterfaces() {
     The switch stack ID.
     .PARAMETER networkId
     The network Id.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile Name.
     .OUTPUTS
     An array of Meraki Interface Objects.
     #>
@@ -53,7 +74,7 @@ function Get-MerakiSwitchStackRoutingInterfaces() {
 Set-Alias GMNetSWStRoutInts -Value Get-MerakiSwitchStackRoutingInterfaces
 
 function Get-MerakiSwitchStackRoutingInterface() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -72,10 +93,27 @@ function Get-MerakiSwitchStackRoutingInterface() {
             ValueFromPipeline = $true,
             ValueFromPipelineByPropertyName = $true
         )]
-        [string]$interfaceId
+        [string]$interfaceId,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
 
     Begin {
+
+        if (-not $OrgID) {
+            $config = Read-Config
+            if ($profileName) {
+                $OrgID = $config.profiles.$profileName
+                if (-not $OrgID) {
+                    throw "Invalid profile name!"
+                }
+            } else {
+                $OrgID = $config.profiles.default
+            }        
+        }
+
         $headers = Get-Headers        
     }
 
@@ -99,6 +137,10 @@ function Get-MerakiSwitchStackRoutingInterface() {
     The stack Id.
     .PARAMETER interfaceId
     The interface Id.
+    .PARAMETER OrgId
+    Optional Organization Id
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
     A Meraki interface object.
     #>
@@ -107,6 +149,7 @@ function Get-MerakiSwitchStackRoutingInterface() {
 Set-Alias -Name GMSWStackRoutInt -Value Get-MerakiSwitchStackRoutingInterface
 
 function Add-MerakiSwitchStackRoutingInterface() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
@@ -131,8 +174,24 @@ function Add-MerakiSwitchStackRoutingInterface() {
         [ValidateScript({$_ -is [int]})]
         [int]$OspfV3Cost,
         [string]$OspfV3Area,
-        [switch]$OspfV3IsPassiveEnabled
-    )  
+        [switch]$OspfV3IsPassiveEnabled,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
+    )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
 
     $Headers = Get-Headers
 
@@ -146,6 +205,14 @@ function Add-MerakiSwitchStackRoutingInterface() {
     if ($InterfaceIp) { $_Body.Add("InterfaceIp", $InterfaceIp) }
     if ($DefaultGateway) { $_Body.Add("defaultGateway", $DefaultGateway) }
     if ($Ipv6Address) {
+        $_Body.Add("ipv6", @{
+            "assignmentMode" = $Ipv6AssignmentMode
+            "address" = $Ipv6Address
+            "prefix" = $Ipv6Prefix
+            "gateway" = $Ipv6Gateway
+        })
+    }
+    if ($OspfCost) {
         $_Body.Add("ospfSettings", @{
             "area" = $OspfArea
             "cost" = $OspfCost
@@ -171,20 +238,74 @@ function Add-MerakiSwitchStackRoutingInterface() {
     .SYNOPSIS
     Add Meraki Switch stack routing interface
     .DESCRIPTION
-    Add an interface to a Meraki 
+    Add an interface to a Meraki network.
+    .PARAMETER NetworkId
+    The Id of the network.
+    .PARAMETER StackId
+    The Id of the switch stack.
+    .PARAMETER VlanId
+    The VLAN this routed interface is on. VLAN must be between 1 and 4094
+    .PARAMETER Name
+    A friendly name or description for the interface or VLAN.
+    .PARAMETER Subnet
+    The network that this routed interface is on, in CIDR notation (ex. 10.1.1.0/24).
+    .PARAMETER InterfaceIp
+    The IP address this switch stack will use for layer 3 routing on this VLAN or subnet. This cannot be the same as the switch's management IP.
+    .PARAMETER DefaultGateway
+    The next hop for any traffic that isn't going to a directly connected subnet or over a static route. This IP address must exist in a subnet with a routed interface.
+    .PARAMETER Ipv6Address
+    The IPv6 address of the interface. Required if assignmentMode is 'static'. Must not be included if assignmentMode is 'eui-64'.
+    .PARAMETER Ipv6AssignmentMode
+    The IPv6 assignment mode for the interface. Can be either 'eui-64' or 'static'. 
+    .PARAMETER Ipv6Gateway
+    The IPv6 default gateway of the interface. Required if prefix is defined and this is the first interface with IPv6 configured for the stack.
+    .PARAMETER Ipv6Prefix
+    The IPv6 prefix of the interface. Required if IPv6 object is included.
+    .PARAMETER OspfCost
+    The path cost for this interface. Defaults to 1, but can be increased up to 65535 to give lower priority.
+    .PARAMETER OspfArea
+    The OSPF area to which this interface should belong. Can be either 'disabled' or the identifier of an existing OSPF area. Defaults to 'disabled'.
+    .PARAMETER OspfIsPassiveEnabled
+    When enabled, OSPF will not run on the interface, but the subnet will still be advertised.
+    .PARAMETER OspfV3Cost
+    The path cost for this interface. Defaults to 1, but can be increased up to 65535 to give lower priority.
+    .PARAMETER OspfV3Area
+    The OSPF area to which this interface should belong. Can be either 'disabled' or the identifier of an existing OSPF area. Defaults to 'disabled'.
+    .PARAMETER OspfV3IsPassiveEnabled
+    When enabled, OSPF will not run on the interface, but the subnet will still be advertised.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     #>
 }
 
 Set-Alias -Name AddMSSRteInt -Value Add-MerakiSwitchStackRoutingInterface
 
 Function Remove-MerakiSwitchStackRoutingInterface() {
-    [CmdletBinding(SupportsShouldProcess)]
+    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'defailt')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
         [Parameter(Mandatory = $true)]
-        [string]$StackId
+        [string]$StackId,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
 
     $Headers = Get-Headers
 
@@ -207,7 +328,11 @@ Function Remove-MerakiSwitchStackRoutingInterface() {
     .PARAMETER NetworkId
     Network ID of the network containing the switch stack
     .PARAMETER StackId
-    The stack ID of the stack to be removed
+    The stack ID of the stack to be removed.
+    .PARAMETER OrgId
+    Optional Organization id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
     Returns HTML status code. Code 204 - Successful.
     #>
@@ -216,6 +341,7 @@ Function Remove-MerakiSwitchStackRoutingInterface() {
 Set-Alias -Name RemoveMSStackRouteInt -Value Remove-MerakiSwitchStackRoutingInterface
 
 function Set-MerakiSwitchStackRoutingInterface() {
+    [CmdletBinding(DefaultParameterSetName ='default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
@@ -242,8 +368,24 @@ function Set-MerakiSwitchStackRoutingInterface() {
         [ValidateScript({$_ -is [int]})]
         [int]$OspfV3Cost,
         [string]$OspfV3Area,
-        [bool]$OspfV3IsPassiveEnabled
+        [bool]$OspfV3IsPassiveEnabled,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
 
     $Headers = Get-Headers
 
@@ -278,6 +420,51 @@ function Set-MerakiSwitchStackRoutingInterface() {
     } catch {
         throw $_
     }
+
+    <#
+    .DESCRIPTION
+    Update a switch stack routing interface.
+    .PARAMETER NetworkId
+    The network Id.
+    .PARAMETER StackId
+    The stack Id.
+    .PARAMETER InterfaceId
+    The Interface Id.
+    .PARAMETER VlanId
+    The VLAN this routed interface is on. VLAN must be between 1 and 4094
+    .PARAMETER Name
+    A friendly name or description for the interface or VLAN.
+    .PARAMETER Subnet
+    The network that this routed interface is on, in CIDR notation (ex. 10.1.1.0/24).
+    .PARAMETER InterfaceIp
+    The IP address this switch stack will use for layer 3 routing on this VLAN or subnet. This cannot be the same as the switch's management IP.
+    .PARAMETER DefaultGateway
+    The next hop for any traffic that isn't going to a directly connected subnet or over a static route. This IP address must exist in a subnet with a routed interface.
+    .PARAMETER Ipv6Address
+    The IPv6 address of the interface. Required if assignmentMode is 'static'. Must not be included if assignmentMode is 'eui-64'.
+    .PARAMETER Ipv6AssignmentMode
+    The IPv6 assignment mode for the interface. Can be either 'eui-64' or 'static'. 
+    .PARAMETER Ipv6Gateway
+    The IPv6 default gateway of the interface. Required if prefix is defined and this is the first interface with IPv6 configured for the stack.
+    .PARAMETER Ipv6Prefix
+    The IPv6 prefix of the interface. Required if IPv6 object is included.
+    .PARAMETER OspfCost
+    The path cost for this interface. Defaults to 1, but can be increased up to 65535 to give lower priority.
+    .PARAMETER OspfArea
+    The OSPF area to which this interface should belong. Can be either 'disabled' or the identifier of an existing OSPF area. Defaults to 'disabled'.
+    .PARAMETER OspfIsPassiveEnabled
+    When enabled, OSPF will not run on the interface, but the subnet will still be advertised.
+    .PARAMETER OspfV3Cost
+    The path cost for this interface. Defaults to 1, but can be increased up to 65535 to give lower priority.
+    .PARAMETER OspfV3Area
+    The OSPF area to which this interface should belong. Can be either 'disabled' or the identifier of an existing OSPF area. Defaults to 'disabled'.
+    .PARAMETER OspfV3IsPassiveEnabled
+    When enabled, OSPF will not run on the interface, but the subnet will still be advertised.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
+    #>
 }
 
 Set-Alias -Name SetMSStkRteInt -Value Set-MerakiSwitchStackRoutingInterface
@@ -331,23 +518,40 @@ Set-Alias -Name SetMSStkRteInt -Value Set-MerakiSwitchStackRoutingInterface
 # Set-Alias GMSwStRteIntsDHCP -Value Get-MerakiSwitchStackRoutingInterfacesDHCP
 
 function Get-MerakiSwitchStackRoutingStaticRoutes() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         #stackId
         [Parameter(
             Mandatory = $true,
             ValueFromPipeline = $true,
             ValueFromPipelineByPropertyName = $true
-        )]
+        )]        
         [string]$id,
         #network ID
         [Parameter(
             Mandatory = $true
         )]
-        [string]$networkId
+        [string]$networkId,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
 
     Begin {
+
+        if (-not $OrgID) {
+            $config = Read-Config
+            if ($profileName) {
+                $OrgID = $config.profiles.$profileName
+                if (-not $OrgID) {
+                    throw "Invalid profile name!"
+                }
+            } else {
+                $OrgID = $config.profiles.default
+            }        
+        }
+
         $Headers = Get-Headers
         $responses = New-Object 'System.Collections.Generic.List[psobject]'        
     }
@@ -379,15 +583,19 @@ function Get-MerakiSwitchStackRoutingStaticRoutes() {
     The stack Id.
     .PARAMETER networkId
     The network Id.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
-    An array of Meraki witch stack static route objects.
+    An array of Meraki switch stack static route objects.
     #>
 }
 
 set-alias GMSwStRoutStatic -Value Get-MerakiSwitchStackRoutingStaticRoutes
 
 function Get-MerakiSwitchStackRoutingStaticRoute() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -399,10 +607,27 @@ function Get-MerakiSwitchStackRoutingStaticRoute() {
         [Parameter(Mandatory = $true)]
         [string]$StackId,
         [Parameter(Mandatory = $true)]
-        [string]$StaticRouteId
+        [string]$StaticRouteId,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
 
     Begin {
+
+        if (-not $OrgID) {
+            $config = Read-Config
+            if ($profileName) {
+                $OrgID = $config.profiles.$profileName
+                if (-not $OrgID) {
+                    throw "Invalid profile name!"
+                }
+            } else {
+                $OrgID = $config.profiles.default
+            }        
+        }
+
         $Headers = $Headers
     }
 
@@ -416,6 +641,7 @@ function Get-MerakiSwitchStackRoutingStaticRoute() {
             throw $_
         }
     }
+
 }
 
 function Set-MerakiNetworkSwitchStackRoutingStaticRoute() {
@@ -453,20 +679,58 @@ function Set-MerakiNetworkSwitchStackRoutingStaticRoute() {
     } catch {
         throw $_
     }
+    <#
+    .DESCRIPTION 
+    Retrieves a static route for the specified network.
+    .PARAMETER NetworkId
+    The Id of the network
+    .PARAMETER StackId
+    The Id of the stack.
+    .PARAMETER StaticRouteId
+    The Id of the static route.
+    .PARAMETER Name
+    Name od the static route.
+    .PARAMETER NextHopIp
+    IP address of the next hop device to which the device sends its traffic for the subnet
+    .PARAMETER Subnet
+    The subnet which is routed via this static route and should be specified in CIDR notation (ex. 1.2.3.0/24)
+    .PARAMETER AdvertiseViaOspf
+    Option to advertise static route via OSPF
+    .PARAMETER PreferOverOspfRoutes
+    Option to prefer static route over OSPF routes
+    .OUTPUTS
+    A static route object.
+    #>
 }
 
 Set-Alias -name SetMNSSRteStRoute -Value Set-MerakiNetworkSwitchStackRoutingStaticRoute
 
 function Remove-MerakiSwitchStackRoutingStaticRoute() {
-    [CmdletBinding(SupportsShouldProcess)]
+    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
         [Parameter(Mandatory = $true)]
         [string]$StackId,
         [Parameter(Mandatory = $true)]
-        [string]$StaticRouteId
+        [string]$StaticRouteId,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
 
     $Headers = Get-Headers
 
@@ -493,6 +757,10 @@ function Remove-MerakiSwitchStackRoutingStaticRoute() {
     Stack ID to remove the route from.
     .PARAMETER StaticRouteId
     Static Route ID to remove.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
     Return HTML status code. 204 = Successful.
     #>
@@ -501,7 +769,7 @@ function Remove-MerakiSwitchStackRoutingStaticRoute() {
 Set-Alias -name RSWStkRteInt -Value Remove-MerakiSwitchStackRoutingStaticRoute -Option ReadOnly
 
 function Get-MerakiSwitchStackRoutingInterfaceDHCP() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory,
@@ -517,10 +785,28 @@ function Get-MerakiSwitchStackRoutingInterfaceDHCP() {
             Mandatory,
             ValueFromPipelineByPropertyName
         )]
-        [string]$stackId
+        [string]$stackId,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
 
     Begin{
+
+        if (-not $OrgID) {
+            $config = Read-Config
+            if ($profileName) {
+                $OrgID = $config.profiles.$profileName
+                if (-not $OrgID) {
+                    throw "Invalid profile name!"
+                }
+            } else {
+                $OrgID = $config.profiles.default
+            }        
+        }
+
+
         $Headers = Get-Headers
     }
 
@@ -566,6 +852,10 @@ function Get-MerakiSwitchStackRoutingInterfaceDHCP() {
     The network Id
     .PARAMETER stackId
     The Stack Id.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name
     .OUTPUTS
     A Meraki interface DHCP object.
     #>
@@ -575,11 +865,12 @@ Set-Alias GMSwStRoutIntDHCP -Value Get-MerakiSwitchStackRoutingInterfaceDHCP
 Set-Alias -Name Get-MerakiSwitchStackRoutingInterfacesDHCP -Value Get-MerakiSwitchStackRoutingInterfaceDHCP
 
 function Set-MerakiSwitchStackRoutingInterfaceDhcp() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
         [Parameter(Mandatory = $true)]
-        [string]$Stackid,
+        [string]$StackId,
         [Parameter(Mandatory = $true)]
         [string]$interfaceId,
         [ValidateSet('dhcpDisabled', 'dhcpRelay', 'dhcpServer')]
@@ -594,9 +885,24 @@ function Set-MerakiSwitchStackRoutingInterfaceDhcp() {
         [string]$BootFilename,
         [hashtable]$DhcpOptions,
         [hashtable[]]$ReservedIpRanges,
-        [hashtable[]]$fixedIpAssignments
+        [hashtable[]]$fixedIpAssignments,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
 
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
 
     $Headers = Get-Headers
 
@@ -623,22 +929,82 @@ function Set-MerakiSwitchStackRoutingInterfaceDhcp() {
     } catch {
         throw $_
     }
+    <#
+    .DESCRIPTION
+    Update a switch stack interface DHCP settings
+    .PARAMETER NetworkId
+    The ID of the network
+    .PARAMETER StackId
+    The Od os the stack.
+    .PARAMETER interfaceId
+    The Id of the interface.
+    .PARAMETER DhcpMode
+    The DHCP mode options for the switch stack interface ('dhcpDisabled', 'dhcpRelay' or 'dhcpServer')
+    .PARAMETER DhcpLeaseTime
+    The DHCP lease time config for the dhcp server running on switch stack interface ('30 minutes', '1 hour', '4 hours', '12 hours', '1 day' or '1 week')
+    .PARAMETER DnsNameServerOption
+    The DHCP name server option for the dhcp server running on the switch stack interface. ('googlePublicDns', 'openDns' or 'custom')
+    .PARAMETER DnsCustomNameServers
+    The DHCP name server IPs when DHCP name server option is 'custom'.
+    .PARAMETER BootOptionsEnabled
+    Enable DHCP boot options to provide PXE boot options configs for the dhcp server running on the switch stack interface.
+    .PARAMETER BootNextServer
+    The PXE boot server IP for the DHCP server running on the switch stack interface
+    .PARAMETER BootFilename
+    The PXE boot server file name for the DHCP server running on the switch stack interface
+    .PARAMETER DhcpOptions
+    Array of DHCP options (hash table) consisting of code, type and value for the DHCP server running on the switch stack interface.
+    code: string The code for DHCP option which should be from 2 to 254
+    type: string The type of the DHCP option which should be one of ('text', 'ip', 'integer' or 'hex')
+    value: string The value of the DHCP option
+    .PARAMETER ReservedIpRanges
+    Array of DHCP reserved IP assignments (hash table) for the DHCP server running on the switch stack interface
+    comment: string The comment for the reserved IP range
+    end: string The ending IP address of the reserved IP range
+    start: string The starting IP address of the reserved IP range
+    .PARAMETER fixedIpAssignments
+    Array of DHCP fixed IP assignments (hashtable) for the DHCP server running on the switch stack interface.
+    ip: string The IP address of the client which has fixed IP address assigned to it
+    mac: string The MAC address of the client which has fixed IP address
+    name: string The name of the client which has fixed IP address
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
+    #>
 }
 
 Set-Alias -Name UMSStkRteIntDhcp -Value Update-MerakiSwitchStackRoutingInterfaceDhcp
 
 function Get-MerakiSwitchRoutingInterfaces() {
-    [CmdLetBinding()]
+    [CmdLetBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
             ValueFromPipeline = $true,
             ValueFromPipelineByPropertyName = $true
         )]
-        [string]$serial
+        [string]$serial,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
 
     Begin {
+
+        if (-not $OrgID) {
+            $config = Read-Config
+            if ($profileName) {
+                $OrgID = $config.profiles.$profileName
+                if (-not $OrgID) {
+                    throw "Invalid profile name!"
+                }
+            } else {
+                $OrgID = $config.profiles.default
+            }        
+        }
+
          $Headers = Get-Headers
     }
 
@@ -663,6 +1029,10 @@ function Get-MerakiSwitchRoutingInterfaces() {
     Returns the routing interfaces for a Meraki switch.
     .PARAMETER serial
     The serial number of the switch.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
     An array of Meraki switch interfaces.
     #>
@@ -671,7 +1041,7 @@ function Get-MerakiSwitchRoutingInterfaces() {
 Set-Alias -Name GMSWRoutInts -value Get-MerakiSwitchRoutingInterfaces -Option ReadOnly
 
 function Get-MerakiSwitchRoutingInterface() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     param (
         [Parameter(
             Mandatory = $true            
@@ -680,8 +1050,25 @@ function Get-MerakiSwitchRoutingInterface() {
         [Parameter(
             Mandatory = $true
         )]
-        [String]$interfaceId
+        [String]$interfaceId,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
+
 
     $Uri = "{0}/devices/{1}/switch/routing/interfaces/{2}" -f $BaseUri, $serial, $interfaceId
     $Headers = Get-Headers
@@ -700,6 +1087,10 @@ function Get-MerakiSwitchRoutingInterface() {
     The serial number of the switch.
     .PARAMETER interfaceId
     The interface Id.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
     A Meralki switch interface object.
     #>
@@ -733,8 +1124,25 @@ function Add-MerakiSwitchRoutingInterface() {
         [switch]$OspfIsPassive,
         [int]$OspfV3Cost,
         [string]$OspfV3Area,
-        [switch]$OspfV3IsPassive
+        [switch]$OspfV3IsPassive,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
+
 
     $Headers = Get-Headers
 
@@ -825,6 +1233,10 @@ function Add-MerakiSwitchRoutingInterface() {
     Can be either 'disabled' or the identifier of an existing OSPFv3 area. Defaults to 'disabled'.
     .PARAMETER OspfV3IsPassive
     When enabled, OSPFv3 will not run on the interface, but the subnet will still be advertised.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name
     .OUTPUTS
     "Interface Object"    
     #>
@@ -833,7 +1245,7 @@ function Add-MerakiSwitchRoutingInterface() {
 Set-Alias -name AddMSRouteInt -Value Add-MerakiSwitchRoutingInterface
 
 function Set-MerakiSwitchRoutingInterface() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$Serial,
@@ -860,8 +1272,24 @@ function Set-MerakiSwitchRoutingInterface() {
         [ValidateScript({$_ -is [int]})]
         [int]$OspfV3Cost,
         [string]$OspfV3Area,
-        [switch]$OspfV3IsPassive        
+        [switch]$OspfV3IsPassive ,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
 
     $Headers = Get-Headers
 
@@ -950,6 +1378,10 @@ function Set-MerakiSwitchRoutingInterface() {
     The OSPFv3 area to which this interface should belong. Can be either 'disabled' or the identifier of an existing OSPFv3 area. Defaults to 'disabled'.
     .PARAMETER OspfV3IsPassive
     When enabled, OSPFv3 will not run on the interface, but the subnet will still be advertised.
+    .PARAMETER OrgId
+    Optional Organization id.
+    .PARAMETER ProfileName
+    Optional Profile Name.
     .OUTPUTS
     Interface object.
     #>
@@ -958,13 +1390,30 @@ function Set-MerakiSwitchRoutingInterface() {
 Set-Alias -name SetMSRteInt -Value Set-MerakiSwitchRoutingInterface
 
 function Remove-MerakiSwitchRoutingInterface() {
-    [CmdletBinding(SupportsShouldProcess)]
+    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$Serial,
         [Parameter(Mandatory = $true)]
-        [stirng]$InterfaceId
+        [string]$InterfaceId,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
+
 
     $Headers = Get-Headers
 
@@ -988,14 +1437,18 @@ function Remove-MerakiSwitchRoutingInterface() {
     .PARAMETER Serial
     Serial number of the switch
     .PARAMETER InterfaceId
-    Id of the interface
+    Id of the interface.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile Name.
     .OUTPUTS
     An HTML status code. Code 204 = success.
     #>
 }
 
 function Get-MerakiSwitchRoutingInterfaceDHCP() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     param (
         [Parameter(
             Mandatory,
@@ -1006,10 +1459,28 @@ function Get-MerakiSwitchRoutingInterfaceDHCP() {
             Mandatory,
             ValueFromPipelineByPropertyName
         )]
-        [String]$interfaceId
+        [String]$interfaceId,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
 
     Begin {
+
+        if (-not $OrgID) {
+            $config = Read-Config
+            if ($profileName) {
+                $OrgID = $config.profiles.$profileName
+                if (-not $OrgID) {
+                    throw "Invalid profile name!"
+                }
+            } else {
+                $OrgID = $config.profiles.default
+            }        
+        }
+
+
         $Headers = Get-Headers       
     }
 
@@ -1048,6 +1519,10 @@ function Get-MerakiSwitchRoutingInterfaceDHCP() {
     The serial number of the switch.
     .PARAMETER interfaceId
     The interface Id.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
     A Meraki switch interface DHCP Settings.
     #>
@@ -1079,8 +1554,25 @@ function Set-MerakiSwitchRoutingInterfaceDhcp() {
         [string]$BootFileName,
         [hashtable[]]$DhcpOptions,
         [hashtable[]]$ReservedIpRanges,
-        [hashtable[]]$FixedIpRanges
+        [hashtable[]]$FixedIpRanges,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
+
 
     $Headers = Get-Headers
 
@@ -1153,6 +1645,10 @@ function Set-MerakiSwitchRoutingInterfaceDhcp() {
     comment:string - The comment for the reserved IP range
     end:string - The ending IP address of the reserved IP range
     start:string - The starting IP address of the reserved IP range
+    .PARAMETER OrgId
+    Optional Organization Id
+    .PARAMETER ProfileName
+    Optional Profile name.
     #>    
 }
 
@@ -1160,18 +1656,34 @@ Set-Alias -Name SetMSRteIntDHCP -Value Set-MerakiSwitchRoutingInterfaceDhcp
 
 #region Switch Static Routes
 function Get-MerakiSwitchRoutingStaticRoutes() {
-    [CmdLetBinding()]
+    [CmdLetBinding(DefaultParameterSetName = 'default')]
     Param(
-        #Parameter Help
         [Parameter(
             Mandatory=$true,
             ValueFromPipeline = $true,
             ValueFromPipelineByPropertyName = $true
         )]
-        [String]$serial        
+        [String]$serial,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
 
     Begin {
+
+        if (-not $OrgID) {
+            $config = Read-Config
+            if ($profileName) {
+                $OrgID = $config.profiles.$profileName
+                if (-not $OrgID) {
+                    throw "Invalid profile name!"
+                }
+            } else {
+                $OrgID = $config.profiles.default
+            }        
+        }
+
         $Headers = Get-Headers
     }
 
@@ -1198,6 +1710,10 @@ function Get-MerakiSwitchRoutingStaticRoutes() {
     Returns the static routes for a Meraki switch.
     .PARAMETER serial
     The serial number of the switch.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
     AN array of Meraki static routes.
     #>
@@ -1206,12 +1722,30 @@ function Get-MerakiSwitchRoutingStaticRoutes() {
 Set-Alias -Name GMSWRoutStatic -value Get-MerakiSwitchRoutingStaticRoutes -Option ReadOnly
 
 function Get-MerakiSwitchRoutingStaticRoute() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$Serial,
         [Parameter(Mandatory = $true)]
-        [string]$StaticRouteId
+        [string]$StaticRouteId,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
+
 
     $Headers = Get-Headers
 
@@ -1232,12 +1766,17 @@ function Get-MerakiSwitchRoutingStaticRoute() {
     The serial number of the switch.
     .PARAMETER StaticRouteId
     The ID of the Static Route
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
     A Static route object
     #>
 }
 
 function Add-MerakiSwitchRoutingStaticRoute() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$Serial,
@@ -1248,8 +1787,25 @@ function Add-MerakiSwitchRoutingStaticRoute() {
         [Parameter(Mandatory = $true)]
         [string]$Subnet,
         [switch]$AdvertiseViaOspfEnabled,
-        [switch]$PreferOverOspfRoutesEnabled
+        [switch]$PreferOverOspfRoutesEnabled,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
+
 
     $Headers = Get-Headers
 
@@ -1288,12 +1844,17 @@ function Add-MerakiSwitchRoutingStaticRoute() {
     Option to advertise static route via OSPF
     .PARAMETER PreferOverOspfRoutesEnabled
     Option to prefer static route over OSPF routes
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
     An object containing the newly created static route
     #>
 }
 
 function Set-MerakiSwitchRoutingStaticRoute() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$Serial,
@@ -1303,8 +1864,25 @@ function Set-MerakiSwitchRoutingStaticRoute() {
         [string]$NextHopIp,
         [string]$Subnet,
         [switch]$AdvertiseViaOspfEnabled,
-        [switch]$PreferOverOspfRoutesEnabled
+        [switch]$PreferOverOspfRoutesEnabled,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
+
 
     $Headers = Get-Headers
 
@@ -1342,20 +1920,40 @@ function Set-MerakiSwitchRoutingStaticRoute() {
     .PARAMETER AdvertiseViaOspfEnabled
     Option to advertise static route via OSPF
     .PARAMETER PreferOverOspfRoutesEnabled
-    Option to prefer static route over OSPF routes
+    Option to prefer static route over OSPF routes.
+    .PARAMETER OrgId
+    Optional Organization Id
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
     An object containing the updated static route
     #>
 }
 
 function Remove-MerakiSwitchStaticRoute() {
-    [CmdletBinding(SupportsShouldProcess)]
+    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$Serial,
         [Parameter(Mandatory = $true)]
-        [string]$StaticRouteId
+        [string]$StaticRouteId,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
 
     $Headers = Get-Headers
 
@@ -1379,7 +1977,11 @@ function Remove-MerakiSwitchStaticRoute() {
     .PARAMETER Serial
     The serial number of the switch
     .PARAMETER StaticRouteId
-    The ID of the statis Route
+    The ID of the static Route
+    .PARAMETER OrgId
+    Optional Organization id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
     An html status code. Code 204 = success
     #>
@@ -1388,17 +1990,34 @@ function Remove-MerakiSwitchStaticRoute() {
 #endregion
 
 function Get-MerakiNetworkSwitchLAG() {
-    [CmdLetBinding()]
+    [CmdLetBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
             ValueFromPipeline = $true,
             ValueFromPipelineByPropertyName=$true
         )]
-        [string]$id
+        [string]$id,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
 
     Begin {
+
+        if (-not $OrgID) {
+            $config = Read-Config
+            if ($profileName) {
+                $OrgID = $config.profiles.$profileName
+                if (-not $OrgID) {
+                    throw "Invalid profile name!"
+                }
+            } else {
+                $OrgID = $config.profiles.default
+            }        
+        }
+
         $Headers = Get-Headers
         $responses = New-Object System.Collections.Generic.List[psObject]
     }
@@ -1437,6 +2056,10 @@ function Get-MerakiNetworkSwitchLAG() {
     Return the LAB configurations for a Meraki Network.
     .PARAMETER id
     The network Id.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
     An array of switch lag objects.
     #>
@@ -1445,12 +2068,30 @@ function Get-MerakiNetworkSwitchLAG() {
 Set-Alias -Name GMNetSWLag -value Get-MerakiNetworkSwitchLAG -Option ReadOnly
 
 function Add-MerakiNetworkSwitchLAG() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
         [Parameter(Mandatory = $true)]
-        [hashtable[]]$SwitchPorts
+        [hashtable[]]$SwitchPorts,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
+
 
     $Headers = Get-Headers
 
@@ -1486,19 +2127,41 @@ function Add-MerakiNetworkSwitchLAG() {
         switchProfilePorts: array[] - Array of switch profile ports for creating aggregation group. Minimum 2 and maximum 8 ports are supported.
             portId*:string - Port identifier of switch port. For modules, the identifier is "SlotNumber_ModuleType_PortNumber" (Ex: "1_8X10G_1"), otherwise it is just the port number (Ex: "8").
             profile*:string - Profile identifier.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS 
     A LAG object.
     #>
 }
 
 function Set-MerakiNetworkSwitchLAG() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
         [Parameter(Mandatory = $true)]
         [string]$LinkAggregationId,
-        [hashtable[]]$SwitchPorts
+        [hashtable[]]$SwitchPorts,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
+
 
     $Headers = Get-Headers
 
@@ -1529,19 +2192,40 @@ function Set-MerakiNetworkSwitchLAG() {
     .PARAMETER SwitchPorts
     Switch Ports to modify in the LAG.
     You must provide all ports in the LAG
+    .PARAMETER OrgId
+    Optional Organization Id
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS 
     A LAG object.
     #>
 }
 
 function Remove-MerakiNetworkSwitchLAG() {
-    [CmdletBinding(SupportsShouldProcess)]
+    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
         [Parameter(Mandatory = $true)]
-        [string]$LinkAggregationId
+        [string]$LinkAggregationId,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
+
 
     $Headers = Get-Headers
 
@@ -1558,18 +2242,22 @@ function Remove-MerakiNetworkSwitchLAG() {
     .SYNOPSIS
     Create a Link Aggregation Port
     .DESCRIPTION
-    Craete a Link Aggregation Port on Meraki Switches.
+    Create a Link Aggregation Port on Meraki Switches.
     .PARAMETER NetworkId
     Network ID to add the LAG to.
     .PARAMETER LinkAggregationId
     ID of the LAG to remove.
+    .PARAMETER OrgId
+    Optional Organization Id
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS 
     HTML response code. Code 204 = Success.
     #>
 }
 
 function Get-MerakiNetworkSwitchStacks() {
-    [CmdLetBinding()]
+    [CmdLetBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -1577,8 +2265,25 @@ function Get-MerakiNetworkSwitchStacks() {
             ValueFromPipelineByPropertyName = $true
         )]
         [Alias("NetworkId")]
-        [String]$id
+        [String]$id,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
+
 
     $Headers = Get-Headers
 
@@ -1606,6 +2311,10 @@ function Get-MerakiNetworkSwitchStacks() {
     Returns the switch stacks for a Meraki network.
     .PARAMETER id
     The network Id.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
     An array of Meraki switch stack objects.
     #>
@@ -1614,7 +2323,7 @@ function Get-MerakiNetworkSwitchStacks() {
 Set-Alias -Name GMNetSWStacks -Value Get-MerakiNetworkSwitchStacks -Option ReadOnly
 
 function Get-MerakiSwitchStack() {
-    [CmdLetBinding()]
+    [CmdLetBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true
@@ -1623,8 +2332,25 @@ function Get-MerakiSwitchStack() {
         [Parameter(
             Mandatory = $true
         )]
-        [string]$stackId
+        [string]$stackId,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
+
 
     $Uri = "{0}/networks/{1}/switch/stacks/{2}" -f $BaseURI, $networkId, $stackId
     $Headers = Get-Headers
@@ -1643,6 +2369,10 @@ function Get-MerakiSwitchStack() {
     The network Id.
     .PARAMETER stackId
     The stack Id.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
     A Meraki switch stack object.
     #>
@@ -1651,14 +2381,32 @@ Set-Alias Get-MerakiNetworkSwitchStack -Value Get-MerakiSwitchStack
 set-alias GMSwStack -Value Get-MerakiSwitchStack
 
 function New-MerakiSwitchStack() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]        
         [string]$NetworkId,
         [Parameter(Mandatory = $true)]
         [string]$Name,
         [Parameter(Mandatory = $true)]
-        [string[]]$Serials
+        [string[]]$Serials,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
+
 
     $Headers = Get-Headers
 
@@ -1687,7 +2435,11 @@ function New-MerakiSwitchStack() {
     .PARAMETER Name
     The name of the stack
     .PARAMETER Serials
-    an array of switch serial numbers to add tothe stack.
+    an array of switch serial numbers to add to the stack.
+    .PARAMETER OrgId
+    Optional Organization id.
+    .PARAMETER ProfileName
+    Optional Profile name
     .OUTPUTS
     An object containing the newly created stack
     #>
@@ -1696,14 +2448,32 @@ function New-MerakiSwitchStack() {
 Set-Alias -Name New-MerakiSwitchStack -Value New-MerakiNeworkSwitchStack
 
 function Add-MerakiSwitchStackSwitch() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
         [Parameter(Mandatory = $true)]
         [string]$StackId,
         [Parameter(Mandatory = $true)]
-        [atring]$serial
+        [string]$serial,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
+
 
     $Headers = Get-Headers
 
@@ -1732,6 +2502,10 @@ function Add-MerakiSwitchStackSwitch() {
     The ID of the stack
     .PARAMETER serial
     The serial number of the new switch
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
     An object containing the stack.
     #>
@@ -1740,15 +2514,32 @@ function Add-MerakiSwitchStackSwitch() {
 Set-Alias -Name AMSSSwitch -Value Add-MerakiSwitchStackSwitch
 
 function Remove-MerakiSwitchStackSwitch() {
-    [CmdletBinding(SupportsShouldProcess)]
+    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
         [Parameter(Mandatory = $true)]
         [string]$SwitchStackId,
         [Parameter(Mandatory = $true)]
-        [string]$Serial
+        [string]$Serial,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
+
 
     $Headers = Get-Headers
 
@@ -1778,20 +2569,41 @@ function Remove-MerakiSwitchStackSwitch() {
     .PARAMETER SwitchStackId
     The ID of the switch stack
     .PARAMETER Serial
-    The serial number of the switch to remove
+    The serial number of the switch to remove.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile Name.
     .OUTPUTS
     An object containing the modified stack
     #>
 }
 
 function Remove-MerakiSwitchStack() {
-    [CmdletBinding(SupportsShouldProcess)]
+    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
         [Parameter(Mandatory = $true)]
-        [string]$SwitchStackId
+        [string]$SwitchStackId,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
+
 
     $Headers = Get-Headers
 
@@ -1816,6 +2628,10 @@ function Remove-MerakiSwitchStack() {
     The network ID.
     .PARAMETER SwitchStackId
     The switch stack Id.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
     AN HTML response code. REsponse code of 204 = success
     #>
@@ -1823,16 +2639,34 @@ function Remove-MerakiSwitchStack() {
 
 #region Switch Ports
 function Get-MerakiSwitchPorts() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
             ValueFromPipeline = $true,
             ValueFromPipelineByPropertyName = $true)]
-        [string]$serial
+        [string]$serial,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
 
     Begin {
+
+        if (-not $OrgID) {
+            $config = Read-Config
+            if ($profileName) {
+                $OrgID = $config.profiles.$profileName
+                if (-not $OrgID) {
+                    throw "Invalid profile name!"
+                }
+            } else {
+                $OrgID = $config.profiles.default
+            }        
+        }
+
+
         $Headers = Get-Headers       
         $responses = New-Object System.Collections.Generic.List[psobject]
     }
@@ -1859,6 +2693,10 @@ function Get-MerakiSwitchPorts() {
     Returns the port configurations for a Meraki switch
     .PARAMETER serial
     The serial number of the switch.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
     An array of Meraki switch port objects.
     #>
@@ -1867,7 +2705,7 @@ function Get-MerakiSwitchPorts() {
 Set-Alias GMSwPorts -Value Get-MerakiSwitchPorts -Option ReadOnly
 
 function Get-MerakiSwitchPort() {
-    [CmdLetBinding()]
+    [CmdLetBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true
@@ -1876,8 +2714,25 @@ function Get-MerakiSwitchPort() {
         [Parameter(
             Mandatory = $true
         )]
-        [string]$portId
+        [string]$portId,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
+
     
     $Uri = "{0}/devices/{1}/switch/ports/{2}" -f $BaseURI, $serial, $portId
     $Headers = Get-Headers
@@ -1896,6 +2751,10 @@ function Get-MerakiSwitchPort() {
     The switch serial number.
     .PARAMETER portId
     The port Id.
+    .PARAMETER OrgId
+    Optional Organization id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
     A Meraki switch port object.]
     #>
@@ -1906,6 +2765,7 @@ Set-Alias -Name GMDevSwPort -Value Get-MerakiDeviceSwitchPort
 Set-Alias -Name Get-MerakiDeviceSwitchPort -Value Get-MerakiSwitchPort
 
 function Set-MerakiSwitchPort() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$Serial,
@@ -1944,8 +2804,25 @@ function Set-MerakiSwitchPort() {
         [string]$AdaptivePolicyGroupId,
         [switch]$PeerStgCapable,
         [switch]$FlexibleStackingEnabled,
-        [switch]$DaiTrusted
+        [switch]$DaiTrusted,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
+
 
     switch ($AccessPolicyType) {
         'Custom access policy' {
@@ -2070,13 +2947,17 @@ function Set-MerakiSwitchPort() {
     For supported switches (e.g. MS420/MS425), whether or not the port has flexible stacking enabled.
     .PARAMETER DaiTrusted
     If true, ARP packets for this port will be considered trusted, and Dynamic ARP Inspection will allow the traffic.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name
     .OUTPUTS
     A port object.
     #>
 }
 
 function Reset-MerakiSwitchPorts() {
-    [CmdLetBinding()]
+    [CmdLetBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -2087,8 +2968,25 @@ function Reset-MerakiSwitchPorts() {
         [Parameter(
             Mandatory = $true
         )]
-        [string[]]$ports
+        [string[]]$ports,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
+
 
     $Uri = "{0}/devices/{1}/devices/ports/cycle"
     $Headers = Get-Headers
@@ -2111,7 +3009,11 @@ function Reset-MerakiSwitchPorts() {
     .PARAMETER serial
     The switch serial number.
     .PARAMETER ports
-    An array of port Ids.
+    An array of port Ids.    
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
     An array of ports that were reset.
     #>
@@ -2120,7 +3022,7 @@ function Reset-MerakiSwitchPorts() {
 Set-Alias -Name RMSWPorts -Value Reset-MerakiSwitchPorts -Option ReadOnly 
 
 function Get-MerakiSwitchPortsStatus() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -2130,10 +3032,28 @@ function Get-MerakiSwitchPortsStatus() {
         [ValidateScript({$_ -is [datetime]})]
         [datetime]$StartDate,
         [ValidateScript({$_ -is [int]})]
-        [int]$Days
+        [int]$Days,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
-    
+
     Begin {
+
+        if (-not $OrgID) {
+            $config = Read-Config
+            if ($profileName) {
+                $OrgID = $config.profiles.$profileName
+                if (-not $OrgID) {
+                    throw "Invalid profile name!"
+                }
+            } else {
+                $OrgID = $config.profiles.default
+            }        
+        }
+
+    
         if ($Days) {
             if ($StartDate) {
                 Write-Host "The Days parameter cannot be used with the StartDate parameter." -BackgroundColor Red
@@ -2179,6 +3099,10 @@ function Get-MerakiSwitchPortsStatus() {
     The Starting date to retrieve data. Cannot be more than 31 days prior to today.
     .PARAMETER Days
     Number of days back from today to retrieve data. Cannot be more than 31 days.
+    .PARAMETER OrgId
+    Optional Organization Name
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
     A collection if port status objects.
     #>
@@ -2189,7 +3113,7 @@ Set-Alias -name GMSWPortStatus  -Value Get-MerakiSwitchPortsStatus -Option ReadO
 #endregion
 
 function Get-MerakiSwitchPortsPacketCounters() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -2197,10 +3121,27 @@ function Get-MerakiSwitchPortsPacketCounters() {
         )]
         [string]$serial,
         [ValidateScript({$_ -is [decimal]})]
-        [decimal]$Hours
+        [decimal]$Hours,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
 
     Begin {
+
+        if (-not $OrgID) {
+            $config = Read-Config
+            if ($profileName) {
+                $OrgID = $config.profiles.$profileName
+                if (-not $OrgID) {
+                    throw "Invalid profile name!"
+                }
+            } else {
+                $OrgID = $config.profiles.default
+            }        
+        }
+
         $Headers = Get-Headers
 
         Set-Variable -Name Query
@@ -2231,11 +3172,15 @@ function Get-MerakiSwitchPortsPacketCounters() {
     .SYNOPSIS
     Return the packet counters for all the ports of a switch
     .DESCRIPTION
-    Returns packet counter statustics for all ports of a switch.
+    Returns packet counter statistics for all ports of a switch.
     .PARAMETER serial
     Serial number of the switch.
     .PARAMETER Hours
     The number of hours to return the data. The default is 24 hours (1 day). Can be entered as a decimal number. For the last 30 minutes enter .5.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile Name.
     .OUTPUTS
     A collection if packet counter objects.
     #>
@@ -2245,7 +3190,7 @@ Set-Alias -Name GMSWPortsPacketCntrs -Value Get-MerakiSwitchPortsPacketCounters
 
 #region Port Schedules
 function Get-MerakiSwitchPortSchedules() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -2253,10 +3198,27 @@ function Get-MerakiSwitchPortSchedules() {
             ValueFromPipelineByPropertyName = $true
         )]
         [Alias('NetworkId')]
-        [string]$Id        
+        [string]$Id,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
 
     Begin {
+
+        if (-not $OrgID) {
+            $config = Read-Config
+            if ($profileName) {
+                $OrgID = $config.profiles.$profileName
+                if (-not $OrgID) {
+                    throw "Invalid profile name!"
+                }
+            } else {
+                $OrgID = $config.profiles.default
+            }        
+        }
+        
         $Headers = Get-Headers
     }
 
@@ -2276,20 +3238,42 @@ function Get-MerakiSwitchPortSchedules() {
     .DESCRIPTION
     Retrieve Meraki switch port schedule for a network.
     .PARAMETER Id
-    Network ID to retrive port schedules
+    Network ID to retrieve port schedules
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
     A port schedules object
     #>
 }
 
 function Add-MerakiSwitchPortSchedule(){
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
         [Parameter(Mandatory = $true)]
         [string]$Name,
-        [hashtable]$PortSchedule
+        [hashtable]$PortSchedule,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
+
 
     $Headers = Get-Headers
 
@@ -2328,7 +3312,10 @@ function Add-MerakiSwitchPortSchedule(){
         from:string - The time, from '00:00' to '24:00'. Must be less than the time specified in 'to'. Defaults to '00:00'. Only 30 minute increments are allowed.
         to: string - The time, from '00:00' to '24:00'. Must be greater than the time specified in 'from'. Defaults to '24:00'. Only 30 minute increments are allowed.
     (see examples)
-
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
     A port schedule object.
     .EXAMPLE
@@ -2376,6 +3363,7 @@ function Add-MerakiSwitchPortSchedule(){
 }
 
 function Set-MerakiSwitchPortSchedule() {
+    [CmdletBinding(DefaultParameterSetName = 'defailt')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
@@ -2384,8 +3372,25 @@ function Set-MerakiSwitchPortSchedule() {
         [Parameter(Mandatory = $true)]
         [string]$Name,
         [Parameter(Mandatory = $true)]
-        [hashtable]$PortSchedule
+        [hashtable]$PortSchedule,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
+
 
     $Headers = Get-Headers
 
@@ -2417,19 +3422,39 @@ function Set-MerakiSwitchPortSchedule() {
     The name of the port schedule
     .PARAMETER PortSchedule
     Hash table of daily schedules.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name
     .OUTPUTS
     A port scheduler object
     #>
 }
 
 function Remove-MerakiSwitchPortSchedule() {
-    [CmdletBinding(SupportsShouldProcess)]
+    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
         [Parameter(Mandatory = $true)]
-        [string]$PortScheduleId
+        [string]$PortScheduleId,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
 
     $Headers = Get-Headers
 
@@ -2454,15 +3479,19 @@ function Remove-MerakiSwitchPortSchedule() {
     Network ID of the network to remove the port schedule
     .PARAMETER PortScheduleId
     ID of the port schedule to remove.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile Name
     .OUTPUTS
-    HTML status code. Code 204 = Successfull
+    HTML status code. Code 204 = Successful
     #>
 }
 #endregion
 
 #region QOS Rules
 function Get-MerakiSwitchQosRules() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -2470,10 +3499,27 @@ function Get-MerakiSwitchQosRules() {
             ValueFromPipelineByPropertyName = $true
         )]
         [Alias('NetworkId')]
-        [string]$Id
+        [string]$Id,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
 
     Begin {
+
+        if (-not $OrgID) {
+            $config = Read-Config
+            if ($profileName) {
+                $OrgID = $config.profiles.$profileName
+                if (-not $OrgID) {
+                    throw "Invalid profile name!"
+                }
+            } else {
+                $OrgID = $config.profiles.default
+            }        
+        }
+
         $Headers = Get-Headers
     }
 
@@ -2494,12 +3540,17 @@ function Get-MerakiSwitchQosRules() {
     Retrieve the QOS rules for a Meraki network switches
     .PARAMETER Id
     The network Id to get the QOS rules from.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
     Am array QOS rules objects.
     #>    
 }
 
 function Get-MerakiSwitchQosRule() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -2509,8 +3560,25 @@ function Get-MerakiSwitchQosRule() {
         [Alias('NetworkId')]
         [string]$Id,
         [Parameter(Mandatory = $true)]
-        [string]$QosRuleId
+        [string]$QosRuleId,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
+
 
     $Headers = Get-Headers
 
@@ -2532,12 +3600,17 @@ function Get-MerakiSwitchQosRule() {
     Network ID to retrieve the rules from.
     .PARAMETER QosRuleId
     ID of the QOS rule to retrieve.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
     A QOS rule object.
     #>
 }
 
 function Add-MerakiSwitchQosRule() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
@@ -2555,12 +3628,29 @@ function Add-MerakiSwitchQosRule() {
         [Alias('dstPortRange')]
         [string]$DestinationPortRange,
         [ValidateRange(-1,0)]
-        [int]$dscp
+        [int]$dscp,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
 
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
+
+
     if ($Protocol -eq 'ANY') {
-        if ($SoursePort) {
-            Write-Host "Parameter SourcePort cannt be used when Protocol is 'ANY'" -ForegroundColor Red
+        if ($SourcePort) {
+            Write-Host "Parameter SourcePort cannot be used when Protocol is 'ANY'" -ForegroundColor Red
             return
         }
 
@@ -2624,6 +3714,10 @@ function Add-MerakiSwitchQosRule() {
     The destination port range of the incoming packet. Applicable only if protocol is set to TCP or UDP. Example: 70-80
     .PARAMETER dscp
     DSCP tag. Set this to -1 to trust incoming DSCP. Default value is 0
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
     A QOS Rule Object
     #>
@@ -2652,8 +3746,25 @@ function Set-MerakiSwitchQosRule() {
         [Alias('dstPortRange')]
         [string]$DestinationPortRange,
         [ValidateRange(-1,0)]
-        [int]$dscp
+        [int]$dscp,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
+
 
     $Headers = Get-Headers
 
@@ -2701,19 +3812,39 @@ function Set-MerakiSwitchQosRule() {
     The destination port range of the incoming packet. Applicable only if protocol is set to TCP or UDP. Example: 70-80
     .PARAMETER dscp
     DSCP tag. Set this to -1 to trust incoming DSCP. Default value is 0
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
     A QOS Rule Object
     #>
 }
 
 function Remove-MerakiSwitchQosRule() {
-    [CmdletBinding(SupportsShouldProcess)]
+    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
         [Parameter(Mandatory = $true)]
-        [string]$QosRuleId
+        [string]$QosRuleId,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
 
     $Headers = Get-Headers
 
@@ -2736,23 +3867,44 @@ function Remove-MerakiSwitchQosRule() {
     The Network Id
     .PARAMETER QosRuleId
     The QOS Rule Id.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
     HTML status code. Code 204 = success
     #>
 }
 
 function Get-MerakiSwitchQosRulesOrder() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
             ValueFromPipeline = $true,
             ValueFromPipelineByPropertyName = $true
         )]
-        [string]$NetworkId
+        [string]$NetworkId,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
 
     Begin {
+
+        if (-not $OrgID) {
+            $config = Read-Config
+            if ($profileName) {
+                $OrgID = $config.profiles.$profileName
+                if (-not $OrgID) {
+                    throw "Invalid profile name!"
+                }
+            } else {
+                $OrgID = $config.profiles.default
+            }        
+        }
+
         $Headers = Get-Headers
 
         $Rules = [List]::New()
@@ -2782,19 +3934,40 @@ function Get-MerakiSwitchQosRulesOrder() {
     .DESCRIPTION
     Return the quality of service rule IDs by order in which they will be processed by the switch
     .PARAMETER NetworkId
-    The Netowrk Id
+    The Network Id
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
     An object containing an array of QOS rule IDs in order of processing
     #>
 }
 
 function Set-MerakiSwitchQosRuleOrder() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
         [Parameter(Mandatory = $true)]
-        [string[]]$RuleIds
+        [string[]]$RuleIds,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
 
     $Headers = Get-Headers
 
@@ -2821,8 +3994,12 @@ function Set-MerakiSwitchQosRuleOrder() {
     The network Id
     .PARAMETER RuleIds
     An array of RuleIds
+    .PARAMETER OrgId
+    Optional Organization Od.
+    .PARAMETER ProfileName
+    Optional Profile name/
     .OUTPUTS
-    Am object containing an array of QOS rule IDs in order of processing
+    An object containing an array of QOS rule IDs in order of processing
     #>
 }
 
@@ -2830,7 +4007,7 @@ function Set-MerakiSwitchQosRuleOrder() {
 
 #region Access Policies
 function Get-MerakiSwitchAccessPolicies() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -2838,10 +4015,27 @@ function Get-MerakiSwitchAccessPolicies() {
             ValueFromPipelineByPropertyName = $true
         )]
         [Alias('NetworkId')]
-        [string]$Id
+        [string]$Id,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
 
     Begin {
+
+        if (-not $OrgID) {
+            $config = Read-Config
+            if ($profileName) {
+                $OrgID = $config.profiles.$profileName
+                if (-not $OrgID) {
+                    throw "Invalid profile name!"
+                }
+            } else {
+                $OrgID = $config.profiles.default
+            }        
+        }
+
         $Headers = Get-Headers
 
         $policies = [List]::New()
@@ -2881,18 +4075,39 @@ function Get-MerakiSwitchAccessPolicies() {
     Return the switch access policies for a Meraki network.
     .PARAMETER Id
     The ID of the network.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
     an object containing the Access policies
     #>
 }
 
 function Get-MerakiSwitchAccessPolicy() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
         [Parameter(Mandatory = $true)]
-        [string]$AccessPolicyNumber
+        [string]$AccessPolicyNumber,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
 
     $Headers = Get-Headers
 
@@ -2908,11 +4123,15 @@ function Get-MerakiSwitchAccessPolicy() {
     .SYNOPSIS
     Return an access policy
     .DESCRIPTION
-    Return a specific access policyt from a network
+    Return a specific access policy from a network
     .PARAMETER NetworkId
     The Id of the network
     .PARAMETER AccessPolicyNumber
     The access policy number to return
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
     An object containing the access policy
     #>
@@ -2948,8 +4167,24 @@ function Add-MerakiSwitchAccessPolicy() {
         [string]$Dot1xControlDirection,
         [PSObject]$Radius,
         [Parameter(ParameterSetName = 'RadiusAccounting')]
-        [PSObject[]]$RadiusAccountingServers
+        [PSObject[]]$RadiusAccountingServers,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
 
     if ($IncreaseAccessSpeed.IsPresent -and ($AccessPolicyType -NE "Hybrid authentication")) {
         Write-Host "Parameter IncreaseAccessSpeed can only be used when parameter AccessPolicyType is 'Hybrid authentication'" -ForegroundColor Red
@@ -3071,7 +4306,11 @@ function Add-MerakiSwitchAccessPolicy() {
         host*:string - Public IP address of the RADIUS accounting server
         secret*:string - RADIUS client shared secret
 
-    See examples for creatng these objects.
+    See examples for creating these objects.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    OptionalProfile name
     .OUTPUTS
     An Access Policy Object
     .EXAMPLE
@@ -3148,15 +4387,30 @@ function Set-MerakiSwitchAccessPolicy() {
         [switch]$RadiusAccountingEnabled,        
         [switch]$RadiusCoaSupportEnabled,
         [switch]$RadiusTestingEnabled,
-        [switch]$UrlredirectWalledGardenEnabled,
+        [switch]$UrlRedirectWalledGardenEnabled,
         [switch]$VoiceVlanClients,
         [string[]]$UrlRedirectWalledGardenRanges,
         [string]$Dot1xControlDirection,
         [PSObject]$Radius,
         [Parameter(ParameterSetName = 'RadiusAccounting')]
-        [PSObject[]]$RadiusAccountingServers
+        [PSObject[]]$RadiusAccountingServers,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
 
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
     $Headers = Get-Headers
 
     $Uri = "{0}/networks/{1}/switch/accessPolicies{2}" -f $BaseURI, $NetworkId, $AccessPolicyNumber
@@ -3215,10 +4469,12 @@ function Set-MerakiSwitchAccessPolicy() {
     Create a Meraki switch access policy for a network.
     .PARAMETER NetworkId
     The network Id of the network to create the policy
+    .PARAMETER AccessPolicyNumber
+    The number of the policy to update
     .PARAMETER Name
     The name of the access policy
     .PARAMETER HostMode
-    Host Mode for the access poliRemove-MerakiSwitchStaticRoutecy.
+    Host Mode for the access policy.
     .PARAMETER RadiusServers
     List of RADIUS servers to require connecting devices to authenticate against before granting network access.
     .PARAMETER GuestVlanId
@@ -3247,19 +4503,39 @@ function Set-MerakiSwitchAccessPolicy() {
     Object for RADIUS Settings
     .PARAMETER RadiusAccountingServers
     List of RADIUS accounting servers to require connecting devices to authenticate against before granting network access
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS 
     An Access Policy object.
     #>
 }
 
 function Remove-MerakiSwitchAccessPolicy() {
-    [CmdletBinding(SupportsShouldProcess)]
+    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
         [Parameter(Mandatory = $true)]
-        [string]$AccessPolicyNumber
+        [string]$AccessPolicyNumber,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
 
     $Headers = Get-Headers
 
@@ -3283,15 +4559,19 @@ function Remove-MerakiSwitchAccessPolicy() {
     Delete a Meraki switch Access Policy
     .PARAMETER NetworkId
     The network Id to delete the policy from.
-    .PARAMETER AccessPolicyNumber
+    .PARAMETER AccessPolicyNumber    
     The access policy number to delete.
+    .PARAMETER OrgId
+    Optional Organization id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     #>
 }
 #endregion
 
 #region Routing Multicast
 function Get-MerakiSwitchRoutingMulticast() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -3299,10 +4579,27 @@ function Get-MerakiSwitchRoutingMulticast() {
             ValueFromPipelineByPropertyName = $true
         )]
         [Alias('NetworkId')]
-        [string]$Id
+        [string]$Id,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
 
     Begin {
+
+        if (-not $OrgID) {
+            $config = Read-Config
+            if ($profileName) {
+                $OrgID = $config.profiles.$profileName
+                if (-not $OrgID) {
+                    throw "Invalid profile name!"
+                }
+            } else {
+                $OrgID = $config.profiles.default
+            }        
+        }
+    
         $Headers = Get-Headers
         $Multicasts = [List]::New()
     }
@@ -3331,21 +4628,42 @@ function Get-MerakiSwitchRoutingMulticast() {
     Retrieve multicast settings for switches
     .DESCRIPTION
     Retrieve the multicast setting for switches in a Meraki network.
-    .PARAMETER NetworkId
+    .PARAMETER Id
     Network ID of the network to retrieve the settings.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS 
     A multicast settings object
     #>
 }
 
 function Set-MerakiSwitchRoutingMulticast() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
         [switch]$FloodUnknownMulticastTrafficEnabled,
         [switch]$igmpSnoopingEnabled,
-        [PSObject[]]$Overrides
+        [PSObject[]]$Overrides,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
 
     $Headers = Get-Headers
 
@@ -3390,13 +4708,17 @@ function Set-MerakiSwitchRoutingMulticast() {
         stacks: array[] - List of switch stack ids for non-template network
         switchProfiles:array[] - List of switch profiles ids for template network
         switches:array[] List of switch serials for non-template network
+    .PARAMETER OrgId
+    Optional Organization id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     #>
 }
 #endregion
 
 #region OSPF
 function Get-MerakiSwitchRoutingOspf() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -3404,10 +4726,27 @@ function Get-MerakiSwitchRoutingOspf() {
             ValueFromPipelineByPropertyName = $true
             )]
             [Alias('NetworkId')]
-            [string]$Id
+            [string]$Id,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
 
     Begin {
+
+        if (-not $OrgID) {
+            $config = Read-Config
+            if ($profileName) {
+                $OrgID = $config.profiles.$profileName
+                if (-not $OrgID) {
+                    throw "Invalid profile name!"
+                }
+            } else {
+                $OrgID = $config.profiles.default
+            }        
+        }
+
         $Headers = Get-Headers        
     }
 
@@ -3428,6 +4767,10 @@ function Get-MerakiSwitchRoutingOspf() {
     Return the Meraki network OSPF settings
     .PARAMETER Id
     The Id of the network
+    .PARAMETER OrgId
+    Optional Organization id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
     An object containing the OSPF settings
     #>
@@ -3458,8 +4801,24 @@ function Set-MerakiSwitchRoutingOspf() {
         [int]$V3HelloTimerInSeconds,
         [switch]$V3Enabled,
         [PSObject[]]$V3Areas,
-        [psobject[]]$Areas
+        [psobject[]]$Areas,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
 
     $Headers = Get-Headers
 
@@ -3536,13 +4895,17 @@ function Set-MerakiSwitchRoutingOspf() {
         areaType*:string - Area types in OSPF. Must be one of: ["normal", "stub", "nssa"]
 
     * required
+    .PARAMETER OrgId
+    Optiona; Organization Name
+    .PARAMETER ProfileName
+    Optional Profile name.
     #>
 }
 
 #Access control Lists
 
 function Get-MerakiSwitchAccessControlList() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -3550,10 +4913,26 @@ function Get-MerakiSwitchAccessControlList() {
             ValueFromPipelineByPropertyName = $true
         )]
         [Alias('NetworkId')]
-        [string]$Id
+        [string]$Id,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
-
     Begin {
+
+        if (-not $OrgID) {
+            $config = Read-Config
+            if ($profileName) {
+                $OrgID = $config.profiles.$profileName
+                if (-not $OrgID) {
+                    throw "Invalid profile name!"
+                }
+            } else {
+                $OrgID = $config.profiles.default
+            }        
+        }
+
         $Headers = Get-Headers
     }
 
@@ -3585,6 +4964,10 @@ function Get-MerakiSwitchAccessControlList() {
     Retrieve Access control LIsts for Meraki Switches
     .PARAMETER Id
     The Network ID
+    .PARAMETER OrgId
+    Optional Organization name.
+    .PARAMETER ProfileName
+    Optional Profile name.
     .OUTPUTS
     An array of ACL objects.
     #>
@@ -3593,7 +4976,7 @@ function Get-MerakiSwitchAccessControlList() {
 Set-Alias -Name GMSWACL -Value Get-MerakiSwitchAccessControlList
 
 function Add-MerakiSwitchAccessControlEntry() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
@@ -3611,8 +4994,24 @@ function Add-MerakiSwitchAccessControlEntry() {
         [string]$DestinationPort = 'any',
         [Alias('DstCidr')]
         [string]$DestinationCidr = 'any',
-        [string]$Comment
+        [string]$Comment,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
 
     $Headers = Get-Headers
 
@@ -3646,16 +5045,61 @@ function Add-MerakiSwitchAccessControlEntry() {
     } catch {
         throw $_
     }
+    <#
+    .DESCRIPTION
+    Adds an Access Control entry to the switch access control list.
+    .PARAMETER NetworkId
+    The Id of the network.
+    .PARAMETER Vlan
+    Incoming traffic VLAN
+    .PARAMETER SourcePort
+    The source port.
+    .PARAMETER SourceCidr
+    Source IP address (in IP or CIDR notation)
+    .PARAMETER Protocol
+    The type of protocol
+    .PARAMETER Policy
+    allow' or 'deny' traffic specified by this rule
+    .PARAMETER IpVersion
+    IP address version 
+    .PARAMETER DestinationPort
+    The destination port.
+    .PARAMETER DestinationCidr
+    Destination IP address (in IP or CIDR notation)
+    .PARAMETER Comment
+    Description of the rule (optional)
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
+    #>
 }
 
 Set-Alias -Name AMSWAce -Value Add-MerakiSwitchAccessControlEntry
 
 function Remove-MerakiSwitchAccessControlEntry() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
-        [int]$Id
+        [int]$Id,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
 
     $Headers = Get-Headers
 
@@ -3678,11 +5122,24 @@ function Remove-MerakiSwitchAccessControlEntry() {
     } catch {
 
     }
+    <#
+    .DESCRIPTION
+    Deletes a switch access control entry from the list.
+    .PARAMETER NetworkId
+    The Id of the network.
+    .PARAMETER Id
+    The ID of the Access Control Entry
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile Name.
+    #>
 }
 
 Set-Alias -Name RMSWAce -value Remove-MerakiSwitchAccessControlEntry
 
 function Set-MerakiSwitchAccessControlEntry() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
@@ -3701,9 +5158,24 @@ function Set-MerakiSwitchAccessControlEntry() {
         [string]$DestinationPort = 'any',
         [Alias('DstCidr')]
         [string]$DestinationCidr = 'any',
-        [string]$Comment
+        [string]$Comment,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
 
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
     $Headers = Get-Headers
 
     $Uri = "{0}/networks/{1}/switch/accessControlList" -f $BaseURI, $NetworkId
@@ -3739,4 +5211,32 @@ function Set-MerakiSwitchAccessControlEntry() {
     } catch {
         Throw $_
     }
+    <#
+    .DESCRIPTION
+    Updates an Access Control Entry inthe Access Control List.
+    .PARAMETER NetworkId
+    The Id of the network.
+    .PARAMETER Id
+    The Access Control Entry Id.
+    .PARAMETER SourcePort
+    The source port.
+    .PARAMETER SourceCidr
+    Source IP address (in IP or CIDR notation)
+    .PARAMETER Protocol
+    The type of protocol
+    .PARAMETER Policy
+    allow' or 'deny' traffic specified by this rule
+    .PARAMETER IpVersion
+    IP address version 
+    .PARAMETER DestinationPort
+    The destination port.
+    .PARAMETER DestinationCidr
+    Destination IP address (in IP or CIDR notation)
+    .PARAMETER Comment
+    Description of the rule (optional)
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
+    #>
 }

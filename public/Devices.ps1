@@ -1,15 +1,31 @@
 #Meraki Device Functions
 
 function Get-MerakiDevice() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
             ValueFromPipeline = $true,
             ValueFromPipelineByPropertyName = $true
         )]
-        [string]$Serial
+        [string]$Serial,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
 
     $Uri = "{0}/devices/{1}" -f $BaseURI, $Serial
     $Headers = Get-Headers
@@ -26,6 +42,10 @@ function Get-MerakiDevice() {
     Returns a Meraki Device.
     .PARAMETER Serial
     The serial number of the device.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile Name.
     .OUTPUTS
     A Meraki device object.
     #>
@@ -34,7 +54,7 @@ function Get-MerakiDevice() {
 Set-Alias -Name GMNetDev -Value Get-MerakiDevice -Option ReadOnly
 
 function Start-MerakiDeviceBlink() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -44,8 +64,24 @@ function Start-MerakiDeviceBlink() {
         [string]$serial,
         [int]$Duration,
         [int]$Duty,
-        [int]$Period
+        [int]$Period,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
 
     $Uri = "{0}/devices/{1}/blinkLeds" -f $BaseURI, $serial
     $Headers = Get-Headers
@@ -80,20 +116,40 @@ function Start-MerakiDeviceBlink() {
     The duty cycle as percent active. Default = 50
     .PARAMETER Period
     The period in milliseconds. Default = 160
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.
     #>
 }
 Set-Alias -Name StartMDevBlink -Value Start-MerakiDeviceBlink -Option ReadOnly
 
 function Restart-MerakiDevice() {
-    [CmdLetBinding()]
+    [CmdLetBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
             ValueFromPipeline = $true,
             ValueFromPipelineByPropertyName=$true
         )]
-        [string]$serial
+        [string]$serial,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
 
     $Uri = "{0}/devices/{1}/reboot" -f $BaseURI, $serial
     $headers = Get-Headers
@@ -110,6 +166,10 @@ function Restart-MerakiDevice() {
     Restart a Meraki device.
     .PARAMETER serial
     The serial number of the device.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile Name
     .OUTPUTS
     True if successful, false if failed.
     #>
@@ -118,7 +178,7 @@ function Restart-MerakiDevice() {
 Set-Alias -Name RestartMD -Value Restart-MerakiDevice -Option ReadOnly
 
 function Get-MerakiDeviceClients() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -189,19 +249,51 @@ function Get-MerakiDeviceClients() {
             throw $_
         }
     }
+    <#
+    .SYNOPSIS
+    Returns clients associated with the device.
+    .DESCRIPTION
+    List the clients of a device, up to a maximum of a month ago. The usage of each client is returned in kilobytes. If the device is a switch, the switchport is returned; otherwise the switchport field is null.
+    .PARAMETER serial
+    The serial number of the device.
+    .PARAMETER StartDate
+    The starting date to retrieve data. Maximum 31 days prior to today.
+    .PARAMETER Days
+    Number of days prior to today to retrieve data. Maximum of 31 days prior to today.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile name.    
+    #>
 }
 
 Set-Alias -Name GMDevClients -Value Get-MerakiDeviceClients -Option ReadOnly
 
 function Get-MerakiDeviceApplianceUplinks() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName)]
     Param(
         [Parameter(
             Mandatory,
             ValueFromPipelineByPropertyName
         )]
-        [string]$Serial
+        [string]$Serial,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
     )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
 
     $Headers = Get-Headers
 
@@ -213,4 +305,14 @@ function Get-MerakiDeviceApplianceUplinks() {
     } catch {
         throw $_
     }
+    <#
+    .DESCRIPTION
+    Return the uplink settings for an MX appliance
+    .PARAMETER Serial
+    Serial number of the MX device.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile Name.
+    #>   
 }

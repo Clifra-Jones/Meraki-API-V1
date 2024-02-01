@@ -1435,15 +1435,7 @@ Set-Alias -name GMOFirmwareUpgrades -Value Get-MerakiOrganizationFirmwareUpgrade
 
 function Get-MerakiOrganizationFirmwareUpgradesByDevice() {
     [CmdletBinding(DefaultParameterSetName='default')]
-    Param(
-        [Parameter(ValueFromPipelineByPropertyName)]
-        [Alias('NetworkId')]
-        [string]$Id,
-        [Parameter(ValueFromPipelineByPropertyName)]
-        [string]$Serial,
-        [string[]]$Macs,
-        [string[]]$FirmwareUpgradeIds,
-        [string[]]$FirmwareUpgradeBatchIds,
+    Param(        
         [ValidateScript({$_ -is [int]})]
         [ValidateRange(3,1000)]
         [int]$PerPage,
@@ -1461,8 +1453,6 @@ function Get-MerakiOrganizationFirmwareUpgradesByDevice() {
     }
  #>
     Begin {
-        $NetworkIds = [List[string]]::New()
-        $Serials = [List[string]]::New()
 
         If (-not $OrgID) {
             $config = Read-Config
@@ -1476,54 +1466,15 @@ function Get-MerakiOrganizationFirmwareUpgradesByDevice() {
             }
         }
 
-        $Headers = Get-Headers
-
-        if ($PerPage) {
-            $Query = "perPage={0}" -f $PerPage
-        }
-        
-        if ($Macs) {
-            if ($Query) {$Query += '&'}
-            $Query = "macs[]={0}" -f ($Macs -join ',')            
-        }
-
-        if ($FirmwareUpgradeIds) {
-            if ($Query) {$Query += '&'}
-            $Query = "{0}firmwareUpgradeIds[]={1}" -f $Query, ($FirmwareUpgradeIds -join ',')            
-        }
-
-        if ($FirmwareUpgradeBatchIds) {
-            if ($Query) {$Query += '&'}
-            $Query = "{0}firmwareUpgradeBatchIds[]={1}" -f $Query, $FirmwareUpgradeBatchIds
-        }
+        $Headers = Get-Headers    
         
         $Uri = "{0}/organizations/{1}/firmware/upgrades/byDevice" -f $BaseURI, $OrgId
     }
     
     Process {
-        if ($Id) {
-            $NetworkIds.Add($Id)
-        }
-    
-        if ($Serial) {
-            $Serials.Add($Serial)
-        }
-    }
 
-    End {
-
-        if ($NetworkIds.Count -gt 0) {
-            if ($Query) {$Query += '&'}
-            $Query = "{0}networkIds[]={1}" -f $Query, ($NetworkIds.ToArray() -join ',')
-        }
-
-        if ($Serials.Count -gt 0) {
-            if ($Query) {$Query += "&"}
-            $Query = "{0}serials[]={1}" -f $Query, ($Serials.ToArray() -join ',')
-        }
-
-        if ($Query) {
-            $Uri = "{0}?{1}" -f $Uri, $Query
+        if ($PerPage) {
+            $Uri = "{0}?perPage={1}" -f $Uri, $PerPage
         }
 
         $Results = [List[PsObject]]::New()
@@ -1566,27 +1517,17 @@ function Get-MerakiOrganizationFirmwareUpgradesByDevice() {
     .DESCRIPTION
     Get Meraki organization firmware upgrades by device
     .PARAMETER OrgId
-    The organization Id
+    Optional organization Id
     .PARAMETER ProfileName
-    The saved profile name.
+    Optional profile name.
+    .PARAMETER Pages
+    Number of pages to return. Default is all.
     .PARAMETER PerPage
     Number of entries per page.
-    .PARAMETER Id
-    An array of network Ids to retrieve upgrades for
-    .PARAMETER Serial
-    An array of serials to retrieve upgrades for
-    .PARAMETER Macs
-    An array of MAC Addresses to retrieve upgrades for
-    .PARAMETER FirmwareUpgradeIds
-    An array of Upgrade Ids to retrieve upgrades for
-    .PARAMETER FirmwareUpgradeBatchIds
-    An array of Firmware Upgrade Batch Ids to retrieve upgrades for
     .OUTPUTS
     An array of firmware upgrade objects.
     #>
 }
-
-#region OrganizationThirdPartyVpnPeers
 
 function Get-MerakiOrganizationDeviceUplinks() {
     [CmdletBinding()]
@@ -1850,7 +1791,7 @@ function Get-MerakiOrganizationDeviceStatus() {
 }
 
 function Get-MerakiOrganizationApplianceVpnStatuses() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(ValueFromPipelineByPropertyName)]
         [Alias('NetworkId')]
