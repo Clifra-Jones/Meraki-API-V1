@@ -470,52 +470,6 @@ function Set-MerakiSwitchStackRoutingInterface() {
 Set-Alias -Name SetMSStkRteInt -Value Set-MerakiSwitchStackRoutingInterface
 
 
-# function Get-MerakiSwitchStackRoutingInterfacesDHCP() {
-#     [CmdletBinding()]
-#     Param(
-#         #Stack Id
-#         [Parameter(
-#             Mandatory = $true,
-#             ValueFromPipeline = $true,
-#             ValueFromPipelineByPropertyName = $true
-#         )]
-#         [string]$id,
-#         #network ID
-#         [Parameter(
-#             Mandatory = $true            
-#         )]
-#         [string]$networkId
-#     )
-
-#     Begin {
-#         #$Headers = Get-Headers
-#         $responses = New-Object 'System.Collections.Generic.List[psobject]'
-#     }
-
-#     Process {
-#         $interfaces = Get-MerakiSwitchStackRoutingInterfaces -Id $id -networkId $networkId
-#         $InterfaceDHCP = $interfaces | Get-MerakiSwitchStackRoutingInterfaceDHCP -stackId $id -networkId $networkId
-#         $InterfaceDHCP | ForEach-Object {
-#             $responses.add($_)
-#         }
-#     }
-
-#     End {
-#         return $responses.ToArray()
-#     }
-#     <#
-#     .SYNOPSIS
-#     Returns the DHCP Settings for a switch stack interface.
-#     .PARAMETER id
-#     The stack Id.
-#     .PARAMETER networkId
-#     The network Id.
-#     .OUTPUTS
-#     An array of Meraki DHCP objects.
-#     #>
-# }
-
-# Set-Alias GMSwStRteIntsDHCP -Value Get-MerakiSwitchStackRoutingInterfacesDHCP
 
 function Get-MerakiSwitchStackRoutingStaticRoutes() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
@@ -527,9 +481,9 @@ function Get-MerakiSwitchStackRoutingStaticRoutes() {
             ValueFromPipelineByPropertyName = $true
         )]        
         [string]$id,
-        #network ID
         [Parameter(
-            Mandatory = $true
+            Mandatory,
+            ValueFromPipelineByPropertyName
         )]
         [string]$networkId,
         [Parameter(ParameterSetName = 'org')]
@@ -565,7 +519,9 @@ function Get-MerakiSwitchStackRoutingStaticRoutes() {
             $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
             $response | ForEach-Object {
+                $_ | Add-Member -MemberType NoteProperty -Name "NetworkId" -Value $networkId
                 $_ | Add-Member -MemberType NoteProperty -Name "Stack" -Value $StackName
+                $_ | Add-Member -MemberType NoteProperty -Name "StackId" -Value $id
                 $responses.add($_)
             }
         } catch {
@@ -599,14 +555,18 @@ function Get-MerakiSwitchStackRoutingStaticRoute() {
     Param(
         [Parameter(
             Mandatory = $true,
-            ValueFromPipeline = $true,
             ValueFromPipelineByPropertyName = $true
         )]
-        [Alias("NetworkId")]
-        [string]$Id,
-        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName)]
+        [Alias('Id')]
         [string]$StackId,
-        [Parameter(Mandatory = $true)]
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
         [string]$StaticRouteId,
         [Parameter(ParameterSetName = 'org')]
         [string]$OrgId,
@@ -628,7 +588,7 @@ function Get-MerakiSwitchStackRoutingStaticRoute() {
             }        
         }
 
-        $Headers = $Headers
+        $Headers = Get-Headers
     }
 
     Process {
@@ -1533,9 +1493,13 @@ Set-Alias GMSWRoutIntDHCP -value Get-MerakiSwitchRoutingInterfaceDHCP -option Re
 function Set-MerakiSwitchRoutingInterfaceDhcp() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
-        [Parameter(Mandatory = $true)]
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName)]
         [string]$Serial,
-        [Parameter(Mandatory)]
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName)]
         [string]$InterfaceId,
         [ValidateSet('dhcpDisabled', 'dhcpRelay', 'dhcpServer')]
         [string]$DhcpMode,
@@ -1561,44 +1525,50 @@ function Set-MerakiSwitchRoutingInterfaceDhcp() {
         [string]$ProfileName
     )
 
-    if (-not $OrgID) {
-        $config = Read-Config
-        if ($profileName) {
-            $OrgID = $config.profiles.$profileName
-            if (-not $OrgID) {
-                throw "Invalid profile name!"
-            }
-        } else {
-            $OrgID = $config.profiles.default
-        }        
+    Begin {
+        if (-not $OrgID) {
+            $config = Read-Config
+            if ($profileName) {
+                $OrgID = $config.profiles.$profileName
+                if (-not $OrgID) {
+                    throw "Invalid profile name!"
+                }
+            } else {
+                $OrgID = $config.profiles.default
+            }        
+        }
+
+
+        $Headers = Get-Headers
+
+
+        $_Body = @{}
+
+        if ($DhcpMode) { $_Body.Add("dhcpMode", $DhcpMode) }
+        if ($DhcpRelayServerIps) { $_Body.Add("dhcpRelayServerIps", $DhcpRelayServerIps) }
+        if ($DhcpLeaseTime) { $_Body.Add("shcpLeaseTime", $DhcpLeaseTime) } 
+        if ($DnsNameServerOptions) { $_Body.Add("dnsNameserverOptions", $DnsNameServerOptions) }
+        if ($DnsCustomNameServers) { $_Body.Add("dnsCustomNameservers", $DnsCustomNameServers) }
+        if ($BootOptionsEnabled) { $_Body.Add("bootOptionsEnabled", $BootOptionsEnabled.IsPresent) } 
+        if ($BootNextServer) { $_Body.Add("bootNextServer", $BootNextServer) }
+        if ($BootFileName) { $_Body.Add("bootFileName", $BootFileName) }
+        if ($DhcpOptions) { $_Body.Add("dhcpOptions", $DhcpOptions) }
+        if ($ReservedIpRanges) { $_Body.Add("reservedIpRanges", $ReservedIpRanges) }
+        if ($FixedIpRanges) { $_Body.Add("fixedIpRanges",$FixedIpRanges) }
+
+        $body = $_Body | ConvertTo-Json -Depth 5 -Compress
     }
 
+    Process {
 
-    $Headers = Get-Headers
+        $Uri = "{0}/devices/{1}/switch/routing/interface/{2}/dhcp" -f $BaseURI, $Serial, $InterfaceId
 
-    $Uri = "{0}/devices/{1}/switch/routing/interface/{2}/dhcp" -f $BaseURI, $Serial, $InterfaceId
-
-    $_Body = @{}
-
-    if ($DhcpMode) { $_Body.Add("dhcpMode", $DhcpMode) }
-    if ($DhcpRelayServerIps) { $_Body.Add("dhcpRelayServerIps", $DhcpRelayServerIps) }
-    if ($DhcpLeaseTime) { $_Body.Add("shcpLeaseTime", $DhcpLeaseTime) } 
-    if ($DnsNameServerOptions) { $_Body.Add("dnsNameserverOptions", $DnsNameServerOptions) }
-    if ($DnsCustomNameServers) { $_Body.Add("dnsCustomNameservers", $DnsCustomNameServers) }
-    if ($BootOptionsEnabled) { $_Body.Add("bootOptionsEnabled", $BootOptionsEnabled.IsPresent) } 
-    if ($BootNextServer) { $_Body.Add("bootNextServer", $BootNextServer) }
-    if ($BootFileName) { $_Body.Add("bootFileName", $BootFileName) }
-    if ($DhcpOptions) { $_Body.Add("dhcpOptions", $DhcpOptions) }
-    if ($ReservedIpRanges) { $_Body.Add("reservedIpRanges", $ReservedIpRanges) }
-    if ($FixedIpRanges) { $_Body.Add("fixedIpRanges",$FixedIpRanges) }
-
-    $body = $_Body | ConvertTo-Json -Depth 5 -Compress
-
-    try {
-        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
-        return $response
-    } catch {
-        throw $_
+        try {
+            $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
+            return $response
+        } catch {
+            throw $_
+        }
     }
     <#
     .SYNOPSIS
@@ -1654,7 +1624,6 @@ function Set-MerakiSwitchRoutingInterfaceDhcp() {
 
 Set-Alias -Name SetMSRteIntDHCP -Value Set-MerakiSwitchRoutingInterfaceDhcp
 
-#region Switch Static Routes
 function Get-MerakiSwitchRoutingStaticRoutes() {
     [CmdLetBinding(DefaultParameterSetName = 'default')]
     Param(
@@ -1724,9 +1693,13 @@ Set-Alias -Name GMSWRoutStatic -value Get-MerakiSwitchRoutingStaticRoutes -Optio
 function Get-MerakiSwitchRoutingStaticRoute() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
-        [Parameter(Mandatory = $true)]
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName)]
         [string]$Serial,
-        [Parameter(Mandatory = $true)]
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName)]
         [string]$StaticRouteId,
         [Parameter(ParameterSetName = 'org')]
         [string]$OrgId,
@@ -1734,28 +1707,32 @@ function Get-MerakiSwitchRoutingStaticRoute() {
         [string]$ProfileName
     )
 
-    if (-not $OrgID) {
-        $config = Read-Config
-        if ($profileName) {
-            $OrgID = $config.profiles.$profileName
-            if (-not $OrgID) {
-                throw "Invalid profile name!"
-            }
-        } else {
-            $OrgID = $config.profiles.default
-        }        
+    Begin {
+        if (-not $OrgID) {
+            $config = Read-Config
+            if ($profileName) {
+                $OrgID = $config.profiles.$profileName
+                if (-not $OrgID) {
+                    throw "Invalid profile name!"
+                }
+            } else {
+                $OrgID = $config.profiles.default
+            }        
+        }
+
+
+        $Headers = Get-Headers
     }
 
+    Process {
+        $Uri = "{0}/devices/{1}/switch/routing/staticRoutes/{2}" -f $BaseURI, $Serial, $StaticRouteId
 
-    $Headers = Get-Headers
-
-    $Uri = "{0}/devices/{1}/switch/routing/staticRoutes/{2}" -f $BaseURI, $Serial, $StaticRouteId
-
-    try {
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
-        return $response
-    } catch {
-        throw $_
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            return $response
+        } catch {
+            throw $_
+        }
     }
     <#
     .SYNOPSIS
@@ -1986,8 +1963,6 @@ function Remove-MerakiSwitchStaticRoute() {
     An html status code. Code 204 = success
     #>
 }
-
-#endregion
 
 function Get-MerakiNetworkSwitchLAG() {
     [CmdLetBinding(DefaultParameterSetName = 'default')]
@@ -2637,7 +2612,7 @@ function Remove-MerakiSwitchStack() {
     #>
 }
 
-#region Switch Ports
+
 function Get-MerakiSwitchPorts() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
@@ -3110,8 +3085,6 @@ function Get-MerakiSwitchPortsStatus() {
 
 Set-Alias -name GMSWPortStatus  -Value Get-MerakiSwitchPortsStatus -Option ReadOnly
 
-#endregion
-
 function Get-MerakiSwitchPortsPacketCounters() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
@@ -3188,7 +3161,6 @@ function Get-MerakiSwitchPortsPacketCounters() {
 
 Set-Alias -Name GMSWPortsPacketCntrs -Value Get-MerakiSwitchPortsPacketCounters
 
-#region Port Schedules
 function Get-MerakiSwitchPortSchedules() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
@@ -3487,9 +3459,7 @@ function Remove-MerakiSwitchPortSchedule() {
     HTML status code. Code 204 = Successful
     #>
 }
-#endregion
 
-#region QOS Rules
 function Get-MerakiSwitchQosRules() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
@@ -4003,9 +3973,6 @@ function Set-MerakiSwitchQosRuleOrder() {
     #>
 }
 
-#endregion
-
-#region Access Policies
 function Get-MerakiSwitchAccessPolicies() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
@@ -4567,9 +4534,7 @@ function Remove-MerakiSwitchAccessPolicy() {
     Optional Profile name.
     #>
 }
-#endregion
 
-#region Routing Multicast
 function Get-MerakiSwitchRoutingMulticast() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
@@ -4714,9 +4679,7 @@ function Set-MerakiSwitchRoutingMulticast() {
     Optional Profile name.
     #>
 }
-#endregion
 
-#region OSPF
 function Get-MerakiSwitchRoutingOspf() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
