@@ -519,8 +519,9 @@ function Add-MerakiNetwork() {
     .PARAMETER CopyFromNetworkId
     The ID of the network to copy configuration from. Other provided parameters will override the copied configuration, except type which must match this network's type exactly.
     .PARAMETER OrgId
-    Optional Organizational ID. if this parameter is not provided the default Organization ID will be retrieved from the settings file.
-    If this parameter is provided it will override the default Organization ID in the settings file.
+    Optional Organizational ID. 
+    .PARAMETER profileName
+    Optional Profile name.
     .OUTPUTS
     An object containing the new network.
     #>
@@ -635,9 +636,9 @@ function Get-MerakiOrganizationConfigTemplate () {
     .PARAMETER Id
     The ID of the template to retrieve.
     .PARAMETER OrgID
-    The Organization ID. Of omitted this is puled from the default configuration.
+    Optional Organization ID.
     .PARAMETER profileName
-    The saved profile name to use. Cannot be used ith the OrgId parameter.
+    Optional Profile Name
     .OUTPUTS
     A configuration template object.
     #>
@@ -685,15 +686,15 @@ function Get-MerakiOrganizationDevices() {
     .DESCRIPTION
     Get all devices in an organization.
     .PARAMETER OrgID
-    The Organization Id. If omitted uses the default profile.
+    Optional Organization Id..
     .PARAMETER profileName
-    Profile name to use to get the devices. If omitted uses the default profile.
+    Optional Profile name.
     .OUTPUTS
     AN array of Meraki Device objects.
     #>
 }
 
-Set-Alias GMOrgDevs -Value Get-MerakiOrganizationDevices -Option ReadOnly
+Set-Alias -Name GMOrgDevs -Value Get-MerakiOrganizationDevices -Option ReadOnly
 
 function Get-MerakiOrganizationAdmins() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
@@ -735,15 +736,15 @@ function Get-MerakiOrganizationAdmins() {
     .SYNOPSIS
     Get Organization Admins.
     .PARAMETER OrgID
-    The Organization ID. If omitted uses the default profile.
+    Optional Organization Id.
     .PARAMETER profileName
-    The profile name to get admins with. If omitted used the default profile.
+    Optional Profile Name.
     .OUTPUTS
     An array of Meraki Admin objects.
     #>
 }
 
-Set-Alias -name GMOrgAdmins -Value Get-MerakiOrganizationAdmins -Option ReadOnly
+Set-Alias -Name GMOrgAdmins -Value Get-MerakiOrganizationAdmins -Option ReadOnly
 
 
 function Get-MerakiOrganizationConfigurationChanges() {
@@ -873,9 +874,9 @@ function Get-MerakiOrganizationConfigurationChanges() {
     .DESCRIPTION
     Gets configuration changes made to an organization's network.
     .PARAMETER OrgID
-    The Organization Id. If omitted used th default profile.
+    Optional Organization Id.
     .PARAMETER profileName
-    The profile name to use to get the changes. If omitted used th default profile.
+    Optional Profile Name
     .PARAMETER StartTime
     The start time to pull changes.
     .PARAMETER EndTime
@@ -902,7 +903,7 @@ function Get-MerakiOrganizationConfigurationChanges() {
     
 }
 
-Set-Alias -name GMOrgCC -Value Get-MerakiOrganizationConfigurationChanges -Option ReadOnly
+Set-Alias -Name GMOrgCC -Value Get-MerakiOrganizationConfigurationChanges -Option ReadOnly
 
 
 function Get-MerakiOrganizationThirdPartyVpnPeers() {
@@ -945,9 +946,9 @@ function Get-MerakiOrganizationThirdPartyVpnPeers() {
     .SYNOPSIS
     Get Organization 3rd party VPNs.
     .PARAMETER OrgID
-    Organization ID. If omitted used th default profile.
+    Optional Organization Id
     .PARAMETER profileName
-    Profile Name to use. If omitted used th default profile.
+    Optional Profile name
     .OUTPUTS
     An array of VPN-peer objects.
     #>
@@ -978,12 +979,7 @@ function Set-MerakiOrganizationThirdPartyVpnPeer() {
         [Parameter(ParameterSetName = 'profile')]
         [string]$profileName
     )
-<# 
-    If ($OrgId -and $profileName) {
-        Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
-        return
-    }
- #>
+
     if (-not $OrgID) {
         $config = Read-Config
         if ($profileName) {
@@ -1033,6 +1029,44 @@ function Set-MerakiOrganizationThirdPartyVpnPeer() {
     } catch {
         throw $_
     }
+    <#
+    .DESCRIPTION
+    Updates a third party VPN peer for an Organization
+    .PARAMETER Name
+    The name of the VPN peer
+    .PARAMETER Secret
+    The shared secret with the VPN peer
+    .PARAMETER IkeVersion
+    The IKE version to be used for the IPsec VPN peer configuration. Defaults to '1' when omitted. Valid values are '1', '2'
+    .PARAMETER IpsecPoliciesPreset
+    One of the following available presets: 'default', 'aws', 'azure'. If this is provided, the 'ipsecPolicies' parameter is ignored.
+    .PARAMETER LocalId
+    The local ID is used to identify the MX to the peer. This will apply to all MXs this peer applies to.
+    .PARAMETER PublicIp
+    The public IP of the VPN peer.
+    .PARAMETER PrivateSubnets
+    The list of the private subnets of the VPN peer
+    .PARAMETER RemoteId
+    The remote ID is used to identify the connecting VPN peer. This can either be a valid IPv4 Address, FQDN or User FQDN.
+    .PARAMETER NetworkTags
+    A list of network tags that will connect with this peer. Use ['all'] for all networks. Use ['none'] for no networks. If not included, the default is ['all'].
+    .PARAMETER IpsecPolicies
+    Custom IPSec policies for the VPN peer. If not included and a preset has not been chosen, the default preset for IPSec policies will be used.
+    This is ab object with the following properties:
+    childLifetime: integer The lifetime of the Phase 2 SA in seconds.
+    ikeLifetime: integer The lifetime of the Phase 1 SA in seconds.
+    childAuthAlgo: array[] This is the authentication algorithms to be used in Phase 2. The value should be an array with one of the following algorithms: 'sha256', 'sha1', 'md5'
+    childCipherAlgo: array[] This is the cipher algorithms to be used in Phase 2. The value should be an array with one or more of the following algorithms: 'aes256', 'aes192', 'aes128', 'tripledes', 'des', 'null'
+    childPfsGroup: array[] This is the Diffie-Hellman group to be used for Perfect Forward Secrecy in Phase 2. The value should be an array with one of the following values: 'disabled','group14', 'group5', 'group2', 'group1'
+    ikeAuthAlgo: array[] This is the authentication algorithm to be used in Phase 1. The value should be an array with one of the following algorithms: 'sha256', 'sha1', 'md5'
+    ikeCipherAlgo: array[] This is the cipher algorithm to be used in Phase 1. The value should be an array with one of the following algorithms: 'aes256', 'aes192', 'aes128', 'tripledes', 'des'
+    ikeDiffieHellmanGroup: array[] This is the Diffie-Hellman group to be used in Phase 1. The value should be an array with one of the following algorithms: 'group14', 'group5', 'group2', 'group1'
+    ikePrfAlgo: array[] [optional] This is the pseudo-random function to be used in IKE_SA. The value should be an array with one of the following algorithms: 'prfsha256', 'prfsha1', 'prfmd5', 'default'. The 'default' option can be used to default to the Authentication algorithm.
+    .PARAMETER OrgID
+    Optional Organization Id.
+    .PARAMETER profileName
+    Optional Profile name.
+    #>
 }
 
 function New-MerakiOrganizationThirdPartyVpnPeer() {
@@ -1058,12 +1092,7 @@ function New-MerakiOrganizationThirdPartyVpnPeer() {
         [Parameter(ParameterSetName = 'profile')]
         [string]$profileName
     )
-<# 
-    If ($OrgId -and $profileName) {
-        Write-Host "The parameters OrdIf and ProfileName cannot be used together!" -ForegroundColor Red
-        exit
-    }
- #>
+
     if (-not $OrgID) {
         $config = Read-Config
         if ($profileName) {
@@ -1108,6 +1137,44 @@ function New-MerakiOrganizationThirdPartyVpnPeer() {
     } catch {
         Throw $_
     }
+    <#
+    .DESCRIPTION
+    Create a new organization third party VPN peer.
+    .PARAMETER Name
+    The name of the VPN peer
+    .PARAMETER Secret
+    The shared secret with the VPN peer
+    .PARAMETER IkeVersion
+    The IKE version to be used for the IPsec VPN peer configuration. Defaults to '1' when omitted. Valid values are '1', '2'
+    .PARAMETER IpsecPoliciesPreset
+    One of the following available presets: 'default', 'aws', 'azure'. If this is provided, the 'ipsecPolicies' parameter is ignored.
+    .PARAMETER LocalId
+    The local ID is used to identify the MX to the peer. This will apply to all MXs this peer applies to.
+    .PARAMETER PublicIp
+    The public IP of the VPN peer.
+    .PARAMETER PrivateSubnets
+    The list of the private subnets of the VPN peer
+    .PARAMETER RemoteId
+    The remote ID is used to identify the connecting VPN peer. This can either be a valid IPv4 Address, FQDN or User FQDN.
+    .PARAMETER NetworkTags
+    A list of network tags that will connect with this peer. Use ['all'] for all networks. Use ['none'] for no networks. If not included, the default is ['all'].
+    .PARAMETER IpsecPolicies
+    Custom IPSec policies for the VPN peer. If not included and a preset has not been chosen, the default preset for IPSec policies will be used.
+    This is ab object with the following properties:
+    childLifetime: integer The lifetime of the Phase 2 SA in seconds.
+    ikeLifetime: integer The lifetime of the Phase 1 SA in seconds.
+    childAuthAlgo: array[] This is the authentication algorithms to be used in Phase 2. The value should be an array with one of the following algorithms: 'sha256', 'sha1', 'md5'
+    childCipherAlgo: array[] This is the cipher algorithms to be used in Phase 2. The value should be an array with one or more of the following algorithms: 'aes256', 'aes192', 'aes128', 'tripledes', 'des', 'null'
+    childPfsGroup: array[] This is the Diffie-Hellman group to be used for Perfect Forward Secrecy in Phase 2. The value should be an array with one of the following values: 'disabled','group14', 'group5', 'group2', 'group1'
+    ikeAuthAlgo: array[] This is the authentication algorithm to be used in Phase 1. The value should be an array with one of the following algorithms: 'sha256', 'sha1', 'md5'
+    ikeCipherAlgo: array[] This is the cipher algorithm to be used in Phase 1. The value should be an array with one of the following algorithms: 'aes256', 'aes192', 'aes128', 'tripledes', 'des'
+    ikeDiffieHellmanGroup: array[] This is the Diffie-Hellman group to be used in Phase 1. The value should be an array with one of the following algorithms: 'group14', 'group5', 'group2', 'group1'
+    ikePrfAlgo: array[] [optional] This is the pseudo-random function to be used in IKE_SA. The value should be an array with one of the following algorithms: 'prfsha256', 'prfsha1', 'prfmd5', 'default'. The 'default' option can be used to default to the Authentication algorithm.
+    .PARAMETER OrgID
+    Optional Organization Id.
+    .PARAMETER profileName
+    Optional Profile name.
+    #>
 }
 
 function Get-MerakiOrganizationInventoryDevices() {
@@ -1294,6 +1361,10 @@ function Get-MerakiOrganizationSecurityEvents() {
     The number if days back from today to retrieve data, Cannot be more than 365.
     .PARAMETER PerPage
     Number of entries per page to retrieve. Acceptable range is 3-1000. Default is 100. NOTE: Paging is not implemented. 
+    .PARAMETER OrgID
+    Organization ID. If omitted used th default profile.
+    .PARAMETER profileName
+    Profile name to use. If omitted used th default profile.
     .OUTPUTS
     A collection of security event objects.
     #>
@@ -1427,10 +1498,15 @@ function Get-MerakiOrganizationFirmwareUpgrades() {
     Filter by this status.
     .PARAMETER ProductType
     Filter by this product type.
+    .PARAMETER OrgID
+    Organization ID. If omitted used th default profile.
+    .PARAMETER profileName
+    Profile name to use. If omitted used th default profile.
+
     #>
 }
 
-Set-Alias -name GMOFirmwareUpgrades -Value Get-MerakiOrganizationFirmwareUpgrades
+Set-Alias -Name GMOFirmwareUpgrades -Value Get-MerakiOrganizationFirmwareUpgrades
 
 
 function Get-MerakiOrganizationFirmwareUpgradesByDevice() {
@@ -1447,23 +1523,22 @@ function Get-MerakiOrganizationFirmwareUpgradesByDevice() {
         [string]$ProfileName
     )
 <# 
-    If ($OrgId -and $profileName) {
+    If ($OrgId GMOrgDevsand $profileName) {
         Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
         return
     }
  #>
     Begin {
-
-        If (-not $OrgID) {
+        if (-not $OrgID) {
             $config = Read-Config
             if ($profileName) {
-                $OrgId = $config.profiles.$profileName
+                $OrgID = $config.profiles.$profileName
                 if (-not $OrgID) {
                     throw "Invalid profile name!"
                 }
             } else {
                 $OrgID = $config.profiles.default
-            }
+            }        
         }
 
         $Headers = Get-Headers    
@@ -1524,13 +1599,17 @@ function Get-MerakiOrganizationFirmwareUpgradesByDevice() {
     Number of pages to return. Default is all.
     .PARAMETER PerPage
     Number of entries per page.
+    .PARAMETER OrgID
+    Organization ID. If omitted used th default profile.
+    .PARAMETER profileName
+    Profile name to use. If omitted used th default profile.
     .OUTPUTS
     An array of firmware upgrade objects.
     #>
 }
 
 function Get-MerakiOrganizationDeviceUplinks() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(ValueFromPipelineByPropertyName)]
         [Alias('NetworkId')]
@@ -1552,15 +1631,13 @@ function Get-MerakiOrganizationDeviceUplinks() {
         [string[]]$Tags,
         [ValidateSet("withAllTags","withAnyTags")]
         [string]$TagFilterType,
+        [Parameter(ParameterSetName = 'org')]
         [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
         [string]$ProfileName
     )
 
     Begin {
-        $Headers = Get-Headers
-        $NetworkIds = [List[string]]::New()
-        $Serials = [List[string]]::New()
-
         if (-not $OrgID) {
             $config = Read-Config
             if ($profileName) {
@@ -1571,7 +1648,13 @@ function Get-MerakiOrganizationDeviceUplinks() {
             } else {
                 $OrgID = $config.profiles.default
             }        
-        }
+        }        
+        
+        $Headers = Get-Headers
+        $NetworkIds = [List[string]]::New()
+        $Serials = [List[string]]::New()
+
+
         if ($PerPage) {
             $Query = "?perPage={0}" -f $PerPage
         }
@@ -1608,15 +1691,7 @@ function Get-MerakiOrganizationDeviceUplinks() {
 
         if ($Serial) {
             $Serials.Add($Serial)
-        }
-    }
-
-    End {
-
-        if ($NetworkIds.Count -gt 0) {
-            if ($Query) {$Query += "&"} else {$Query += "?"}
-            $Query = "{0}networkIds[]={1}" -f $Query, ($NetworkIds.ToArray() -join ',')
-        }
+            }
 
         if ($Serials.Count -gt 0) {
             if ($Query) {$Query += "&"} else {$Query += "?"}
@@ -1668,48 +1743,52 @@ function Get-MerakiOrganizationDeviceUplinks() {
             throw $_
         }
     }
-        <#
-        .SYNOPSIS
-        List the current uplink addresses for devices in an organization.
-        .DESCRIPTION
-        List the current uplink addresses for devices in an organization. This can be filtered by
-        Networks, Product Types, Serials, and Tags.
-        .PARAMETER Id
-        Optional parameter to filter device uplinks by network ID. 
-        .PARAMETER Serial
-        Optional parameter to filter device uplinks by device product types.
-        .PARAMETER PerPage
-        The number of entries per page returned. Acceptable range is 3 - 1000. Default is 1000
-        .PARAMETER Pages
-        Number of pages to return. Default is 1, 0 = all pages.
-        .PARAMETER IncludeAppliances
-        Include Appliances
-        .PARAMETER IncludeCameras
-        Include Cameras
-        .PARAMETER IncludeCellularGateways
-        Include Cellular Gateways
-        .PARAMETER IncludeSensors
-        Include Sensors
-        .PARAMETER IncludeSwitches
-        Include Switches
-        .PARAMETER IncludeSystemsManagers
-        Include Systems Managers
-        .PARAMETER IncludeWireless
-        Include Wireless
-        .PARAMETER Tags
-        An optional parameter to filter devices by tags. The filtering is case-sensitive.
-        .PARAMETER TagFilterType
-        An optional parameter of value 'withAnyTags' or 'withAllTags' to indicate whether to return devices which contain ANY or ALL of the included tags. If no type is included, 'withAnyTags' will be selected.
-        .PARAMETER OrgId
-        Organization Id to use.
-        .PARAMETER ProfileName
-        Named profile to use.
-        .OUTPUTS
-        An array of device uplink objects.
-        .NOTES
-        If no include parameters are given then all product typed are returned.
-        If one or more include parameters are given then the results are restricted to those product types.
-        #>
+    <#
+    .SYNOPSIS
+    List the current uplink addresses for devices in an organization.
+    .DESCRIPTION
+    List the current uplink addresses for devices in an organization. This can be filtered by
+    Networks, Product Types, Serials, and Tags.
+    .PARAMETER Id
+    Optional parameter to filter device uplinks by network ID. 
+    .PARAMETER Serial
+    Optional parameter to filter device uplinks by device product types.
+    .PARAMETER PerPage
+    The number of entries per page returned. Acceptable range is 3 - 1000. Default is 1000
+    .PARAMETER Pages
+    Number of pages to return. Default is 1, 0 = all pages.
+    .PARAMETER IncludeAppliances
+    Include Appliances
+    .PARAMETER IncludeCameras
+    Include Cameras
+    .PARAMETER IncludeCellularGateways
+    Include Cellular Gateways
+    .PARAMETER IncludeSensors
+    Include Sensors
+    .PARAMETER IncludeSwitches
+    Include Switches
+    .PARAMETER IncludeSystemsManagers
+    Include Systems Managers
+    .PARAMETER IncludeWireless
+    Include Wireless
+    .PARAMETER Tags
+    An optional parameter to filter devices by tags. The filtering is case-sensitive.
+    .PARAMETER TagFilterType
+    An optional parameter of value 'withAnyTags' or 'withAllTags' to indicate whether to return devices which contain ANY or ALL of the included tags. If no type is included, 'withAnyTags' will be selected.
+    .PARAMETER OrgId
+    Organization Id to use.
+    .PARAMETER ProfileName
+    Named profile to use.
+    .PARAMETER OrgID
+    Organization ID. If omitted used th default profile.
+    .PARAMETER profileName
+    Profile name to use. If omitted used th default profile.
+    .OUTPUTS
+    An array of device uplink objects.
+    .NOTES
+    If no include parameters are given then all product typed are returned.
+    If one or more include parameters are given then the results are restricted to those product types.
+    #>
 }
 
 function Get-MerakiOrganizationDeviceStatus() {
@@ -1893,5 +1972,279 @@ function Get-MerakiOrganizationApplianceVpnStatuses() {
     The named profile to use.
     .OUTPUTS
     An array of VPN statuses.
+    #>
+}
+
+function Get-MerakiOrganizationApplianceUplinkStatuses() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
+    Param(
+        [Parameter(
+            ValueFromPipeline = $true,
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [String]$networkId="*",
+        [Parameter(
+            ValueFromPipeline = $true,
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [String]$serial="*",
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
+
+    )
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    } else {
+        $config = Read-Config
+    } 
+
+    $Uri = "{0}/organizations/{1}/appliance/uplink/statuses" -f $BaseURI, $OrgID
+    $Headers = Get-Headers
+
+    try {
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+
+        return $response | Where-Object {$_.networkID -like $networkID -and $_.serial -like $serial}
+    } catch {
+        throw $_
+    }
+    <#
+    .SYNOPSIS
+    Returns the Uplink status of Meraki Networks.
+    .PARAMETER networkId
+    Filters the output by network Id.
+    .PARAMETER serial
+    Filters the output by Appliance serial number. Partial serial number can be specified bu using the * wildcard. i.e. "*HG4U"
+    .OUTPUTS
+    An array of Meraki uplink objects.
+    #>
+}
+Set-Alias -Name GMAppUpStat -value Get-MerakiOrganizationApplianceUplinkStatuses -Option ReadOnly
+Set-Alias -Name Get-MerakiApplianceUplinkStatuses -value Get-MerakiOrganizationApplianceUplinkStatuses -Option ReadOnly
+
+
+function Get-MerakiOrganizationApplianceVpnStats() {
+    [cmdletBinding(DefaultParameterSetName = 'default')]
+    Param(
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipeline = $true,
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [string]$id,
+        [ValidateSet({$_ -is [int]})]
+        [int]$perPage=100,
+        [ValidateSet({$_ -is [int]})]
+        [int]$TimeSpan=5,
+        [switch]$Summarize,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
+    )
+
+    Begin {
+
+        if (-not $OrgID) {
+            $config = Read-Config
+            if ($profileName) {
+                $OrgID = $config.profiles.$profileName
+                if (-not $OrgID) {
+                    throw "Invalid profile name!"
+                }
+            } else {
+                $OrgID = $config.profiles.default
+            }        
+        } else {
+            $config = Read-Config
+        } 
+
+
+        $Headers = Get-Headers
+        $config = read-config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgId) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }
+
+        class vpnPeer {
+            [string]$networkID
+            [string]$networkName
+            [string]$peerNetworkId
+            [string]$peerNetworkName
+            [int]$receivedKilobytes
+            [int]$sentKilobytes
+        }
+
+        class summaryVpnPeer {
+            [string]$networkID
+            [string]$networkName
+            [int]$totalReceivedKilobytes
+            [int]$totalSentKilobytes
+        }
+    }
+
+    Process {
+        $Network = Get-MerakiNetwork -networkID $id
+
+        $Uri = "{0}/organizations/{1}/appliance/vpn/stats" -f $BaseURI, $OrgID
+
+        $TimeSpan_Seconds = (New-TimeSpan -Days $timespan).TotalSeconds
+
+        $Uri = "{0}?perPage={1}&networkIds%5B%5D={2}&timespan={3}" -f $Uri, $timespan, $id, $TimeSpan_Seconds
+
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            
+            $peers = $response.merakiVpnPeers
+            $PeerNetworks = New-object System.Collections.Generic.List[psobject]
+            foreach ($peer in $peers) {
+                $P = [vpnPeer]::New()
+                $P.networkID = $id
+                $P.networkName = $Network.name
+                $P.peerNetworkId = $peer.networkId
+                $P.peerNetworkName = $peer.networkName
+                $P.receivedKilobytes = $peer.usageSummary.receivedInKilobytes
+                $P.sentKiloBytes = $peer.usageSummary.sentInKilobytes
+
+                $PeerNetworks.Add($P)
+            }
+            $vpnPeers = $PeerNetworks.ToArray()
+
+            if ($Summarize) {   
+                $summary = [summaryVpnPeer]::New()
+                $summary.networkID = $id
+                $Summary.networkName = $Network.name
+                $summary.totalReceivedKilobytes = ($vpnPeers | Measure-Object -Property receivedKilobytes -Sum).Sum
+                $summary.totalSentKilobytes = ($vpnPeers | Measure-Object -Property sentKilobytes -Sum).Sum            
+
+                return $summary
+            } else {
+                $vpnPeers
+            }
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .SYNOPSIS
+    Returns VPN statistics for the given organization network.
+    .PARAMETER id
+    The Network Id.
+    .PARAMETER perPage
+    The number of entries per page returned. Acceptable range is 3 - 300. Default is 300.
+    .PARAMETER timespan
+    Number of seconds to return data for. default = 5.
+    .PARAMETER Summarize
+    Summarize the statistics,
+    AN array op VPN peer objects or a summary object.
+    .PARAMETER OrgId
+    Optional Organization Id.
+    .PARAMETER ProfileName
+    Optional Profile Name
+    #>
+}
+
+Set-Alias -Name GMAVpnStats -Value Get-MerakiOrganizationApplianceVpnStats -Option ReadOnly
+Set-Alias -Name GMOAVpnStats -Value Get-MerakiOrganizationApplianceVpnStats -Option ReadOnly
+set-Alias -Name Get-MerakiNetworkApplianceVpnStats -Value Get-MerakiOrganizationApplianceVpnStats
+
+function Merge-MerakiOrganizationNetworks() {
+    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'default')]
+    Param(
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [string]$EnrollmentString,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
+
+    )
+    Begin {
+
+        if (-not $OrgID) {
+            $config = Read-Config
+            if ($profileName) {
+                $OrgID = $config.profiles.$profileName
+                if (-not $OrgID) {
+                    throw "Invalid profile name!"
+                }
+            } else {
+                $OrgID = $config.profiles.default
+            }        
+        } else {
+            $config = Read-Config
+        } 
+
+        $Networks = [List[string]]::New()
+
+        $Header = Get-Headers
+        $Uri = "{0}/organizations/{1}/networks/combine" -f $BaseURI, $OrgID
+   }
+
+    Process {
+        $Networks.Add($Id)
+    }
+
+    End {
+
+        $_Body = @{
+            "name" = $Name
+            "networkIds" = ($Networks.ToArray())
+        }
+        if ($EnrollmentString) { $_Body.Add("enrollmentString", $EnrollmentString) }
+
+        $body = $_Body | ConvertTo-Json -Compress
+
+        if ($PSCmdlet.ShouldProcess('Merge',"Networks $($Networks -join ',')")) {
+            try {
+                $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Header -Body $Body -PreserveAuthorizationOnRedirect
+                return $response
+            } catch {
+                throw $_
+            }
+        }
+    }
+    <#
+    .SYNOPSIS
+    Combine multiple Meraki networks into a single network.
+    .PARAMETER Id
+    The ID of the networks to combine. You should pass an array of network objects to combine those networks.
+    .PARAMETER Name
+    The name of the combined network.
+    .PARAMETER NetworkIds
+    A list of the network IDs that will be combined. 
+    If an ID of a combined network is included in this list, the other networks in the list will be grouped into that network.
+    .PARAMETER EnrollmentString
+    A unique identifier which can be used for device enrollment or easy access through the Meraki SM Registration page or the Self Service Portal. 
+    Please note that changing this field may cause existing bookmarks to break. All networks that are part of this combined network will have their enrollment string appended by '-network_type'. 
+    If left empty, all existing enrollment strings will be deleted.
+    .PARAMETER OrgId
+    Optional Organization Id
+    .PARAMETER ProfileName
+    Optional Profile name.    
+    .OUTPUTS
+    A network object
     #>
 }

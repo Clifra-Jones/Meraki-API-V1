@@ -8,24 +8,8 @@ function Get-MerakiNetworkApplianceContentFilteringCategories() {
             ValueFromPipeline = $true,
             ValueFromPipelineByPropertyName = $true
         )]
-        [string]$id,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgId,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$ProfileName
+        [string]$id
     )
-
-    if (-not $OrgID) {
-        $config = Read-Config
-        if ($profileName) {
-            $OrgID = $config.profiles.$profileName
-            if (-not $OrgID) {
-                throw "Invalid profile name!"
-            }
-        } else {
-            $OrgID = $config.profiles.default
-        }        
-    }
 
     $Uri = "{0}/networks/{1}/appliance/contentFiltering/categories" -f $BaseURI, $id
     $Headers = Get-Headers
@@ -42,10 +26,6 @@ function Get-MerakiNetworkApplianceContentFilteringCategories() {
     Returns the content filtering categories for this network.*
     .PARAMETER id
     The Network ID.
-    .PARAMETER OrgId
-    Optional Organization Id.
-    .PARAMETER ProfileName
-    Optional Profile name.
     .OUTPUTS
     An array of content filtering categories.
     .NOTES
@@ -54,7 +34,7 @@ function Get-MerakiNetworkApplianceContentFilteringCategories() {
     #>
 }
 
-Set-Alias GMNetAppCFCats -Value Get-MerakiNetworkApplianceContentFilteringCategories -Option ReadOnly
+Set-Alias -Name GMNetAppCFCats -Value Get-MerakiNetworkApplianceContentFilteringCategories -Option ReadOnly
 
 <#
 .Description
@@ -67,24 +47,9 @@ function Get-MerakiNetworkApplianceContentFiltering() {
             Mandatory = $true,
             ValueFromPipeline = $true,
             ValueFromPipelineByPropertyName = $true)]
-        [string]$id,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgId,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$ProfileName
+        [string]$id
     )
 
-    if (-not $OrgID) {
-        $config = Read-Config
-        if ($profileName) {
-            $OrgID = $config.profiles.$profileName
-            if (-not $OrgID) {
-                throw "Invalid profile name!"
-            }
-        } else {
-            $OrgID = $config.profiles.default
-        }        
-    }
 
     $Uri = "{0}/networks/{1}/appliance/contentFiltering" -f $BaseURI, $id
     $headers = Get-Headers
@@ -101,16 +66,12 @@ function Get-MerakiNetworkApplianceContentFiltering() {
     Get the content filtering settings for this appliance.
     .PARAMETER id
     The network Id.
-    .PARAMETER OrgId
-    Optional Organization Id.
-    .PARAMETER ProfileName
-    Optional Profile name.
     .OUTPUTS
     An array of Meraki content filtering objects.
     #>
 }
 
-Set-Alias GMNetCF -Value Get-MerakiNetworkApplianceContentFiltering -Option ReadOnly
+Set-Alias -Name GMNetCF -Value Get-MerakiNetworkApplianceContentFiltering -Option ReadOnly
 
 function Update-MerakiNetworkApplianceContentFiltering() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
@@ -144,24 +105,8 @@ function Update-MerakiNetworkApplianceContentFiltering() {
         [string]$urlCategoryListSize,
         [ValidateScript({$_ -and -not ($allowedURLPatterns -or $blockedUrlCategories -or $urlCategoryListSize)}, 
             ErrorMessage="The parameter ContentFilteringRules cannot be used with the allowedURLPatterns, blockedURLPatterns, blockedURLCategories -or urlCategoriesList parameters")]
-        [psObject]$ContentFilteringRules,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgId,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$ProfileName
+        [psObject]$ContentFilteringRules
     )
-
-    if (-not $OrgID) {
-        $config = Read-Config
-        if ($profileName) {
-            $OrgID = $config.profiles.$profileName
-            if (-not $OrgID) {
-                throw "Invalid profile name!"
-            }
-        } else {
-            $OrgID = $config.profiles.default
-        }        
-    }
 
     $Uri = "{0}/networks/{1}/appliance/contentFiltering" -f $BaseURI, $id
     $Headers = Get-Headers
@@ -214,10 +159,6 @@ function Update-MerakiNetworkApplianceContentFiltering() {
     The list size of the category list. Note this parameter is not supported on MX100 and above devices.
     .PARAMETER ContentFilteringRules
     A Meraki content filtering rule object (not supported with other parameters).
-    .PARAMETER OrgId
-    Optional Organization Id.
-    .PARAMETER ProfileName
-    Optional Organization name.
     .OUTPUTS
     The updated Meraki content filtering object.
     .NOTES
@@ -250,26 +191,10 @@ function Add-MerakiNetworkApplianceContentFilteringRules() {
         )]
         [String]$Id,
         [String[]]$allowedURLPatterns,
-        [String[]]$blockedURLPatterns,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgId,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$ProfileName
+        [String[]]$blockedURLPatterns
     )
 
     Begin {
-
-        if (-not $OrgID) {
-            $config = Read-Config
-            if ($profileName) {
-                $OrgID = $config.profiles.$profileName
-                if (-not $OrgID) {
-                    throw "Invalid profile name!"
-                }
-            } else {
-                $OrgID = $config.profiles.default
-            }        
-        }
 
     }
     
@@ -303,10 +228,6 @@ function Add-MerakiNetworkApplianceContentFilteringRules() {
     An array of allowed URL patterns.
     .PARAMETER blockedURLPatterns
     An array of blocked URL patterns.
-    .PARAMETER OrgId
-    Optional Organization Id.
-    .PARAMETER ProfileName
-    Optional Profile name.
     .OUTPUTS
     The updated content filtering rules.
     .EXAMPLE
@@ -327,26 +248,8 @@ function Remove-MerakiNetworkApplianceContentFilteringRules () {
         )]
         [string]$id,
         [string[]]$allowedURLPatterns,
-        [string[]]$blockedURLPatterns,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgId,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$ProfileName
+        [string[]]$blockedURLPatterns
     )
-
-    Begin {
-        if (-not $OrgID) {
-            $config = Read-Config
-            if ($profileName) {
-                $OrgID = $config.profiles.$profileName
-                if (-not $OrgID) {
-                    throw "Invalid profile name!"
-                }
-            } else {
-                $OrgID = $config.profiles.default
-            }        
-        }
-    }
 
     Process {
         If ((-not $allowedURLPatterns) -and (-not $blockedURLPatterns)) {
@@ -383,10 +286,6 @@ function Remove-MerakiNetworkApplianceContentFilteringRules () {
     Allowed URL patterns to remove.
     .PARAMETER blockedURLPatterns
     Blocked URL patterns to remove.
-    .PARAMETER OrgId
-    Optional Organization Id
-    .PARAMETER ProfileName
-    Optional Profile Name
     .OUTPUTS
     The updated content filtering rules.
     .EXAMPLE
@@ -405,26 +304,10 @@ function Get-MerakiAppliancePorts() {
             ValueFromPipeline = $true,
             ValueFromPipelineByPropertyName = $true
         )]
-        [string]$id,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgId,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$ProfileName
+        [string]$id
     )
 
     Begin {
-
-        if (-not $OrgID) {
-            $config = Read-Config
-            if ($profileName) {
-                $OrgID = $config.profiles.$profileName
-                if (-not $OrgID) {
-                    throw "Invalid profile name!"
-                }
-            } else {
-                $OrgID = $config.profiles.default
-            }        
-        }
 
         $Headers = Get-Headers
     }
@@ -444,10 +327,6 @@ function Get-MerakiAppliancePorts() {
     Returns the port configuration for the Network Appliance.
     .PARAMETER id
     The network Id.
-    .PARAMETER OrgId
-    Optional Organization Id.
-    .PARAMETER ProfileName
-    Optional Profile name.
     .OUTPUTS
     An array of Meraki port objects.
     #>
@@ -463,24 +342,8 @@ function Get-MerakiNetworkApplianceStaticRoutes() {
             ValueFromPipeline = $true,
             ValueFromPipelineByPropertyName = $true
         )]
-        [string]$id,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgId,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$ProfileName
+        [string]$id
     )
-
-    if (-not $OrgID) {
-        $config = Read-Config
-        if ($profileName) {
-            $OrgID = $config.profiles.$profileName
-            if (-not $OrgID) {
-                throw "Invalid profile name!"
-            }
-        } else {
-            $OrgID = $config.profiles.default
-        }        
-    }
 
     $uri = "{0}/networks/{1}/appliance/staticRoutes" -f $BaseURI, $id
     $Headers = Get-Headers
@@ -497,10 +360,6 @@ function Get-MerakiNetworkApplianceStaticRoutes() {
     Returns the static routes for this network appliance.
     .PARAMETER id
     The Network Id.
-    .PARAMETER OrgId
-    Optional Organization Id.
-    .PARAMETER ProfileName
-    Optional Profile Name.
     .OUTPUTS 
     An array of Meraki static route objects.
     #>
@@ -516,26 +375,10 @@ function Get-MerakiNetworkApplianceVLANS() {
             Mandatory = $true,
             ValueFromPipeline = $true,
             ValueFromPipelineByPropertyName = $true)]
-        [string]$id,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgId,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$ProfileName
+        [string]$id
     )
 
     Begin {
-
-        if (-not $OrgID) {
-            $config = Read-Config
-            if ($profileName) {
-                $OrgID = $config.profiles.$profileName
-                if (-not $OrgID) {
-                    throw "Invalid profile name!"
-                }
-            } else {
-                $OrgID = $config.profiles.default
-            }        
-        }
     
         $Headers = Get-Headers       
     }
@@ -555,10 +398,6 @@ function Get-MerakiNetworkApplianceVLANS() {
     Returns the VLANs for the network appliance.
     .PARAMETER id
     The network Id.
-    .PARAMETER OrgId
-    Optional Organization Id.
-    .PARAMETER ProfileName
-    Optional Profile Name.
     .OUTPUTS
     AN array of Meraki VLAN objects.
     #>
@@ -578,25 +417,9 @@ function Get-MerakiNetworkApplianceVLAN() {
             Mandatory = $true,
             ValueFromPipeline = $true,
             ValueFromPipelineByPropertyName = $true)]
-        [string]$id,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgId,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$ProfileName
+        [string]$id
     )
-
-    if (-not $OrgID) {
-        $config = Read-Config
-        if ($profileName) {
-            $OrgID = $config.profiles.$profileName
-            if (-not $OrgID) {
-                throw "Invalid profile name!"
-            }
-        } else {
-            $OrgID = $config.profiles.default
-        }        
-    }
-    
+   
     $Uri = "{0}/networks/{1}/appliance/vlans/{2}" -f $BaseURI, $networkId, $id
     $Headers = Get-Headers
 
@@ -614,16 +437,12 @@ function Get-MerakiNetworkApplianceVLAN() {
     The Network Id.
     .PARAMETER id
     The VLAN Id.
-    .PARAMETER OrgId
-    Optional Organization Id.
-    .PARAMETER ProfileName
-    Optional Profile name.
     .OUTPUTS
     A Meraki VLAN object.
     #>
 }
 
-Set-Alias -name GMNetAppVLAN -Value Get-MerakiNetworkApplianceVLAN -Option ReadOnly
+Set-Alias -Name GMNetAppVLAN -Value Get-MerakiNetworkApplianceVLAN -Option ReadOnly
 
 function Add-MerakiNetworkApplianceVlan() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
@@ -643,24 +462,8 @@ function Add-MerakiNetworkApplianceVlan() {
         [int]$Mask,
         [switch]$Ipv6Enabled,
         [hashtable[]]$Ipv6PrefixAssignments,
-        [switch]$MandatoryDHCP,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgId,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$ProfileName
+        [switch]$MandatoryDHCP
     )
-
-    if (-not $OrgID) {
-        $config = Read-Config
-        if ($profileName) {
-            $OrgID = $config.profiles.$profileName
-            if (-not $OrgID) {
-                throw "Invalid profile name!"
-            }
-        } else {
-            $OrgID = $config.profiles.default
-        }        
-    }
 
     $Headers = Get-Headers
 
@@ -725,10 +528,6 @@ function Add-MerakiNetworkApplianceVlan() {
     Prefix assignments on the VLAN
     .PARAMETER MandatoryDHCP
     Mandatory DHCP will enforce that clients connecting to this VLAN must use the IP address assigned by the DHCP server. Clients who use a static IP address won't be able to associate. Only available on firmware versions 17.0 and above
-    .PARAMETER OrgId
-    Optional Organization Id.
-    .PARAMETER ProfileName
-    Optional Profile name.
     #>
 }
 
@@ -738,24 +537,8 @@ Function Remove-MerakiNetworkApplianceVlan() {
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
         [Parameter(Mandatory)]
-        [string]$VlanId,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgId,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$ProfileName
+        [string]$VlanId
     )
-
-    if (-not $OrgID) {
-        $config = Read-Config
-        if ($profileName) {
-            $OrgID = $config.profiles.$profileName
-            if (-not $OrgID) {
-                throw "Invalid profile name!"
-            }
-        } else {
-            $OrgID = $config.profiles.default
-        }        
-    }
 
     $Headers = Get-Headers
 
@@ -778,10 +561,6 @@ Function Remove-MerakiNetworkApplianceVlan() {
     The Id of the network
     .PARAMETER VlanId
     The VLAN ID to remove
-    .PARAMETER OrgId
-    Optional Organization Id.
-    .PARAMETER ProfileName
-    Optional Profile name
     #>
 }
 
@@ -822,24 +601,8 @@ function Set-MerakiNetworkApplianceVLAN() {
         [hashtable[]]$DhcpOptions,
         [switch]$Ipv6Enabled,
         [hashtable[]]$IPv6PrefixAssignments,
-        [bool]$MandatoryDhcp,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgId,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$ProfileName
+        [bool]$MandatoryDhcp
     )
-
-    if (-not $OrgID) {
-        $config = Read-Config
-        if ($profileName) {
-            $OrgID = $config.profiles.$profileName
-            if (-not $OrgID) {
-                throw "Invalid profile name!"
-            }
-        } else {
-            $OrgID = $config.profiles.default
-        }        
-    }
 
     
     $Headers = Get-Headers
@@ -990,10 +753,6 @@ function Set-MerakiNetworkApplianceVLAN() {
     autonomous: boolean Auto assign a /64 prefix from the origin to the VLAN
     .PARAMETER MandatoryDhcp
     Mandatory DHCP will enforce that clients connecting to this VLAN must use the IP address assigned by the DHCP server. Clients who use a static IP address won't be able to associate. Only available on firmware versions 17.0 and above
-    .PARAMETER OrgId 
-    Optional Organization Id.
-    .PARAMETER ProfileName
-    Optional Profile name.
     #>
 }
 
@@ -1010,24 +769,9 @@ function Get-MerakiNetworkApplianceSiteToSiteVPN() {
             ValueFromPipelineByPropertyName = $true
         )]
         [string]$id,
-        [switch]$hr,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgId,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$ProfileName
+        [switch]$hr
     )
 
-    if (-not $OrgID) {
-        $config = Read-Config
-        if ($profileName) {
-            $OrgID = $config.profiles.$profileName
-            if (-not $OrgID) {
-                throw "Invalid profile name!"
-            }
-        } else {
-            $OrgID = $config.profiles.default
-        }        
-    }
 
     $Uri = "{0}/networks/{1}/appliance/vpn/siteToSiteVpn" -f $BaseURI, $id
     $Headers = Get-Headers
@@ -1078,10 +822,6 @@ function Get-MerakiNetworkApplianceSiteToSiteVPN() {
     .OUTPUTS
     If -hr is specified outputs tables to the console.
     If -hr is omitted, outputs a Meraki Site-to-Site VPN object.
-    .PARAMETER OrgId
-    Optional Organization Id.
-    .PARAMETER ProfileName
-    Optional Profile name.
     #>
 }
 
@@ -1101,24 +841,8 @@ function Set-MerakiNetworkApplianceSiteToSiteVpn() {
         [Parameter(ValueFromPipelineByPropertyName)]
         [psobject[]]$Hubs,
         [Parameter(ValueFromPipelineByPropertyName)]
-        [psobject[]]$Subnets,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgId,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$ProfileName
+        [psobject[]]$Subnets
     )
-
-    if (-not $OrgID) {
-        $config = Read-Config
-        if ($profileName) {
-            $OrgID = $config.profiles.$profileName
-            if (-not $OrgID) {
-                throw "Invalid profile name!"
-            }
-        } else {
-            $OrgID = $config.profiles.default
-        }        
-    }
 
     $Headers = Get-Headers
 
@@ -1182,10 +906,6 @@ function Set-MerakiNetworkApplianceSiteToSiteVpn() {
     Subnet object contain the following properties:
     localSubnet:string (required) - The CIDR notation subnet used within the VPN
     useVpn: boolean - Indicates the presence of the subnet in the VPN
-    .PARAMETER OrgId
-    Optional Organization name.
-    .PARAMETER ProfileName
-    Optional Profile name.    
     .EXAMPLE
     Updating an existing network configured as a spoke.
     # The easiest way to do this is to get the current von settings in an object.
@@ -1221,202 +941,6 @@ function Set-MerakiNetworkApplianceSiteToSiteVpn() {
     #>
 }
 
-
-function Get-MerakiApplianceUplinkStatuses() {
-    [CmdletBinding(DefaultParameterSetName = 'default')]
-    Param(
-        [Parameter(
-            ValueFromPipeline = $true,
-            ValueFromPipelineByPropertyName = $true
-        )]
-        [String]$networkId="*",
-        [Parameter(
-            ValueFromPipeline = $true,
-            ValueFromPipelineByPropertyName = $true
-        )]
-        [String]$serial="*",
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgId,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$ProfileName
-    )
-
-    if (-not $OrgID) {
-        $config = Read-Config
-        if ($profileName) {
-            $OrgID = $config.profiles.$profileName
-            if (-not $OrgID) {
-                throw "Invalid profile name!"
-            }
-        } else {
-            $OrgID = $config.profiles.default
-        }        
-    }
-
-    $config = Read-Config
-    if ($profileName) {
-        $OrgID = $config.profiles.$profileName
-        if (-not $orgId) {
-            throw "invalid profile name!"
-        }
-    } else {
-        $OrgID = $config.profiles.default
-    }
-
-    $Uri = "{0}/organizations/{1}/appliance/uplink/statuses" -f $BaseURI, $OrgID
-    $Headers = Get-Headers
-
-    try {
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
-
-        return $response | Where-Object {$_.networkID -like $networkID -and $_.serial -like $serial}
-    } catch {
-        throw $_
-    }
-    <#
-    .SYNOPSIS
-    Returns the Uplink status of Meraki Networks.
-    .PARAMETER networkId
-    Filters the output by network Id.
-    .PARAMETER serial
-    Filters the output by Appliance serial number.
-    .PARAMETER OrgId
-    Optional Organization Id.
-    .PARAMETER profileName
-    Optional Profile name.
-    .OUTPUTS
-    An array of Meraki uplink objects.
-    #>
-}
-
-Set-Alias -Name GMAppUpStat -value Get-MerakiApplianceUplinkStatuses -Option ReadOnly
-
-function Get-MerakiNetworkApplianceVpnStats() {
-    [cmdletBinding(DefaultParameterSetName = 'default')]
-    Param(
-        [Parameter(
-            Mandatory = $true,
-            ValueFromPipeline = $true,
-            ValueFromPipelineByPropertyName = $true
-        )]
-        [string]$id,
-        [ValidateSet({$_ -is [int]})]
-        [int]$perPage=100,
-        [ValidateSet({$_ -is [int]})]
-        [int]$TimeSpan=5,
-        [switch]$Summarize,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgId,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$ProfileName
-    )
-
-    Begin {
-
-        if (-not $OrgID) {
-            $config = Read-Config
-            if ($profileName) {
-                $OrgID = $config.profiles.$profileName
-                if (-not $OrgID) {
-                    throw "Invalid profile name!"
-                }
-            } else {
-                $OrgID = $config.profiles.default
-            }        
-        }
-
-        $Headers = Get-Headers
-        $config = read-config
-        if ($profileName) {
-            $OrgID = $config.profiles.$profileName
-            if (-not $OrgId) {
-                throw "Invalid profile name!"
-            }
-        } else {
-            $OrgID = $config.profiles.default
-        }
-
-        class vpnPeer {
-            [string]$networkID
-            [string]$networkName
-            [string]$peerNetworkId
-            [string]$peerNetworkName
-            [int]$receivedKilobytes
-            [int]$sentKilobytes
-        }
-
-        class summaryVpnPeer {
-            [string]$networkID
-            [string]$networkName
-            [int]$totalReceivedKilobytes
-            [int]$totalSentKilobytes
-        }
-    }
-
-    Process {
-        $Network = Get-MerakiNetwork -networkID $id
-
-        $Uri = "{0}/organizations/{1}/appliance/vpn/stats" -f $BaseURI, $OrgID
-
-        $TimeSpan_Seconds = (New-TimeSpan -Days $timespan).TotalSeconds
-
-        $Uri = "{0}?perPage={1}&networkIds%5B%5D={2}&timespan={3}" -f $Uri, $timespan, $id, $TimeSpan_Seconds
-
-        try {
-            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
-            
-            $peers = $response.merakiVpnPeers
-            $PeerNetworks = New-object System.Collections.Generic.List[psobject]
-            foreach ($peer in $peers) {
-                $P = [vpnPeer]::New()
-                $P.networkID = $id
-                $P.networkName = $Network.name
-                $P.peerNetworkId = $peer.networkId
-                $P.peerNetworkName = $peer.networkName
-                $P.receivedKilobytes = $peer.usageSummary.receivedInKilobytes
-                $P.sentKiloBytes = $peer.usageSummary.sentInKilobytes
-
-                $PeerNetworks.Add($P)
-            }
-            $vpnPeers = $PeerNetworks.ToArray()
-
-            if ($Summarize) {   
-                $summary = [summaryVpnPeer]::New()
-                $summary.networkID = $id
-                $Summary.networkName = $Network.name
-                $summary.totalReceivedKilobytes = ($vpnPeers | Measure-Object -Property receivedKilobytes -Sum).Sum
-                $summary.totalSentKilobytes = ($vpnPeers | Measure-Object -Property sentKilobytes -Sum).Sum            
-
-                return $summary
-            } else {
-                $vpnPeers
-            }
-        } catch {
-            throw $_
-        }
-    }
-    <#
-    .SYNOPSIS
-    Returns VPN statistics for the given organization network.
-    .PARAMETER id
-    The Network Id.
-    .PARAMETER perPage
-    The number of entries per page returned. Acceptable range is 3 - 300. Default is 300.
-    .PARAMETER timespan
-    Number of seconds to return data for. default = 5.
-    .PARAMETER Summarize
-    Summarize the statistics,
-    .PARAMETER OrgId
-    Optional Organization Id
-    .PARAMETER profileName
-    Optional Profile name
-    .OUTPUTS 
-    AN array op VPN peer objects or a summary object.
-    #>
-}
-
-Set-Alias -Name GMAVpnStats -Value Get-MerakiNetworkApplianceVpnStats -Option ReadOnly
-
 function Get-MerakiNetworkApplianceDhcpSubnets() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
@@ -1424,29 +948,11 @@ function Get-MerakiNetworkApplianceDhcpSubnets() {
             Mandatory = $true,
             ValueFromPipelineByPropertyName = $true
         )]
-        [string]$serial,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgId,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$ProfileName
+        [string]$serial
     )
 
-    Begin {
-
-        if (-not $OrgID) {
-            $config = Read-Config
-            if ($profileName) {
-                $OrgID = $config.profiles.$profileName
-                if (-not $OrgID) {
-                    throw "Invalid profile name!"
-                }
-            } else {
-                $OrgID = $config.profiles.default
-            }        
-        }
-        
+    Begin {        
         $Headers = Get-Headers
-
     }
 
     Process {
@@ -1465,10 +971,6 @@ function Get-MerakiNetworkApplianceDhcpSubnets() {
     Returns information and statistics for an appliances DHCP subnets. Including used count and free count.
     .PARAMETER serial
     The serial number of the appliance.
-    .PARAMETER OrgId
-    Optional Organization Id
-    .PARAMETER ProfileName
-    Optional Profile name.
     .OUTPUTS
     A collection of Subnet objects.
     #>
@@ -1482,26 +984,10 @@ function Get-MerakiNetworkApplianceCellularFirewallRules () {
     Param(
         [Parameter(Mandatory = $true)]
         [Alias('NetworkId')]
-        [string]$Id,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgId,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$ProfileName
+        [string]$Id
     )
 
     Begin {
-
-        if (-not $OrgID) {
-            $config = Read-Config
-            if ($profileName) {
-                $OrgID = $config.profiles.$profileName
-                if (-not $OrgID) {
-                    throw "Invalid profile name!"
-                }
-            } else {
-                $OrgID = $config.profiles.default
-            }        
-        }
 
         $Headers = Get-Headers
 
@@ -1527,10 +1013,6 @@ function Get-MerakiNetworkApplianceCellularFirewallRules () {
     Returns the Cellular firewall rules for this network.
     .PARAMETER Id
     The Network ID to retrieve the rules from.
-    .PARAMETER OrgId
-    Optional Organization Id.
-    .PARAMETER ProfileName
-    Optional Profile name.
     #>
 }
 
@@ -1541,24 +1023,8 @@ function Set-MerakiNetworkApplianceCellularFirewallRules() {
         [Alias('NetworkId')]
         [string]$Id,
         [Parameter(Mandatory = $true)]
-        [psObject[]]$Rules,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgId,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$ProfileName
+        [psObject[]]$Rules
     )
-
-    if (-not $OrgID) {
-        $config = Read-Config
-        if ($profileName) {
-            $OrgID = $config.profiles.$profileName
-            if (-not $OrgID) {
-                throw "Invalid profile name!"
-            }
-        } else {
-            $OrgID = $config.profiles.default
-        }        
-    }
 
     $Headers = Get-Headers
 
@@ -1587,10 +1053,6 @@ function Set-MerakiNetworkApplianceCellularFirewallRules() {
     srcCidr*: string Comma-separated list of source IP address(es) (in IP or CIDR notation), or 'any' (note: FQDN not supported for source addresses)
     srcPort: string Comma-separated list of source port(s) (integer in the range 1-65535), or 'any'
     syslogEnabled: boolean Log this rule to syslog (true or false, boolean value) - only applicable if a syslog has been configured (optional)
-    .PARAMETER OrgId
-    Optional Organization Id.
-    .PARAMETER ProfileName
-    Optional Profile name
     #>
 }
 
@@ -1620,24 +1082,8 @@ function Set-MerakiNetworkApplianceCellularFirewallRule() {
         [string]$DestinationPort = 'any',
         [switch]$SyslogEnabled,
         [Parameter(Mandatory = $true)]
-        [string]$Comment,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgId,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$ProfileName
+        [string]$Comment
     )
-
-    if (-not $OrgID) {
-        $config = Read-Config
-        if ($profileName) {
-            $OrgID = $config.profiles.$profileName
-            if (-not $OrgID) {
-                throw "Invalid profile name!"
-            }
-        } else {
-            $OrgID = $config.profiles.default
-        }        
-    }
 
     $rules = (Get-MerakiNetworkApplianceCellularFirewallRules -id $Id).rules
 
@@ -1689,10 +1135,6 @@ function Set-MerakiNetworkApplianceCellularFirewallRule() {
     Log this rule to syslog (true or false, boolean value) - only applicable if a syslog has been configured (optional)
     .PARAMETER Comment
     Description of the rule (optional)
-    .PARAMETER OrgId
-    Optional Organization id.
-    .PARAMETER ProfileName
-    Optional Profile name.
     #>
 }
 
@@ -1700,7 +1142,7 @@ function Add-MerakiNetworkApplianceCellularFirewallRule() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
-        [Alias('Networkid')]
+        [Alias('NetworkId')]
         [string]$Id,
         [Parameter(Mandatory = $true)]
         [ValidateSet('allow','deny')]
@@ -1720,24 +1162,9 @@ function Add-MerakiNetworkApplianceCellularFirewallRule() {
         [string]$DestinationPort = 'any',
         [switch]$SyslogEnabled,
         [Parameter(Mandatory = $true)]
-        [string]$Comment,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgId,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$ProfileName
+        [string]$Comment
     )
 
-    if (-not $OrgID) {
-        $config = Read-Config
-        if ($profileName) {
-            $OrgID = $config.profiles.$profileName
-            if (-not $OrgID) {
-                throw "Invalid profile name!"
-            }
-        } else {
-            $OrgID = $config.profiles.default
-        }        
-    }
     $Rules = (Get-MerakiNetworkApplianceCellularFirewallRules -Id $Id).rules
 
     $Properties = [PSCustomObject]@{
@@ -1781,10 +1208,6 @@ function Add-MerakiNetworkApplianceCellularFirewallRule() {
     Log this rule to syslog (true or false, boolean value) - only applicable if a syslog has been configured (optional)
     .PARAMETER Comment
     Description of the rule (optional)
-    .PARAMETER OrgId
-    Optional Organization id.
-    .PARAMETER ProfileName
-    Optional Profile name.
     #>
 }
 
@@ -1794,24 +1217,8 @@ function Remove-MerakiNetworkApplianceCellularFirewallRule() {
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
         [Parameter(Mandatory = $true)]
-        [int]$RuleIndex,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgId,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$ProfileName
+        [int]$RuleIndex
     )
-
-    if (-not $OrgID) {
-        $config = Read-Config
-        if ($profileName) {
-            $OrgID = $config.profiles.$profileName
-            if (-not $OrgID) {
-                throw "Invalid profile name!"
-            }
-        } else {
-            $OrgID = $config.profiles.default
-        }        
-    }
 
     $Rules = (Get-MerakiNetworkApplianceCellularFirewallRules -id $NetworkId).Rules
     $alRules = [System.Collections.ArrayList]$Rules
@@ -1836,10 +1243,6 @@ function Remove-MerakiNetworkApplianceCellularFirewallRule() {
     The ID of the network to remove the rule.
     .PARAMETER RuleIndex
     The rule index to be removed.
-    .PARAMETER OrgId
-    Optional Organization Id.
-    .PARAMETER ProfileName
-    Optional Profile name.
     #>
 }
 
@@ -1855,26 +1258,10 @@ function Get-MerakiNetworkApplianceFirewalledServices() {
             ValueFromPipelineByPropertyName = $true
         )]
         [Alias('NetworkId')]
-        [string]$Id,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgId,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$ProfileName
+        [string]$Id
     )
 
     Begin {
-
-        if (-not $OrgID) {
-            $config = Read-Config
-            if ($profileName) {
-                $OrgID = $config.profiles.$profileName
-                if (-not $OrgID) {
-                    throw "Invalid profile name!"
-                }
-            } else {
-                $OrgID = $config.profiles.default
-            }        
-        }
 
         $Headers = Get-Headers
     }
@@ -1897,10 +1284,6 @@ function Get-MerakiNetworkApplianceFirewalledServices() {
     Retrieve the Appliance firewalled services.
     .PARAMETER Id
     The Id of the network.
-    .PARAMETER OrgId
-    Optional Organization Id.
-    .PARAMETER ProfileName
-    Optional Profile name
     #>
 }
 #endregion
@@ -1914,24 +1297,8 @@ Function Get-MerakiApplianceL3FirewallRules() {
             ValueFromPipelineByPropertyName
         )]
         [Alias('NetworkId')]
-        [string]$id,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgId,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$ProfileName
+        [string]$id
     )
-
-    if (-not $OrgID) {
-        $config = Read-Config
-        if ($profileName) {
-            $OrgID = $config.profiles.$profileName
-            if (-not $OrgID) {
-                throw "Invalid profile name!"
-            }
-        } else {
-            $OrgID = $config.profiles.default
-        }        
-    }
 
     $Uri = "{0}/networks/{1}/appliance/firewall/l3FirewallRules" -f $BaseURI, $Id
 
@@ -1954,10 +1321,6 @@ Function Get-MerakiApplianceL3FirewallRules() {
     Retrieve the network appliance level 3 firewall rules.
     .PARAMETER id
     The network Id.
-    .PARAMETER OrgId
-    Optional Organization Id.
-    .PARAMETER ProfileName
-    Optional Profile name.
     #>
 }
 
@@ -1974,26 +1337,10 @@ function Set-MerakiApplianceL3FirewallRules() {
             Mandatory
         )]
         [psobject[]]$Rules,
-        [switch]$PassThru,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgId,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$ProfileName
+        [switch]$PassThru
     )
 
     Begin {
-
-        if (-not $OrgID) {
-            $config = Read-Config
-            if ($profileName) {
-                $OrgID = $config.profiles.$profileName
-                if (-not $OrgID) {
-                    throw "Invalid profile name!"
-                }
-            } else {
-                $OrgID = $config.profiles.default
-            }        
-        }    
 
         $Headers = Get-Headers
 
@@ -2029,10 +1376,6 @@ function Set-MerakiApplianceL3FirewallRules() {
     An array of firewall rules objects.
     .PARAMETER PassThru
     Returns the updated list of rules.
-    .PARAMETER OrgId
-    Optional Organization Id.
-    .PARAMETER ProfileName
-    Optional Profile name.
     #>
 }
 
@@ -2067,26 +1410,10 @@ function Add-MerakiApplianceL3FirewallRule() {
         [string]$DestinationCIDR,
         [string]$DestinationPort = 'any',
         [switch]$SyslogEnabled,
-        [switch]$PassThru,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgId,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$ProfileName
+        [switch]$PassThru
     )
 
     Begin {
-
-        if (-not $OrgID) {
-            $config = Read-Config
-            if ($profileName) {
-                $OrgID = $config.profiles.$profileName
-                if (-not $OrgID) {
-                    throw "Invalid profile name!"
-                }
-            } else {
-                $OrgID = $config.profiles.default
-            }        
-        }
 
         $Headers = Get-Headers
     }
@@ -2148,10 +1475,6 @@ function Add-MerakiApplianceL3FirewallRule() {
     Log this rule to syslog - only applicable if a syslog has been configured (optional)
     .PARAMETER PassThru
     Return the newly created rule.
-    .PARAMETER OrgId
-    Optional Organization name.
-    .PARAMETER ProfileName
-    Optional Profile name
     #>
 }
 
@@ -2184,24 +1507,9 @@ function Set-MerakiApplianceL3FirewallRule() {
         )]
         [string]$DestinationCIDR,
         [string]$DestinationPort,
-        [switch]$SyslogEnabled,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgId,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$ProfileName
+        [switch]$SyslogEnabled
     )
 
-    if (-not $OrgID) {
-        $config = Read-Config
-        if ($profileName) {
-            $OrgID = $config.profiles.$profileName
-            if (-not $OrgID) {
-                throw "Invalid profile name!"
-            }
-        } else {
-            $OrgID = $config.profiles.default
-        }        
-    }
 
     $Uri = "{0}/networks/{1}/appliance/firewall/l3FirewallRules" -f $BaseUri, $NetworkId
 
@@ -2271,10 +1579,6 @@ function Set-MerakiApplianceL3FirewallRule() {
     .PARAMETER SyslogEnabled
     Log this rule to syslog (true or false, boolean value) - only applicable if a syslog has been configured (optional)
     .PARAMETER 
-    .PARAMETER OrgId
-    Optional Organization Id.
-    .PARAMETER ProfileName
-    Optional Profile name.
     #>
 }
 
@@ -2287,24 +1591,8 @@ function Remove-MerakiApplianceL3FirewallRule() {
         [string]$NetworkId,
         [Parameter(Mandatory)]
         [string]$RuleId,
-        [switch]$PassThru,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgId,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$ProfileName
+        [switch]$PassThru
     )
-
-    if (-not $OrgID) {
-        $config = Read-Config
-        if ($profileName) {
-            $OrgID = $config.profiles.$profileName
-            if (-not $OrgID) {
-                throw "Invalid profile name!"
-            }
-        } else {
-            $OrgID = $config.profiles.default
-        }        
-    }
 
     $Uri = "{0}/networks/{1}/appliance/firewall/l3FirewallRules" -f $BaseUri, $NetworkId
 
@@ -2346,10 +1634,6 @@ function Remove-MerakiApplianceL3FirewallRule() {
     The Rule Id to be deleted.
     .PARAMETER PassThru
     return the updated rules.
-    .PARAMETER OrgId
-    Optional Organization Id,
-    .PARAMETER ProfileName
-    Optional Profile name.
     #>
 }
 #endregion

@@ -10,24 +10,8 @@ function Get-MerakiSSIDs() {
             ValueFromPipelineByPropertyName = $true
         )]
         [Alias('NetworkId')]
-        [string]$id,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgId,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$ProfileName
+        [string]$id
     )
-
-    if (-not $OrgID) {
-        $config = Read-Config
-        if ($profileName) {
-            $OrgID = $config.profiles.$profileName
-            if (-not $OrgID) {
-                throw "Invalid profile name!"
-            }
-        } else {
-            $OrgID = $config.profiles.default
-        }        
-    }
 
     $Uri = "{0}/networks/{1}/wireless/ssids" -f $BaseURI, $id
     $Headers = Get-Headers
@@ -44,10 +28,6 @@ function Get-MerakiSSIDs() {
     Returns the Wireless SSIDs for a Meraki Network.
     .PARAMETER id
     The network Id.
-    .PARAMETER OrgId
-    Optional Organization Id.
-    .PARAMETER ProfileName
-    Optional Profile name.
     .OUTPUTS
     An array of Meraki SSID objects.
     #>
@@ -63,24 +43,8 @@ function Get-MerakiSSID() {
             ValueFromPipelineByPropertyName)]
         [string]$networkId,
         [Parameter(Mandatory = $true)]
-        [Int]$number,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgId,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$ProfileName
+        [Int]$number
     )
-
-    if (-not $OrgID) {
-        $config = Read-Config
-        if ($profileName) {
-            $OrgID = $config.profiles.$profileName
-            if (-not $OrgID) {
-                throw "Invalid profile name!"
-            }
-        } else {
-            $OrgID = $config.profiles.default
-        }        
-    }
 
     $Uri = "[0]/networks/{1}/wireless/ssids/{2}" -f $BaseURI, $networkId, $number
     $Headers = Get-Headers
@@ -99,10 +63,6 @@ function Get-MerakiSSID() {
     The network ID.
     .PARAMETER number
     The SSID Number.
-    .PARAMETER OrgId
-    Optional Organization name.
-    .PARAMETER ProfileName
-    Optional Profile Name.
     .OUTPUTS
     A Meraki SSID Object.
     #>
@@ -118,24 +78,8 @@ function Get-MerakiWirelessStatus() {
             ValueFromPipeline = $true,
             ValueFromPipelineByPropertyName = $true
         )]
-        [string]$serial,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgId,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$ProfileName
+        [string]$serial
     )
-
-    if (-not $OrgID) {
-        $config = Read-Config
-        if ($profileName) {
-            $OrgID = $config.profiles.$profileName
-            if (-not $OrgID) {
-                throw "Invalid profile name!"
-            }
-        } else {
-            $OrgID = $config.profiles.default
-        }        
-    }
 
     $Uri = '{0}/devices/{1}/wireless/status' -f $BaseURI, $serial
     $Headers = Get-Headers
@@ -152,10 +96,6 @@ function Get-MerakiWirelessStatus() {
     Returns the status of a Meraki Access Point.
     .PARAMETER serial
     The serial number of the Access Point.
-    .PARAMETER OrgId
-    Optional Organization Id
-    .PARAMETER ProfileName
-    Optional Profile name.
     .OUTPUTS
     A Meraki Access Point status object.
     #>
@@ -202,32 +142,10 @@ function Get-NetworkWirelessClientsConnectionStats() {
         [ValidateRange(1,4096)]
         [int]$VLAN,
 
-        [string]$APTag,
-
-        [Parameter(ParameterSetName = 'org', Mandatory)]
-        [Parameter(ParameterSetName = 'datesWithOrg', Mandatory)]
-        [Parameter(ParameterSetName = 'daysWithOrg', Mandatory)]
-        [string]$OrgId,
-
-        [Parameter(ParameterSetName = 'profile')]
-        [Parameter(ParameterSetName = 'datesWithProfile')]
-        [Parameter(ParameterSetName = 'daysWithProfile')]
-        [string]$ProfileName
+        [string]$APTag
     )
 
     Begin {
-
-    if (-not $OrgID) {
-        $config = Read-Config
-        if ($profileName) {
-            $OrgID = $config.profiles.$profileName
-            if (-not $OrgID) {
-                throw "Invalid profile name!"
-            }
-        } else {
-            $OrgID = $config.profiles.default
-        }        
-    }
 
         $Headers = Get-Headers
 
@@ -297,10 +215,6 @@ function Get-NetworkWirelessClientsConnectionStats() {
     Filter results by VLAN.
     .PARAMETER APTag
     Filter results by AP Tag.
-    .PARAMETER OrgId
-    Optional Organization Id.
-    .PARAMETER ProfileName
-    Optional Profile name
     .OUTPUTS
     A collection of connectivity information objects.
     #>
@@ -351,32 +265,10 @@ function Get-NetworkWirelessClientConnectionStats() {
         [ValidateRange(1,4096)]
         [int]$VLAN,
 
-        [string]$APTag,
-
-        [Parameter(ParameterSetName = 'org', Mandatory)]
-        [Parameter(ParameterSetName = 'datesWithOrg', Mandatory)]
-        [Parameter(ParameterSetName = 'daysWithOrg', Mandatory)]
-        [string]$OrgId,
-
-        [Parameter(ParameterSetName = 'profile')]
-        [Parameter(ParameterSetName = 'datesWithProfile')]
-        [Parameter(ParameterSetName = 'daysWithProfile')]
-        [string]$ProfileName
+        [string]$APTag
     )
 
     Begin {
-
-    if (-not $OrgID) {
-        $config = Read-Config
-        if ($profileName) {
-            $OrgID = $config.profiles.$profileName
-            if (-not $OrgID) {
-                throw "Invalid profile name!"
-            }
-        } else {
-            $OrgID = $config.profiles.default
-        }        
-    }
 
         $Headers = Get-Headers
 
@@ -446,10 +338,6 @@ function Get-NetworkWirelessClientConnectionStats() {
     Filter results by VLAN.
     .PARAMETER APTag
     Filter results by AP Tag.
-    .PARAMETER OrgId
-    Optional Organization Id.
-    .PARAMETER ProfileName
-    Optional Profile name
     .OUTPUTS
     A collection of connectivity information objects.
     #>
@@ -463,24 +351,8 @@ function Get-MerakiWirelessAirMarshal() {
             ValueFromPipelineByPropertyName
         )]
         [string]$Id,
-        [int]$Days,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgId,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$ProfileName
+        [int]$Days
     )
-
-    if (-not $OrgID) {
-        $config = Read-Config
-        if ($profileName) {
-            $OrgID = $config.profiles.$profileName
-            if (-not $OrgID) {
-                throw "Invalid profile name!"
-            }
-        } else {
-            $OrgID = $config.profiles.default
-        }        
-    }
 
     $Uri = "{0}/networks/{1}/wireless/airMarshal" -f $BaseURI, $id
     $Headers = Get-Headers
@@ -505,11 +377,6 @@ function Get-MerakiWirelessAirMarshal() {
     The Id of the network.
     .PARAMETER Days
     Number of days prior to today to return data.
-    .PARAMETER OrgId
-    Optional Organization Id.
-    .PARAMETER ProfileName
-    Optional Profile Name.
-
     #>
 }
 
@@ -564,17 +431,7 @@ function Get-MerakiWirelessUsageHistory() {
         [string]$Band,
 
         [ValidateSet(0,14)]
-        [Int]$SsidNumber,
-
-        [Parameter(ParameterSetName = 'org', Mandatory)]
-        [Parameter(ParameterSetName = 'datesWithOrg', Mandatory)]
-        [Parameter(ParameterSetName = 'daysWithOrg', Mandatory)]
-        [string]$OrgId,
-
-        [Parameter(ParameterSetName = 'profile')]
-        [Parameter(ParameterSetName = 'datesWithProfile')]
-        [Parameter(ParameterSetName = 'daysWithProfile')]
-        [string]$ProfileName
+        [Int]$SsidNumber
     )
 
     Begin {
@@ -678,10 +535,6 @@ function Get-MerakiWirelessUsageHistory() {
     Filter results by band (either '2.4', '5' or '6').
     .PARAMETER SsidNumber
     Filter results by SSID number.
-    .PARAMETER OrgId
-    Optional Organization Id.
-    .PARAMETER ProfileName
-    Optional Profile name..
     #>
 }
 
@@ -733,17 +586,7 @@ function Get-MerakiWirelessDataRateHistory() {
         [string]$Band,
         [ValidateSet(0,24)]
         [Int]$SsidNumber,
-        [switch]$ExcludeNoData,
-
-        [Parameter(ParameterSetName = 'org', Mandatory)]
-        [Parameter(ParameterSetName = 'datesWithOrg', Mandatory)]
-        [Parameter(ParameterSetName = 'daysWithOrg', Mandatory)]
-        [string]$OrgId,
-
-        [Parameter(ParameterSetName = 'profile')]
-        [Parameter(ParameterSetName = 'datesWithProfile')]
-        [Parameter(ParameterSetName = 'daysWithProfile')]
-        [string]$ProfileName
+        [switch]$ExcludeNoData
     )
 
     Begin {
@@ -850,10 +693,6 @@ function Get-MerakiWirelessDataRateHistory() {
     Filter results by SSID number.
     .PARAMETER ExcludeNoData
     Exclude items that have no data.
-    .PARAMETER OrgId
-    Optional Organization Id.
-    .PARAMETER ProfileName
-    Optional Profile Name.
     #>
 }
 
