@@ -32,7 +32,11 @@ CompanyName = 'Balfour Beatty US'
 Copyright = '(c) Balfour Beatty US All rights reserved.'
 
 # Description of the functionality provided by this module
-Description = 'Powershell module to use with the Meraki API to manage your Meraki Organization. This is a large update. Please see the project site for more details.'
+Description = 'Powershell module to use with the Meraki API to manage your Meraki Organization. 
+This module now supports storing API keys in a secure Secret store. 
+There are untested writable functions in this module. You can enable and test these by uncommenting them in the module manifest.
+This is a large update. Please see the project site for more details.
+'
 
 # Minimum version of the PowerShell engine required by this module
 PowerShellVersion = '6.0'
