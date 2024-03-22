@@ -105,7 +105,7 @@ function Remove-MerakiNetwork() {
 
     $Network = Get-MerakiNetwork -networkID $Id
 
-    if ($PSCmdlet.ShouldProcess("Delete","Network $($Network.Name). This cannot be undone!")){
+    if ($PSCmdlet.ShouldProcess("Network $($Network.Name). This cannot be undone!", "DELETE")){
         try {
             $response = Invoke-RestMethod -Method Delete -Uri $Uri -Headers $Headers
             return $response
@@ -680,7 +680,7 @@ function Get-MerakiNetworkClients () {
     #>
 }
 
-Set-Alias -Name GMNetEvents -Value Get-MerakiNetworkClients -Option ReadOnly
+Set-Alias -Name GMNetClients -Value Get-MerakiNetworkClients -Option ReadOnly
 
 function Get-MerakiNetworkClientApplicationUsage() {
     [CmdletBinding(DefaultParameterSetName = 'default')]

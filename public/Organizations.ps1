@@ -6,9 +6,28 @@ function Set-MerakiAPI() {
     Param(
         [string]$APIKey,
         [string]$OrgID,
-        [string]$ProfileName
+        [string]$ProfileName,
+        [switch]$SecureKey
     )
     
+    function Set-MerakiSecret() {
+        Param(
+            [string]$APIKey
+        )
+        $SecretIn = @{
+            Version = 1
+            APIKey = $APIKey
+        }
+        $Secret = $SecretIn | ConvertTo-Json
+
+        $Params = @{
+            Name = "MerakiAPI"
+            Secret = $Secret
+        }
+
+        Set-Secret @Params
+    }
+
     $configPath = "{0}/.meraki" -f $HOME
     $configFile = "{0}/config.json" -f $configPath
 
@@ -17,28 +36,36 @@ function Set-MerakiAPI() {
             $APIKey = Read-Host -Prompt "API Key: "
         }   
 
-        if (-not $APIKey) {
+        if ($APIKey) {
+            if ($SecureKey) {
+                $config = @{
+                    APIKey = "Secure"
+                }
+                
+                $Params = @{
+                    APIKey = $APIKey
+                }
+                
+                Set-MerakiSecret @Params                
+            } else {
+                $config = @{
+                    APIKey = $apiKey
+                }
+            }
+         } else {
             Throw "APIKey required if config file does not exist!"
-        }
+        } 
         if ((-not $OrgId) -and (-not $profileName)) {
             $orgs = Get-MerakiOrganizations -APIKey $APIKey
-            $config = @{
-                APIKey = $apiKey
-            }
+            
             $config.Add('profiles', @{default = $orgs[0].Id})
             foreach ($org in $orgs) {
                 $config.profiles.Add($org.name, $org.id)
             }
         } else {
             if (-not $profileName) {
-                $config = @{
-                    APIKey = $APIKey
-                }
                 $config.Add('profiles',@{default = $OrgID})
             } else {
-                $config = @{
-                    APIKey = $apiKey
-                }
                 $config.Add('profiles',@{})
                 $config.profiles.Add($profileName, $OrgID)
             }
@@ -54,12 +81,41 @@ function Set-MerakiAPI() {
                 Write-Host "The APIKey you entered does not match the APIKey in the config file. This will overwrite the existing config file!" -ForegroundColor Yellow
                 $response = ($R = read-host "Continue? [Y/n]:") ? $R : 'Y'
                 if ($response-eq "Y") {
-                    $config = @{
-                        APIKey = $APiKey
+                    if ($SecureKey) {
+                        $config = @{
+                            APIKey = "Secure"
+                        }
+                        
+                        Set-MerakiSecret -APIKey $APIKey
+
+                    } else {
+                        $config = @{
+                            APIKey = $APiKey
+                        }
                     }
                 } else {
                     Throw "Aborting!"
                 }
+            } else {
+                if ($SecureKey) {
+                    $Config.APIKey = "Secure"
+                    
+                    Set-MerakiSecret -APIKey $APIKey 
+                }
+            }
+        } else {
+            if ($SecureKey) {
+                $APIKey = $config.APIKey
+                $config.APIKey = "Secure"
+                                
+                Set-MerakiSecret -APIKey $APIKey 
+
+                if (-not (Test-Path -Path $configPath)) {
+                    [void](New-Item -Path $configPath -ItemType:Directory)
+                }
+
+                $config | ConvertTo-Json | Out-File -FilePath $configFile
+                return 
             }
         }
         if ((-not $OrgID) -and (-not $profileName)) {
@@ -105,15 +161,28 @@ function Set-MerakiAPI() {
     The ID of an organization to add to the profile.    
     .PARAMETER profileName
     The name of the profile to create. If omitted the OrgID is set as the default profile.
+    .PARAMETER SecureKey
+    Save the API key to the a secret Vault.
+    If this parameter is provided alone, your existing API key will be stored in the secret vault and the configuration changed
+    to support the secure key. The config.json file will no longer contain your key in clear text.
+    If you do not have a secrets vault registered you must register on using the New-MerakiSecretsVault function.
+    If your Secrets Management configuration requires a password you will only eed to enter the password when issuing the first command.
+    The vault will remain unlocked for the remainder of the PowerShell session.    
     .NOTES
     If the OrgID and profileName parameters are omitted named profiles will be created based on the Organization names pulled from Meraki.
     This approach may not be the best as most of the time these names will have multiple words and spaces and just be too long.
     .EXAMPLE
     Create the default profile
-    PS> Set-MerakiAPI -APIKey 'GDTE63534HD74BD93847' -OrgId 123456
+    PS> Set-MerakiAPI -APIKey 'EXAMPLEGDTE63534HD74BD93847' -OrgId 123456
     .EXAMPLE
     Create a Named Profile.
-    Set-MerakiAPI -OrgId 123456 -ProfileName USNetwork
+    Set-MerakiAPI -OrgId 987458 -ProfileName USNetwork
+    .EXAMPLE
+    Create a secure key profile.
+    Set-MerakiAPI -APIKey 'EXAMPLE88fhjryh4666drfe9207' -OrgId 123456 -SecureKey
+    .EXAMPLE
+    Convert your existing configuration to use the Secure Key Store.
+    Set-MerakiAPI -SecureKey     
     #>
 }
 
@@ -579,13 +648,12 @@ function Get-MerakiOrganizationConfigTemplates() {
     #>
 }
 
-Set-Alias -Name GMOrgTemplates -value Get-MerakiOrganizationConfigTemplates -Option ReadOnly
+
 
 function Get-MerakiOrganizationConfigTemplate () {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
-            Mandatory,
             ValueFromPipelineByPropertyName
         )]
         [Alias('TemplateId')]
@@ -618,7 +686,10 @@ function Get-MerakiOrganizationConfigTemplate () {
     }
 
     Process {
-        $Uri = "{0}/organizations/{1}/configTemplates/{2}" -f $BaseURI, $OrgID, $Id
+        $Uri = "{0}/organizations/{1}/configTemplates" -f $BaseURI, $OrgID
+        if ($Id) {
+            $Uri = "{0}/{1}" -f $Uri, $Id
+        }
 
         try {
             $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
@@ -643,6 +714,9 @@ function Get-MerakiOrganizationConfigTemplate () {
     A configuration template object.
     #>
 }
+
+Set-Alias -Name GMOrgTemplates -value Get-MerakiOrganizationConfigTemplate -Option ReadOnly
+Set-Alias -Name Get-MerakiOrganizationConfigTemplates -Value Get-MerakiOrganizationConfigTemplate
 
 function Get-MerakiOrganizationDevices() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
@@ -1289,7 +1363,7 @@ function Get-MerakiOrganizationSecurityEvents() {
 
     Set-Variable -Name Query
     if ($StartDate) {
-        $Query = "t0={0}" -f ($StartDate.ToString(")"))
+        $Query = "t0={0}" -f ($StartDate.ToString("0"))
     }
     if ($EndDate) {
         if ($Query) {$Query += "&"}
@@ -1340,7 +1414,7 @@ function Get-MerakiOrganizationSecurityEvents() {
                 }
             } until ($done)
         }
-        return $response
+        return $Results
     } catch {
         throw $_
     }
@@ -2246,5 +2320,69 @@ function Merge-MerakiOrganizationNetworks() {
     Optional Profile name.    
     .OUTPUTS
     A network object
+    #>
+}
+
+Function New-MerakiSecretsVault() {
+    [CmdletBinding()]
+    Param (
+        [ValidateSet('Password', 'none')]
+        [string]$Authentication,
+        [ValidateSet('Prompt','none')]
+        [string]$Interaction
+    )
+
+    $CurrentConfig = Get-SecretStoreConfiguration | Where-Object {$_.Scope -eq "CurrentUser"}
+
+    $Params = @{}
+
+    if ($Authentication) {
+        if ($Authentication -ne $CurrentConfig.Authentication) {
+            $Params.Add("Authentication",$Authentication)
+        }
+    }
+
+    if ($Interaction) {
+        if ($Interaction -ne $CurrentConfig.Interaction) {
+            $Params.Add("Interaction", $Interaction)
+        }
+    }
+
+    if ($Params.Count -gt 0) {
+        Set-SecretStoreConfiguration -Scope CurrentUser @Params
+    }
+
+    $Vaults = Get-SecretVault
+    if ($Vaults) {
+        if ($vaults.ModuleName -contains 'Microsoft.PowerShell.SecretStore') {
+            Write-Host "There is currently an existing Vault register for module $($Vault.ModuleName)." -ForegroundColor Yellow
+            Write-Host "The secretStore vault currently always operates in the logged user scope." -ForegroundColor Yellow
+            Write-Host "Registering SecretStore multiple times with different names just results in duplication of teh same store," -ForegroundColor Yellow
+            Write-Host "This vault will be used to store the secrets." -ForegroundColor Yellow            
+         }
+    } else {
+        Register-SecretVault -Name "LocalVault" -ModuleName Microsoft.PowerShell.SecretStore -DefaultVault -AllowClobber
+
+        Write-Host "Vault 'LocalVault' created." -ForegroundColor Yellow 
+    }
+
+    <#
+    .DESCRIPTION
+    Created a local Secret vault to store secrets.
+    .PARAMETER Authentication
+    Specifies how to authenticate access to the SecretStore. The value must be Password or None. 
+    If specified as None, the cmdlet enables access to the SecretStore without a password. The default authentication is Password.
+    .PARAMETER Interaction
+    Specifies whether the SecretStore should prompt a user when they access it. If the value is Prompt, the user is prompted for their 
+    password in interactive sessions when required. If the value is None, the user is not prompted for a password. If the value is None 
+    and a password is required, the cmdlet requiring the password throws a error.
+    .NOTES
+    Setting Authentication to 'none' is less secure than 'password'. Specifying 'none' may be useful for automated tasks where prompting
+    for password is not practical. Authentication should always be set to 'password' for interactive sessions.
+    If you set a password, you should set -Interaction to 'Prompt' otherwise an error will occur.
+    
+    Secret Store only uses the local user scope. Registering Secret Store multiple times only results in duplication of the same store,
+    This module does not support vaults registered with a different module.
+    Secrets will ALWAYS be stored in the default vault!
     #>
 }

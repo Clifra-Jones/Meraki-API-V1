@@ -254,7 +254,7 @@ function Submit-MerakiDeviceClaim() {
     #>
 }
 
-function Update-MerakiDevice {
+function Set-MerakiDevice {
     [CmdletBinding()]
     Param(
         [Parameter(
@@ -319,4 +319,46 @@ function Update-MerakiDevice {
     .OUTPUTS
     A Device object.
     #>
+}
+
+function Remove-MerakiNetworkDevice() {
+    [CmdletBinding(SupportsShouldProcess)]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [string]$Serial
+    )
+
+    Begin {
+        $Headers = Get-Headers
+    }
+
+    Process {
+        $Uri = "{0}/networks/{1}/devices/remove" -f $BaseUri, $Id
+
+        $_Body = @{
+            serial = $Serial
+        }
+
+        $body = $_Body | ConvertTo-Json -Compress
+
+        $NetworkName = (Get-MerakiNetwork -id $Id).Name
+
+        if ($PSCmdlet.ShouldProcess("Device $Serial from network $NetworkName", "Delete")) {
+            try {
+                $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
+                return $response
+            } catch {
+                throw $_
+            }
+        }
+    }
 }

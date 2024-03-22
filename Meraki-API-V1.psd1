@@ -53,7 +53,10 @@ PowerShellVersion = '6.0'
 # ProcessorArchitecture = ''
 
 # Modules that must be imported into the global environment prior to importing this module
-# RequiredModules = @()
+RequiredModules = @(
+    'Microsoft.PowerShell.SecretManagement',
+    'Microsoft.PowerShell.SecretStore'
+)
 
 # Assemblies that must be loaded prior to importing this module
 # RequiredAssemblies = @()
@@ -71,15 +74,21 @@ ScriptsToProcess = @('./public/public.ps1')
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = @(`
+FunctionsToExport = @(
+    'Add-MerakiApplianceCellularFirewallRule',
+    'Add-MerakiApplianceContentFilteringRules',
+    'Add-MerakiApplianceDelegatedStaticPrefix',
+    'Add-MerakiApplianceFirewallNatRule',
+    'Add-MerakiApplianceInboundCellularFirewallRule',
+    'Add-MerakiApplianceInboundFirewallRule',
     'Add-MerakiApplianceL3FirewallRule',
+    'Add-MerakiApplianceL7FirewallRule',
+    'Add-MerakiApplianceStaticRoute',
+    'Add-MerakiApplianceVlan',
     'Add-MerakiNetwork',
-    'Add-MerakiNetworkApplianceCellularFirewallRule',
-    'Add-MerakiNetworkApplianceContentFilteringRules',
-    'Add-MerakiNetworkApplianceVlan',
-    'Add-MerakiNetworkSwitchLAG',
     'Add-MerakiSwitchAccessControlEntry',
     'Add-MerakiSwitchAccessPolicy',
+    'Add-MerakiSwitchLAG',
     'Add-MerakiSwitchPortSchedule',
     'Add-MerakiSwitchQosRule',
     'Add-MerakiSwitchRoutingInterface',
@@ -88,21 +97,33 @@ FunctionsToExport = @(`
     'Add-MerakiSwitchStackSwitch',
     'Connect-MerakiNetworkToTemplate',
     'Disconnect-MerakiNetworkFromTemplate',
+    'Get-MerakiApplianceCellularFirewallRules',
+    'Get-MerakiApplianceClientSecurityEvents',
+    'Get-MerakiApplianceContentFiltering',
+    'Get-MerakiApplianceContentFilteringCategories',
+    'Get-MerakiApplianceDelegatesStaticPrefix',
+    'Get-MerakiApplianceDelegatesStaticPrefixes',
+    'Get-MerakiApplianceDhcpSubnets',
+    'Get-MerakiApplianceFirewalledServices',
+    'Get-MerakiApplianceFirewallNatRules',
+    'Get-MerakiApplianceInboundCellularFirewallRules',
+    'Get-MerakiApplianceInboundFirewallRules',
     'Get-MerakiApplianceL3FirewallRules',
+    'Get-MerakiApplianceL7ApplicationCategories',
+    'Get-MerakiApplianceL7FirewallRules',
+    'Get-MerakiAppliancePort',
     'Get-MerakiAppliancePorts',
+    'Get-MerakiApplianceSecurityIntrusion',
+    'Get-MerakiApplianceSecurityMalwareSettings',
+    'Get-MerakiApplianceSingleLan',
+    'Get-MerakiApplianceSiteToSiteVPN',
+    'Get-MerakiApplianceStaticRoutes',
+    'Get-MerakiApplianceVLAN',
+    'Get-MerakiApplianceVLANS',
     'Get-MerakiDevice',
     'Get-MerakiDeviceApplianceUplinks',
     'Get-MerakiDeviceClients',
     'Get-MerakiNetwork',
-    'Get-MerakiNetworkApplianceCellularFirewallRules',
-    'Get-MerakiNetworkApplianceContentFiltering',
-    'Get-MerakiNetworkApplianceContentFilteringCategories',
-    'Get-MerakiNetworkApplianceDhcpSubnets',
-    'Get-MerakiNetworkApplianceFirewalledServices',
-    'Get-MerakiNetworkApplianceSiteToSiteVPN',
-    'Get-MerakiNetworkApplianceStaticRoutes',
-    'Get-MerakiNetworkApplianceVLAN',
-    'Get-MerakiNetworkApplianceVLANS',
     'Get-MerakiNetworkClientApplicationUsage',
     'Get-MerakiNetworkClientBandwidthUsage',
     'Get-MerakiNetworkClients',
@@ -110,7 +131,6 @@ FunctionsToExport = @(`
     'Get-MerakiNetworkEvents',
     'Get-MerakiNetworkEventTypes',
     'Get-MerakiNetworks',
-    'Get-MerakiNetworkSwitchLAG',
     'Get-MerakiNetworkSwitchStacks',
     'Get-MerakiNetworkTraffic',
     'Get-MerakiOrganization',
@@ -135,6 +155,7 @@ FunctionsToExport = @(`
     'Get-MerakiSwitchAccessControlList',
     'Get-MerakiSwitchAccessPolicies',
     'Get-MerakiSwitchAccessPolicy',
+    'Get-MerakiSwitchLAG',
     'Get-MerakiSwitchPort',
     'Get-MerakiSwitchPorts',
     'Get-MerakiSwitchPortSchedules',
@@ -160,20 +181,27 @@ FunctionsToExport = @(`
     'Get-MerakiWirelessDataRateHistory',
     'Get-MerakiWirelessStatus',
     'Get-MerakiWirelessUsageHistory',
-    'Get-NetworkWirelessClientConnectionStats',
-    'Get-NetworkWirelessClientsConnectionStats',
+    'Get-NetworkClientConnectionStats',
+    'Get-NetworkClientsConnectionStats',
     'Merge-MerakiOrganizationNetworks',
     'New-MerakiOrganization',
     'New-MerakiOrganizationThirdPartyVpnPeer',
+    'New-MerakiSecretsVault'
     'New-MerakiSwitchStack',
+    'Remove-MerakiApplianceCellularFirewallRule',
+    'Remove-MerakiApplianceContentFilteringRules',
+    'Remove-MerakiApplianceDelegatedStaticPrefix',
+    'Remove-MerakiApplianceFirewallNatRule',
+    'Remove-MerakiApplianceInboundCellularFirewallRule',
+    'Remove-MerakiApplianceInboundFirewallRule',
     'Remove-MerakiApplianceL3FirewallRule',
+    'Remove-MerakiApplianceL7FirewallRule',
+    'Remove-MerakiApplianceVlan',
     'Remove-MerakiNetwork',
-    'Remove-MerakiNetworkApplianceCellularFirewallRule',
-    'Remove-MerakiNetworkApplianceContentFilteringRules',
-    'Remove-MerakiNetworkApplianceVlan',
-    'Remove-MerakiNetworkSwitchLAG',
+    'Remove-MerakiNetworkDevice',
     'Remove-MerakiSwitchAccessControlEntry',
     'Remove-MerakiSwitchAccessPolicy',
+    'Remove-MerakiSwitchLAG',
     'Remove-MerakiSwitchPortSchedule',
     'Remove-MerakiSwitchQosRule',
     'Remove-MerakiSwitchRoutingInterface',
@@ -185,20 +213,34 @@ FunctionsToExport = @(`
     'Reset-MerakiSwitchPorts',
     'Restart-MerakiDevice',
     'Set-MerakiAPI',
+    'Set-MerakiApplianceCellularFirewallRule',
+    'Set-MerakiApplianceCellularFirewallRules',
+    'Set-MerakiApplianceDelegatedStaticPrefix',
+    'Set-MerakiApplianceFirewallNatRule',
+    'Set-MerakiApplianceFirewallNatRules',
+    'Set-MerakiApplianceInboundCellularFirewallRule',
+    'Set-MerakiApplianceInboundCellularFirewallRules',
+    'Set-MerakiApplianceInboundFirewallRule',
+    'Set-MerakiApplianceInboundFirewallRules',
     'Set-MerakiApplianceL3FirewallRule',
     'Set-MerakiApplianceL3FirewallRules',
+    'Set-MerakiApplianceL7FirewallRule',
+    'Set-MerakiApplianceL7FirewallRules',
+    'Set-MerakiAppliancePort',
+    'Set-MerakiApplianceSecurityIntrusion',
+    'Set-MerakiApplianceSecurityMalwareSettings',
+    'Set-MerakiApplianceSingleLan',
+    'Set-MerakiApplianceSiteToSiteVpn',
+    'Set-MerakiApplianceStaticRoute',
+    'Set-MerakiApplianceVLAN',
+    'Set-MerakiDevice',
     'Set-MerakiNetwork',
-    'Set-MerakiNetworkApplianceCellularFirewallRule',
-    'Set-MerakiNetworkApplianceCellularFirewallRules',
-    'Set-MerakiNetworkApplianceSiteToSiteVpn',
-    'Set-MerakiNetworkApplianceVLAN',
-    'Set-MerakiNetworkSwitchLAG',
-    'Set-MerakiNetworkSwitchStackRoutingStaticRoute',
     'Set-MerakiOrganization',
     'Set-MerakiOrganizationThirdPartyVpnPeer',
     'Set-MerakiProfile',
     'Set-MerakiSwitchAccessControlEntry',
     'Set-MerakiSwitchAccessPolicy',
+    'Set-MerakiSwitchLAG',
     'Set-MerakiSwitchPort',
     'Set-MerakiSwitchPortSchedule',
     'Set-MerakiSwitchQosRule',
@@ -210,11 +252,11 @@ FunctionsToExport = @(`
     'Set-MerakiSwitchRoutingStaticRoute',
     'Set-MerakiSwitchStackRoutingInterface',
     'Set-MerakiSwitchStackRoutingInterfaceDhcp',
+    'Set-MerakiSwitchStackRoutingStaticRoute',
     'Split-MerakiNetwork',
     'Start-MerakiDeviceBlink',
     'Submit-MerakiDeviceClaim',
-    'Update-MerakiDevice',
-    'Update-MerakiNetworkApplianceContentFiltering'
+    'Update-MerakiApplianceContentFiltering'
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
@@ -300,7 +342,15 @@ AliasesToExport = @(`
     'RMSWAce',
     'GMSSIDs',
     'GMSSID',
-    'GMWirelessStat'
+    'GMWirelessStat',
+    'Get-MerakiNetworkSwitchStacks',
+    'Get-MerakiNetworkApplianceVLANS',
+    'Get-MerakiNetworkApplianceStaticRoutes',
+    'Get-MerakiSwitchStackRoutingInterfaces',
+    'Get-MerakiSwitchStackRoutingStaticRoutes',
+    'Get-MerakiSwitchRoutingInterfaces',
+    'Get-MerakiNetworkSwitchLAG',
+    'Get-MerakiSwitchPorts'
 )
 
 # DSC resources to export from this module
@@ -339,7 +389,10 @@ PrivateData = @{
         # RequireLicenseAcceptance = $false
 
         # External dependent modules of this module
-        # ExternalModuleDependencies = @()
+        ExternalModuleDependencies = @(
+            'Microsoft.PowerShell.SecretManagement',
+            'Microsoft.PowerShell.SecretStore'
+        )
 
     } # End of PSData hashtable
 

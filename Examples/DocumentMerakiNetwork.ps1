@@ -38,7 +38,10 @@ Param(
     [Parameter(
         Mandatory = $true
     )]
-    [string]$OutputFolder
+    [string]$OutputFolder,
+    [switch]$ExcludeAppliances,
+    [switch]$ExcludeSwitches,
+    [switch]$ExcludeAccessPoints
 )
 $ErrorActionPreference = "Break"
 
@@ -622,21 +625,25 @@ function DocumentAccessPoints() {
     }    
 }
 
-DocumentAppliances $Appliances
-DocumentUplinks $Network
-DocumentApplianceVLANs $ApplianceVLANS
-DocumentAppliancePorts $Network
-DocumentApplianceStaticRoutes $Network
-
-DocumentApplianceL3FirewallRules $Network
-
-DocumentApplianceVLANDhcp  $ApplianceVLANS
-ExportSwitches $switches
-DocumentSwitchStacks -Stacks $stacks -switches $Switches
-DocumentNonStackSwitches -switches $switches -stacks $stacks
-DocumentSwitchLags $network                   
-DocumentSwitchPorts  $switches 
-DocumentAccessPoints $AccessPoints
+If (-not $ExcludeAppliances) {
+    DocumentAppliances $Appliances
+    DocumentUplinks $Network
+    DocumentApplianceVLANs $ApplianceVLANS
+    DocumentAppliancePorts $Network
+    DocumentApplianceStaticRoutes $Network
+    DocumentApplianceL3FirewallRules $Network
+    DocumentApplianceVLANDhcp  $ApplianceVLANS
+}
+if (-not $ExcludeSwitches) {
+    ExportSwitches $switches
+    DocumentSwitchStacks -Stacks $stacks -switches $Switches
+    DocumentNonStackSwitches -switches $switches -stacks $stacks
+    DocumentSwitchLags $network                   
+    DocumentSwitchPorts  $switches 
+}
+If (-not $ExcludeAccessPoints) {
+    DocumentAccessPoints $AccessPoints
+}
 
 if ($IsWindows) {
     Close-ExcelPackage $excel -Show                        

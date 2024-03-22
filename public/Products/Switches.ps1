@@ -1,77 +1,23 @@
 #Meraki Switch Functions
 using namespace System.Collections.Generic
-function Get-MerakiSwitchStackRoutingInterfaces() {
-    [CmdletBinding(DefaultParameterSetName = 'default')]
-    Param(
-        [Parameter(
-            Mandatory = $true,
-            ValueFromPipelineByPropertyName = $true
-        )]
-        [Alias('StackId')]
-        [String]$Id,
-        [Parameter(
-            Mandatory,
-            ValueFromPipelineByPropertyName
-        )]
-        [String]$NetworkId
-    )
 
-    Begin{
-
-        $Headers = Get-Headers       
-    }
-
-    Process {
-        $Uri = "{0}/networks/{1}/switch/stacks/{2}/routing/interfaces" -f $BaseURI, $NetworkId, $Id
-
-        $Stack = Get-MerakiSwitchStack -stackId $id -networkId $NetworkId
-
-        try {
-            $response = Invoke-RestMethod -Method Get -Uri $uri -Headers $Headers -PreserveAuthorizationOnRedirect
-            $response | foreach-Object {
-                $_ | Add-Member -MemberType NoteProperty -Name "stackId" -Value $Id
-                $_ | Add-Member -MemberType NoteProperty -Name "stackName" -Value $Stack.Name
-                $_ | Add-Member -MemberType NoteProperty -Name "networkId" -Value $NetworkId
-            }
-
-            return $response
-        } catch {
-            throw $_
-        }
-    }
-    <#
-    .SYNOPSIS
-    Returns thr routing interfaces for a Switch stack.
-    .PARAMETER Id
-    The switch stack ID.
-    .PARAMETER networkId
-    The network Id.
-    .OUTPUTS
-    An array of Meraki Interface Objects.
-    #>
-}
-
-Set-Alias -Name GMNetSWStRoutInts -Value Get-MerakiSwitchStackRoutingInterfaces
-
+#region Stack Interfaces
 function Get-MerakiSwitchStackRoutingInterface() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
-            Mandatory = $true,
-            ValueFromPipeline = $true,
-            ValueFromPipelineByPropertyName = $true
+            Mandatory,
+            ValueFromPipelineByPropertyName
         )]
-        [string]$networkId,
+        [string]$NetworkId,
         [Parameter(
-            Mandatory = $true,
-            ValueFromPipeline = $true,
-            ValueFromPipelineByPropertyName = $true
+            Mandatory,
+            ValueFromPipelineByPropertyName
         )]
-        [string]$stackId,
+        [Alias('StackId')]
+        [string]$Id,
         [Parameter(
-            Mandatory = $true,
-            ValueFromPipeline = $true,
-            ValueFromPipelineByPropertyName = $true
+            ValueFromPipelineByPropertyName
         )]
         [string]$interfaceId
     )
@@ -82,11 +28,18 @@ function Get-MerakiSwitchStackRoutingInterface() {
     }
 
     Process {
-        $uri = "{0}/networks/{1}/switch/stacks/{2}/routing/interfaces/{3}" -f $BaseUri, $networkId, $stackId, $interfaceId
+        $uri = "{0}/networks/{1}/switch/stacks/{2}/routing/interfaces" -f $BaseUri, $networkId, $Id
+
+        If ($interfaceId) {
+            $Uri = "{0}/{1}" -f $Uri, $interfaceId
+        }
 
         try {
             $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $headers -PreserveAuthorizationOnRedirect
-
+            $response | ForEach-Object {
+                $_ | Add-Member -MemberType NoteProperty -Name 'NetworkId' -Value $NetworkId
+                $_ | Add-Member -MemberType NoteProperty -Name 'StackId' -Value $Id
+            }
             return $response
         } catch {
             throw $_
@@ -94,19 +47,21 @@ function Get-MerakiSwitchStackRoutingInterface() {
     }
     <#
     .SYNOPSIS
-    Return a Meraki Switch stack routing interface.
+    Return a Meraki Switch stack routing interface(s).
     .PARAMETER networkId
     The network Id.
     .PARAMETER stackId
     The stack Id.
     .PARAMETER interfaceId
-    The interface Id.
+    The interface Id. If Omitted return all interfaces.
     .OUTPUTS
     A Meraki interface object.
     #>
 }
 
 Set-Alias -Name GMSWStackRoutInt -Value Get-MerakiSwitchStackRoutingInterface
+Set-Alias -Name GMNetSWStRoutInts -Value Get-MerakiSwitchStackRoutingInterface
+Set-Alias -Name Get-MerakiSwitchStackRoutingInterfaces -Value Get-MerakiSwitchStackRoutingInterface
 
 function Add-MerakiSwitchStackRoutingInterface() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
@@ -236,7 +191,7 @@ Function Remove-MerakiSwitchStackRoutingInterface() {
     $Uri = "{0}/networks/{1}/switch/stacks/{2}/routing/interfaces" -f $BaseURI, $NetworkId, $StackId
     $STack = Get-MerakiNetworkSwitchStack -networkId $NetworkId -stackId $StackId
 
-    if ($PSCmdlet.ShouldProcess("Delete","Stack: $($Stack.name)")) {
+    if ($PSCmdlet.ShouldProcess("Stack: $($Stack.name)","Delete")) {
         try {
             $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
@@ -369,66 +324,9 @@ function Set-MerakiSwitchStackRoutingInterface() {
 
 Set-Alias -Name SetMSStkRteInt -Value Set-MerakiSwitchStackRoutingInterface
 
+#endregion
 
-
-function Get-MerakiSwitchStackRoutingStaticRoutes() {
-    [CmdletBinding(DefaultParameterSetName = 'default')]
-    Param(
-        #stackId
-        [Parameter(
-            Mandatory = $true,
-            ValueFromPipeline = $true,
-            ValueFromPipelineByPropertyName = $true
-        )]        
-        [string]$id,
-        [Parameter(
-            Mandatory,
-            ValueFromPipelineByPropertyName
-        )]
-        [string]$networkId
-    )
-
-    Begin {
-
-        $Headers = Get-Headers
-        $responses = New-Object 'System.Collections.Generic.List[psobject]'        
-    }
-
-    Process {
-        $StackName = (Get-MerakiNetworkSwitchStack -networkID $networkId -stackId $id).Name
-
-        $Uri = "{0}/networks/{1}/switch/stacks/{2}/routing/staticRoutes" -f $BaseURI, $networkId, $id
-
-        try {
-            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
-
-            $response | ForEach-Object {
-                $_ | Add-Member -MemberType NoteProperty -Name "NetworkId" -Value $networkId
-                $_ | Add-Member -MemberType NoteProperty -Name "Stack" -Value $StackName
-                $_ | Add-Member -MemberType NoteProperty -Name "StackId" -Value $id
-                $responses.add($_)
-            }
-        } catch {
-            throw $_
-        }
-    }
-
-    End {
-        return $responses.ToArray()
-    }
-    <#
-    .SYNOPSIS
-    Returns the switch stack static routes.
-    .PARAMETER id
-    The stack Id.
-    .PARAMETER networkId
-    The network Id.
-    .OUTPUTS
-    An array of Meraki switch stack static route objects.
-    #>
-}
-
-set-alias -Name GMSwStRoutStatic -Value Get-MerakiSwitchStackRoutingStaticRoutes
+#region Stack Static Routes
 
 function Get-MerakiSwitchStackRoutingStaticRoute() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
@@ -443,10 +341,7 @@ function Get-MerakiSwitchStackRoutingStaticRoute() {
             ValueFromPipelineByPropertyName)]
         [Alias('Id')]
         [string]$StackId,
-        [Parameter(
-            Mandatory,
-            ValueFromPipelineByPropertyName
-        )]
+        [Parameter(ValueFromPipelineByPropertyName)]
         [string]$StaticRouteId
     )
 
@@ -456,7 +351,10 @@ function Get-MerakiSwitchStackRoutingStaticRoute() {
     }
 
     Process {
-        $Uri = "{0}/networks/{1}/switch/stacks/{2}/routing/staticRoutes/{3}" -f $BaseURI, $NetworkId, $StackId, $StaticRouteId
+        $Uri = "{0}/networks/{1}/switch/stacks/{2}/routing/staticRoutes" -f $BaseURI, $NetworkId, $StackId
+        if ($StaticRouteId) {
+            $Uri = "{0}/{1}" -f $Uri, $StaticRouteId
+        }
 
         try {
             $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
@@ -468,19 +366,22 @@ function Get-MerakiSwitchStackRoutingStaticRoute() {
 
     <#
     .DESCRIPTION
-    Retrieves  static route from the switch stack.
+    Retrieves static route(s) from the switch stack.
     .PARAMETER NetworkId
     The Id of the network.
     .PARAMETER StackId
     The Id of the switch stack.
     .PARAMETER StaticRouteId
-    The id of the static route.
+    The id of the static route. If Omitted returns all static routes.
     .OUTPUTS
     A static route object.
     #>
 }
 
-function Set-MerakiNetworkSwitchStackRoutingStaticRoute() {
+set-alias -Name GMSwStRoutStatic -Value Get-MerakiSwitchStackRoutingStaticRoutes
+Set-Alias -Name Get-MerakiSwitchStackRoutingStaticRoutes -Value Get-MerakiSwitchStackRoutingStaticRoute
+
+function Set-MerakiSwitchStackRoutingStaticRoute() {
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
@@ -539,7 +440,8 @@ function Set-MerakiNetworkSwitchStackRoutingStaticRoute() {
     #>
 }
 
-Set-Alias -Name SetMNSSRteStRoute -Value Set-MerakiNetworkSwitchStackRoutingStaticRoute
+Set-Alias -Name SetMNSSRteStRoute -Value Set-MerakiSwitchStackRoutingStaticRoute
+set-Alias -Name Set-MerakiNetworkSwitchStackRoutingStaticRoute -Value Set-MerakiSwitchStackRoutingStaticRoute -Option ReadOnly
 
 function Remove-MerakiSwitchStackRoutingStaticRoute() {
     [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'default')]
@@ -558,7 +460,7 @@ function Remove-MerakiSwitchStackRoutingStaticRoute() {
 
     $StaticRoute = Get-MerakiSwitchStackRoutingStaticRoute -Id $NetworkId -StackId $StackId -StaticRouteId $StaticRouteId
 
-    if ($PSCmdlet.ShouldProcess("Delete","Static Route: $($Staticroute.Name)")) {
+    if ($PSCmdlet.ShouldProcess("Static Route: $($Staticroute.Name)","Delete")) {
         try {
             $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
@@ -584,6 +486,9 @@ function Remove-MerakiSwitchStackRoutingStaticRoute() {
 
 Set-Alias -Name RSWStkRteInt -Value Remove-MerakiSwitchStackRoutingStaticRoute -Option ReadOnly
 
+#endregion
+
+#region Stack Interface DHCP
 function Get-MerakiSwitchStackRoutingInterfaceDHCP() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
@@ -749,74 +654,43 @@ function Set-MerakiSwitchStackRoutingInterfaceDhcp() {
     #>
 }
 
-Set-Alias -Name UMSStkRteIntDhcp -Value Update-MerakiSwitchStackRoutingInterfaceDhcp
+Set-Alias -Name SMSStkRteIntDhcp -Value Update-MerakiSwitchStackRoutingInterfaceDhcp
+#endregion
 
-function Get-MerakiSwitchRoutingInterfaces() {
-    [CmdLetBinding(DefaultParameterSetName = 'default')]
-    Param(
-        [Parameter(
-            Mandatory = $true,
-            ValueFromPipeline = $true,
-            ValueFromPipelineByPropertyName = $true
-        )]
-        [string]$serial
-    )
-
-    Begin {
-
-         $Headers = Get-Headers
-    }
-
-    Process {
-        $Uri = "{0}/devices/{1}/switch/routing/interfaces" -f $BaseUri, $serial
-
-        try {
-            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
-            $response | ForEach-Object {
-                $Switch = Get-MerakiDevice -Serial $serial
-                $_ | Add-Member -MemberType NoteProperty -Name "switchName" -Value $switch.Name
-                $_ | Add-Member -MemberType NoteProperty -Name "serial" -Value $serial
-            }
-
-            return $response
-        } catch {
-            throw $_
-        }
-    }
-    <#
-    .SYNOPSIS
-    Returns the routing interfaces for a Meraki switch.
-    .PARAMETER serial
-    The serial number of the switch.
-    .OUTPUTS
-    An array of Meraki switch interfaces.
-    #>
-}
-
-Set-Alias -Name GMSWRoutInts -value Get-MerakiSwitchRoutingInterfaces -Option ReadOnly
-
+#region Switch Interfaces
 function Get-MerakiSwitchRoutingInterface() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     param (
         [Parameter(
-            Mandatory = $true            
+            Mandatory,
+            ValueFromPipelineByPropertyName         
         )]
-        [String]$serial,        
-        [Parameter(
-            Mandatory = $true
-        )]
+        [String]$serial,
         [String]$interfaceId
     )
 
-    $Uri = "{0}/devices/{1}/switch/routing/interfaces/{2}" -f $BaseUri, $serial, $interfaceId
-    $Headers = Get-Headers
+    Begin {
+        $Headers = Get-Headers       
+    }
 
-    try {
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+    Process {
 
-        return $response
-    } catch {
-        throw $_
+        $Uri = "{0}/devices/{1}/switch/routing/interfaces" -f $BaseUri, $serial
+        
+        if ($interfaceId) {
+            $Uri = "{0}/{1}" -f $Uri, $interfaceId
+        }
+
+
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            $response | ForEach-Object {
+                $_ | Add-Member -MemberType NoteProperty -Name 'Serial' -Value $serial
+            }
+            return $response
+        } catch {
+            throw $_
+        }
     }
     <#
     .SYNOPSIS
@@ -831,11 +705,17 @@ function Get-MerakiSwitchRoutingInterface() {
 }
 
 Set-Alias -Name GMSWRoutInt -Value Get-MerakiSwitchRoutingInterface -Option ReadOnly
+Set-Alias -Name GMSWRoutInts -value Get-MerakiSwitchRoutingInterface -Option ReadOnly
+Set-Alias -Name Get-MerakiSwitchRoutingInterfaces -Value Get-MerakiSwitchRoutingInterface -Option ReadOnly
+
 
 function Add-MerakiSwitchRoutingInterface() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
-        [Parameter(Mandatory = $true)]
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
         [string]$Serial,
         [Parameter(Mandatory = $true)]
         [ValidateRange(1,4096)]
@@ -870,10 +750,9 @@ function Add-MerakiSwitchRoutingInterface() {
         "vlanId" = $VlanId
     }
 
-    if ($Sbnet) { $_Body.Add("subnet", $Subnet) }
+    if ($Subnet) { $_Body.Add("subnet", $Subnet) }
     if ($InterfaceIp) { $_Body.Add("interfaceIp", $InterfaceIp) }
     if ($DefaultGateway) { $_Body.Add("defaultGateway", $DefaultGateway) }
-    if ($InterfaceIp) { $_Body.Add("interfaceIp", $InterfaceIp) }
     if ($MulticastRouting) { $_Body.Add("multicastRouting", $MulticastRouting) }
     if ($Ipv6Address) {
         $_Body.Add("ipv6", @{
@@ -1097,7 +976,7 @@ function Remove-MerakiSwitchRoutingInterface() {
 
     $Interface = Get-MerakiSwitchRoutingInterface -serial $Serial -interfaceId $InterfaceId
 
-    if ($PSCmdlet.ShouldProcess('Delete', "Interface $($interface.name)")) {
+    if ($PSCmdlet.ShouldProcess( "Interface $($interface.name)",'Delete')) {
         try {
             $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
@@ -1119,6 +998,9 @@ function Remove-MerakiSwitchRoutingInterface() {
     #>
 }
 
+#endregion
+
+#region Switch Interface DHCP
 function Get-MerakiSwitchRoutingInterfaceDHCP() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     param (
@@ -1294,7 +1176,9 @@ function Set-MerakiSwitchRoutingInterfaceDhcp() {
 }
 
 Set-Alias -Name SetMSRteIntDHCP -Value Set-MerakiSwitchRoutingInterfaceDhcp
+#endregion
 
+#region Switch Static Routes
 function Get-MerakiSwitchRoutingStaticRoutes() {
     [CmdLetBinding(DefaultParameterSetName = 'default')]
     Param(
@@ -1339,7 +1223,8 @@ function Get-MerakiSwitchRoutingStaticRoutes() {
     #>
 }
 
-Set-Alias -Name GMSWRoutStatic -value Get-MerakiSwitchRoutingStaticRoutes -Option ReadOnly
+Set-Alias -Name GMSWStaticRoutes -value Get-MerakiSwitchRoutingStaticRoute -Option ReadOnly
+Set-Alias -Name Get-MerakiSwitchRoutingStaticRoutes -Value Get-MerakiSwitchRoutingStaticRoute -Option ReadOnly
 
 function Get-MerakiSwitchRoutingStaticRoute() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
@@ -1348,9 +1233,7 @@ function Get-MerakiSwitchRoutingStaticRoute() {
             Mandatory,
             ValueFromPipelineByPropertyName)]
         [string]$Serial,
-        [Parameter(
-            Mandatory,
-            ValueFromPipelineByPropertyName)]
+        [Parameter(ValueFromPipelineByPropertyName)]
         [string]$StaticRouteId
     )
 
@@ -1360,7 +1243,10 @@ function Get-MerakiSwitchRoutingStaticRoute() {
     }
 
     Process {
-        $Uri = "{0}/devices/{1}/switch/routing/staticRoutes/{2}" -f $BaseURI, $Serial, $StaticRouteId
+        $Uri = "{0}/devices/{1}/switch/routing/staticRoutes" -f $BaseURI, $Serial
+        if ($StaticRouteId) {
+            $Uri = "{0}/{1}" -f $Uri, $StaticRouteId
+        }
 
         try {
             $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
@@ -1371,13 +1257,13 @@ function Get-MerakiSwitchRoutingStaticRoute() {
     }
     <#
     .SYNOPSIS
-    Retrieve a Static Route
+    Retrieve a Static Route(s)
     .DESCRIPTION
     Retrieve a Meraki Switch Static Route
     .PARAMETER Serial
     The serial number of the switch.
     .PARAMETER StaticRouteId
-    The ID of the Static Route
+    The ID of the Static Route. If omitted return all static routes.
     .OUTPUTS
     A Static route object
     #>
@@ -1511,7 +1397,7 @@ function Remove-MerakiSwitchStaticRoute() {
 
     $StaticRoute = Get-MerakiSwitchStaticRoute -Serial $Serial -StaticRouteId $StaticRouteId
 
-    if ($PSCmdlet.ShouldProcess('Delete', "StaticRoute $($StaticRoute.Name)") ) {
+    if ($PSCmdlet.ShouldProcess( "StaticRoute $($StaticRoute.Name)",'Delete') ) {
         try {
             $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
             return $response
@@ -1532,14 +1418,15 @@ function Remove-MerakiSwitchStaticRoute() {
     An html status code. Code 204 = success
     #>
 }
+#endregion
 
-function Get-MerakiNetworkSwitchLAG() {
+#region Switch LAG
+function Get-MerakiSwitchLAG() {
     [CmdLetBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
-            Mandatory = $true,
-            ValueFromPipeline = $true,
-            ValueFromPipelineByPropertyName=$true
+            Mandatory,
+            ValueFromPipelineByPropertyName
         )]
         [string]$id
     )
@@ -1554,22 +1441,20 @@ function Get-MerakiNetworkSwitchLAG() {
         $Uri = "{0}/networks/{1}/switch/linkAggregations" -f $BaseUri, $Id
         try {
             $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
-            $Lnum = 1
             $response | ForEach-Object {
                 $lagID = $_.Id
                 $_.switchPorts | foreach-Object {
                     $switchName = (Get-MerakiDevice -serial $_.serial).Name
-                    $portName = (Get-MerakiDeviceSwitchPort -serial $_.serial -portId $_.portId).Name
+                    $portName = (Get-MerakiDeviceSwitchPort -serial $_.serial -portId $_.portId).Name                    
                     $Lag = [PSCustomObject]@{
                         lagID = $LagID
-                        lagNumber = $Lnum
                         Switch = $SwitchName
-                        Port = $_.PortId
+                        Serial = $_.serial
+                        PortId = $_.PortId
                         portName = $portName
                     }
                     $responses.Add($Lag)
                 }
-                $lnum += 1
             }
         } catch {
             throw $_
@@ -1581,17 +1466,24 @@ function Get-MerakiNetworkSwitchLAG() {
     }
     <#
     .SYNOPSIS
-    Return the LAB configurations for a Meraki Network.
+    Return the LAG configurations for a Meraki Network.
     .PARAMETER id
     The network Id.
     .OUTPUTS
-    An array of switch lag objects.
+    An array of switch lag objects. The Lag object refactored into a single level object with the following properties:
+        LagID: The id og the LAG
+        Switch: Switch name.
+        Serial: Switch serial.
+        PortId: POrt Id (number)
+        PortName: Port name or description if configured.
+
     #>
 }
 
-Set-Alias -Name GMNetSWLag -value Get-MerakiNetworkSwitchLAG -Option ReadOnly
+Set-Alias -Name GMNetSWLag -value Get-MerakiSwitchLAG -Option ReadOnly
+Set-Alias -Name Get-MerakiNetworkSwitchLAG -Value Get-MerakiSwitchLAG -Option ReadOnly
 
-function Add-MerakiNetworkSwitchLAG() {
+function Add-MerakiSwitchLAG() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
@@ -1639,7 +1531,9 @@ function Add-MerakiNetworkSwitchLAG() {
     #>
 }
 
-function Set-MerakiNetworkSwitchLAG() {
+Set-Alias -Name Add-MerakiNetworkSwitchLAG -value Add-MerakiSwitchLAG -Option ReadOnly
+
+function Set-MerakiSwitchLAG() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
@@ -1683,7 +1577,9 @@ function Set-MerakiNetworkSwitchLAG() {
     #>
 }
 
-function Remove-MerakiNetworkSwitchLAG() {
+Set-Alias -Name Set-MerakiNetworkSwitchLAG -Value Set-MerakiSwitchLAG -Option ReadOnly
+
+function Remove-MerakiSwitchLAG() {
     [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
@@ -1697,7 +1593,7 @@ function Remove-MerakiNetworkSwitchLAG() {
 
     $Uri = "{0}/networks/{1}/switch/linkAggregations/{2}" -f $BaseURI, $NetworkId, $LinkAggregationId
 
-    if ($PSCmdlet.ShouldProcess("Delete","LAG ID:$LinkAggregationId")) {
+    if ($PSCmdlet.ShouldProcess("LAG ID:$LinkAggregationId","Delete")) {
         try {
             Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
         } catch {
@@ -1718,73 +1614,41 @@ function Remove-MerakiNetworkSwitchLAG() {
     #>
 }
 
-function Get-MerakiNetworkSwitchStacks() {
-    [CmdLetBinding(DefaultParameterSetName = 'default')]
-    Param(
-        [Parameter(
-            Mandatory = $true,
-            ValueFromPipeline = $true,
-            ValueFromPipelineByPropertyName = $true
-        )]
-        [Alias("NetworkId")]
-        [String]$id
-    )
+Set-Alias Remove-MerakiNetworkSwitchLAG -Value Remove-MerakiSwitchLAG -Option ReadOnly
+#endregion
 
-    $Headers = Get-Headers
-
-    $Uri = "{0}/networks/{1}/switch/stacks" -f $BaseURI, $id
-
-    $Network = Get-MerakiNetwork -networkID $id
-
-    if ($network.productTypes -contains "switch") {
-        try {
-            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
-            $response | ForEach-Object {
-                $_ | Add-Member -MemberType NoteProperty -Name NetworkId -Value $Network.Id
-                $_ | Add-Member -MemberType NoteProperty -Name NetworkName -Value $Network.Name
-            }
-
-            return $response
-        } catch {
-            throw $_
-        }
-    } else {
-        return $null
-    }
-    <#
-    .SYNOPSIS
-    Returns the switch stacks for a Meraki network.
-    .PARAMETER id
-    The network Id.
-    .OUTPUTS
-    An array of Meraki switch stack objects.
-    #>
-}
-
-Set-Alias -Name GMNetSWStacks -Value Get-MerakiNetworkSwitchStacks -Option ReadOnly
-
+#region Stacks
 function Get-MerakiSwitchStack() {
     [CmdLetBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
-            Mandatory = $true
+            Mandatory,
+            ValueFromPipelineByPropertyName
         )]
-        [String]$networkId,
-        [Parameter(
-            Mandatory = $true
-        )]
-        [string]$stackId
+        [Alias('NetworkId')]
+        [String]$Id,
+        [string]$StackId
     )
 
-    $Uri = "{0}/networks/{1}/switch/stacks/{2}" -f $BaseURI, $networkId, $stackId
-    $Headers = Get-Headers
+    Begin {
+        $Headers = Get-Headers    
+    }
 
-    try {
-        $response = Invoke-RestMethod -Method GET -Uri $uri -Headers $Headers -PreserveAuthorizationOnRedirect
+    Process {
+        $Uri = "{0}/networks/{1}/switch/stacks" -f $BaseURI, $Id
+        if ($stackId) {
+            $Uri = "{0}/{1}" -f $Uri, $StackId
+        }
 
-        return $response
-    } catch {
-        throw $_
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            $response | ForEach-Object {
+                $_ | Add-Member -MemberType NoteProperty -Name 'NetworkId' -Value $Id
+            }
+            return $response
+        } catch {
+            throw $_
+        }
     }
     <#
     .SYNOPSIS
@@ -1799,6 +1663,7 @@ function Get-MerakiSwitchStack() {
 }
 Set-Alias -Name Get-MerakiNetworkSwitchStack -Value Get-MerakiSwitchStack
 set-alias -Name GMSwStack -Value Get-MerakiSwitchStack
+Set-Alias -Name Get-MerakiNetworkSwitchStacks -Value Get-MerakiSwitchStack -Option ReadOnly
 
 function New-MerakiSwitchStack() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
@@ -1844,7 +1709,7 @@ function New-MerakiSwitchStack() {
     #>
 }
 
-Set-Alias -Name New-MerakiSwitchStack -Value New-MerakiNeworkSwitchStack
+Set-Alias -Name New-MerakiSwitchStack -Value New-MerakiNetworkSwitchStack
 
 function Add-MerakiSwitchStackSwitch() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
@@ -1912,7 +1777,7 @@ function Remove-MerakiSwitchStackSwitch() {
 
     $body = $_Body | ConvertTo-Json -Compress
 
-    if ($PSCmdlet.ShouldProcess('Remove', "Stack member switch $Serial") ) {
+    if ($PSCmdlet.ShouldProcess( "Stack member switch $Serial",'Remove') ) {
         try {
             $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
             return $response
@@ -1937,7 +1802,10 @@ function Remove-MerakiSwitchStackSwitch() {
 }
 
 function Remove-MerakiSwitchStack() {
-    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'default')]
+    [CmdletBinding(
+        SupportsShouldProcess, 
+        ConfirmImpact = 'high',
+        DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
@@ -1951,7 +1819,7 @@ function Remove-MerakiSwitchStack() {
     
     $Stack = Get-MerakiSwitchStack -networkId $NetworkId -SwitchStackId $SwitchStackId
 
-    if ($PSCmdlet.ShouldProcess('Delete',"Switch stack $($stack.name)") ) {
+    if ($PSCmdlet.ShouldProcess("Switch stack $($stack.name)",'Delete') ) {
         try {
             $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
@@ -1972,75 +1840,51 @@ function Remove-MerakiSwitchStack() {
     AN HTML response code. REsponse code of 204 = success
     #>
 }
+#endregion
 
+#region Switch Ports
 
-function Get-MerakiSwitchPorts() {
-    [CmdletBinding(DefaultParameterSetName = 'default')]
-    Param(
-        [Parameter(
-            Mandatory = $true,
-            ValueFromPipeline = $true,
-            ValueFromPipelineByPropertyName = $true)]
-        [string]$serial
-    )
-
-    Begin {
-
-        $Headers = Get-Headers       
-        $responses = New-Object System.Collections.Generic.List[psobject]
-    }
-
-    Process {
-        $switchName = (Get-MerakiDevice -Serial $serial).Name
-        $Uri = "{0}/devices/{1}/switch/ports" -f $BaseURI, $serial
-        try {
-            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
-            $response | ForEach-Object {
-                $_ | Add-Member -MemberType NoteProperty -Name "switch" -Value $switchname
-                $responses.Add($_)
-            }
-        } catch {
-            throw $_
-        }
-    }
-
-    End {
-        return $responses.ToArray()
-    }
-    <#
-    .SYNOPSIS
-    Returns the port configurations for a Meraki switch
-    .PARAMETER serial
-    The serial number of the switch.
-    .OUTPUTS
-    An array of Meraki switch port objects.
-    #>
-}
-
-Set-Alias -Name GMSwPorts -Value Get-MerakiSwitchPorts -Option ReadOnly
 
 function Get-MerakiSwitchPort() {
     [CmdLetBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
-            Mandatory = $true
+            Mandatory,
+            ValueFromPipelineByPropertyName
         )]
-        [string]$serial,
-        [Parameter(
-            Mandatory = $true
-        )]
-        [string]$portId
+        [string]$Serial,
+        [string]$PortId
     )
     
-    $Uri = "{0}/devices/{1}/switch/ports/{2}" -f $BaseURI, $serial, $portId
-    $Headers = Get-Headers
+    Begin {
+        $Headers = Get-Headers
+    }
 
-    try {
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+    Process {
 
-        return $response
-    } catch {
-        throw $_
+        $Uri = "{0}/devices/{1}/switch/ports" -f $BaseURI, $serial
+
+        if ($PortId) {
+            $Uri = "{0}/{1}" -f $Uri, $PortId
+        }
+
+        $SwitchName = (Get-MerakiDevice -Serial $Serial).Name
+
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            if ($response -is [array]) {
+                $response | ForEach-Object {
+                    $_ | Add-Member -MemberType NoteProperty -Name "serial" -Value $Serial
+                    $_ | Add-Member -MemberType NoteProperty -Name "switch" -Value $SwitchName
+                }
+            } else {
+                $response | Add-Member -MemberType NoteProperty -Name "serial" -Value $Serial
+                $response | Add-Member -MemberType NoteProperty -Name "switch" -Value $SwitchName
+            }
+            return $response
+        } catch {
+            throw $_
+        }
     }
     <#
     .SYNOPSIS
@@ -2048,22 +1892,30 @@ function Get-MerakiSwitchPort() {
     .PARAMETER serial
     The switch serial number.
     .PARAMETER portId
-    The port Id.
+    The port Id. If Omitted all ports are returned
     .OUTPUTS
-    A Meraki switch port object.]
+    A Meraki switch port object or array of switch port objects.
     #>
 }
 
 Set-Alias -Name GMSwPort -Value Get-MerakiSwitchPort
 Set-Alias -Name GMDevSwPort -Value Get-MerakiSwitchPort
 Set-Alias -Name Get-MerakiDeviceSwitchPort -Value Get-MerakiSwitchPort
+Set-Alias -Name GMSwPorts -Value Get-MerakiSwitchPort -Option ReadOnly
+Set-Alias -Name Get-MerakiSwitchPorts -Value Get-MerakiSwitchPort -Option ReadOnly
 
 function Set-MerakiSwitchPort() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
-        [Parameter(Mandatory = $true)]
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
         [string]$Serial,
-        [Parameter(Mandatory = $true)]
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
         [string]$PortId,
         [string]$Name,
         [string[]]$Tags,
@@ -2101,70 +1953,74 @@ function Set-MerakiSwitchPort() {
         [switch]$DaiTrusted
     )
 
-    switch ($AccessPolicyType) {
-        'Custom access policy' {
-            if (-not $AccessPolicyNumber) {
-                Write-Host "Parameter AccessPolicyNumber is required when parameter AccessPolicyType is 'Custom access policy'." -ForegroundColor Red
-                return
-            }
-        }
-        'MAC allow list' {
-            if (-not $MacAllowList) {
-                Write-Host "Parameter MacAllowList is required when paramter AccessPolicyType is 'MAC allow list'." -ForegroundColor Red
-                return
-            }
-        }
-        'Sticky MAC allow list' {
-            if (-not $StickyMacAllowList) {
-                Write-Host "Parameter StickyMacAllowList is required when parameter AccessPolicyType is 'Sticky MAC allow list'." -ForegroundColor Red
-                return
-            }
+    Begin {
+        $Headers = Get-Headers
 
-            if (-not $StickyMacAllowListLimit) {
-                Write-Host "Parameter StickyMacAllowListLimit is required when parameter AccessPolicyType is 'Sticky MAC allow list'." -ForegroundColor Red
-                return
+        switch ($AccessPolicyType) {
+            'Custom access policy' {
+                if (-not $AccessPolicyNumber) {
+                    Write-Host "Parameter AccessPolicyNumber is required when parameter AccessPolicyType is 'Custom access policy'." -ForegroundColor Red
+                    return
+                }
+            }
+            'MAC allow list' {
+                if (-not $MacAllowList) {
+                    Write-Host "Parameter MacAllowList is required when paramter AccessPolicyType is 'MAC allow list'." -ForegroundColor Red
+                    return
+                }
+            }
+            'Sticky MAC allow list' {
+                if (-not $StickyMacAllowList) {
+                    Write-Host "Parameter StickyMacAllowList is required when parameter AccessPolicyType is 'Sticky MAC allow list'." -ForegroundColor Red
+                    return
+                }
+
+                if (-not $StickyMacAllowListLimit) {
+                    Write-Host "Parameter StickyMacAllowListLimit is required when parameter AccessPolicyType is 'Sticky MAC allow list'." -ForegroundColor Red
+                    return
+                }
             }
         }
+        
+        if ($Name) { $_Body.Add("name", $Name) }
+        if ($Tags) { $_Body.Add("tags", $Tags) }
+        if ($Enabled.IsPresent) { $_Body.Add("enabled", $Enabled.IsPresent) }
+        if ($PoeEnabled.IsPresent) { $_Body.Add("poeEnabled", $PoeEnabled.IsPresent) }
+        if ($Type) { $_Body.Add("type", $Type) }
+        if ($Vlan) { $_Body.Add("vlan", $Vlan) }
+        if ($VoiceVlan) { $_Body.Add("voiceVlan", $VoiceVlan) }
+        if ($AllowedVlans) { $_Body.Add("allowedVlans", $AllowedVlans) }
+        if ($IsolationEnabled.IsPresent) { $_Body.add("isolationEnabled", $IsolationEnabled.IsPresent) }
+        if ($rstpEnabled.IsPresent) { $_Body.Add("rstpEnabled", $PoeEnabled.IsPresent)}
+        if ($stpGuard) { $_Body.Add("stpGuard", $stpGuard) }
+        if ($LinkNegotiation) { $_Body.Add("linkNegotiation", $LinkNegotiation) }
+        if ($PortScheduleId) { $_Body.Add("portScheduleId", $PortScheduleId) }
+        if ($udld) { $_Body.Add("udld", $udld) }
+        if ($AccessPolicyType) { $_Body.Add("AccessPolicyType", $AccessPolicyType) }
+        if ($AccessPolicyNumber) { $_Body.Add("accessPolicyNumber", $AccessPolicyNumber) }
+        if ($MacAllowList) { $_Body.Add("macAllowList", $MacAllowList) }
+        if ($StickyMacAllowList) { $_Body.Add("stickyMacAllowList", $StickyMacAllowList) }
+        if ($StickyMacAllowListLimit) { $_Body.Add("stickyMacAllowListLimit", $StickyMacAllowListLimit) }
+        if ($StormControlEnabled) { $_Body.Add("stormControlEnabled", $StormControlEnabled) }
+        if ($AdaptivePolicyGroupId) { $_Body.Add("adaptivePolicyGroupId", $AdaptivePolicyGroupId) }
+        if ($PeerStgCapable) { $_Body.Add("peerStgCapable", $PeerStgCapable) }
+        if ($FlexibleStackingEnabled) { $_Body.Add("flexibleStackingEnabled", $FlexibleStackingEnabled) }
+        if ($DaiTrusted) { $_Body.Add("daiTrusted", $DaiTrusted) }
+
+        $body = $_Body | ConvertTo-Json -Depth 5 -Compress
     }
 
-    $Headers = Get-Headers
+    Process {
+       $Uri = "{0}/devices/{1}/switch/ports/{2}" -f $BaseURI, $Serial, $PortId
 
-    $Uri = "{0}/devices/{1}/switch/ports/{2}" -f $BaseURI, $Serial, $PortId
+        $_Body = @{}  
 
-    $_Body = @{}
-
-    if ($Name) { $_Body.Add("name", $Name) }
-    if ($Tags) { $_Body.Add("tags", $Tags) }
-    if ($Enabled.IsPresent) { $_Body.Add("enabled", $Enabled.IsPresent) }
-    if ($PoeEnabled.IsPresent) { $_Body.Add("poeEnabled", $PoeEnabled.IsPresent) }
-    if ($Type) { $_Body.Add("type", $Type) }
-    if ($Vlan) { $_Body.Add("vlan", $Vlan) }
-    if ($VoiceVlan) { $_Body.Add("voiceVlan", $VoiceVlan) }
-    if ($AllowedVlans) { $_Body.Add("allowedVlans", $AllowedVlans) }
-    if ($IsolationEnabled.IsPresent) { $_Body.add("isolationEnabled", $IsolationEnabled.IsPresent) }
-    if ($rstpEnabled.IsPresent) { $_Body.Add("rstpEnabled", $PoeEnabled.IsPresent)}
-    if ($stpGuard) { $_Body.Add("stpGuard", $stpGuard) }
-    if ($LinkNegotiation) { $_Body.Add("linkNegotiation", $LinkNegotiation) }
-    if ($PortScheduleId) { $_Body.Add("portScheduleId", $PortScheduleId) }
-    if ($udld) { $_Body.Add("udld", $udld) }
-    if ($AccessPolicyType) { $_Body.Add("AccessPolicyType", $AccessPolicyType) }
-    if ($AccessPolicyNumber) { $_Body.Add("accessPolicyNumber", $AccessPolicyNumber) }
-    if ($MacAllowList) { $_Body.Add("macAllowList", $MacAllowList) }
-    if ($StickyMacAllowList) { $_Body.Add("stickyMacAllowList", $StickyMacAllowList) }
-    if ($StickyMacAllowListLimit) { $_Body.Add("stickyMacAllowListLimit", $StickyMacAllowListLimit) }
-    if ($StormControlEnabled) { $_Body.Add("stormControlenabled", $StormControlEnabled) }
-    if ($AdaptivePolicyGroupId) { $_Body.Add("adaptivePolicyGroupId", $AdaptivePolicyGroupId) }
-    if ($PeerStgCapable) { $_Body.Add("peerStgCapable", $PeerStgCapable) }
-    if ($FlexibleStackingEnabled) { $_Body.Add("flexibleStackingEnabled", $FlexibleStackingEnabled) }
-    if ($DaiTrusted) { $_Body.Add("daiTrusted", $DaiTrusted) }
-
-    $body = $_Body | ConvertTo-Json -Depth 5 -Compress
-
-    try {
-        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
-        return $response
-    } catch {
-        throw $_
+        try {
+            $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
+            return $response
+        } catch {
+            throw $_
+        }
     }
 
     <#
@@ -2443,7 +2299,7 @@ function Add-MerakiSwitchPortSchedule(){
         [string]$NetworkId,
         [Parameter(Mandatory = $true)]
         [string]$Name,
-        [hashtable]$PortSchedule
+        [PsObject[]]$PortSchedule
     )
 
     $Headers = Get-Headers
@@ -2477,8 +2333,8 @@ function Add-MerakiSwitchPortSchedule(){
     When it's empty, default schedule with all days of a week are configured. 
     Any unspecified day in the schedule is added as a default schedule configuration of the day.
 
-    An object of port schedules. Schedulee consist of:
-    Day of week (Monday, Teusday, etc)
+    An object of port schedules. Schedule consist of:
+    Day of week (Monday, Tuesday, etc)
         Active: boolean - Whether the schedule is active (true) or inactive (false) during the time specified between 'from' and 'to'. Defaults to true.
         from:string - The time, from '00:00' to '24:00'. Must be less than the time specified in 'to'. Defaults to '00:00'. Only 30 minute increments are allowed.
         to: string - The time, from '00:00' to '24:00'. Must be greater than the time specified in 'from'. Defaults to '24:00'. Only 30 minute increments are allowed.
@@ -2578,7 +2434,11 @@ function Set-MerakiSwitchPortSchedule() {
 }
 
 function Remove-MerakiSwitchPortSchedule() {
-    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'default')]
+    [CmdletBinding(
+        SupportsShouldProcess, 
+        ConfirmImpact = 'high',
+        DefaultParameterSetName = 'default'
+    )]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
@@ -2590,9 +2450,9 @@ function Remove-MerakiSwitchPortSchedule() {
 
     $Uri = "{0}/networks/switch/portSchedules/{2}" -f $BaseURI, $NetworkId, $PortScheduleId
 
-    $PortSchedule = (Get-MerakiSwitchPortSchedules -NetworkId $NetworkId).Where({$_.id -eq $PortScheduleId})
+    $PortSchedule = (Get-MerakiSwitchPortSchedules -NetworkId $NetworkId) | Where-Object {$_.id -eq $PortScheduleId}
     
-    if ($PSCmdlet.ShouldProcess('Delete',"Port Schedule $($PortSchedule.Name)")) {
+    if ($PSCmdlet.ShouldProcess("Port Schedule $($PortSchedule.Name)", 'Delete')) {
         try {
             $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
@@ -2613,26 +2473,32 @@ function Remove-MerakiSwitchPortSchedule() {
     HTML status code. Code 204 = Successful
     #>
 }
+#endregion
 
-function Get-MerakiSwitchQosRules() {
+#region QOS Rules
+
+function Get-MerakiSwitchQosRule() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
-            Mandatory = $true,
-            ValueFromPipeline = $true,
-            ValueFromPipelineByPropertyName = $true
+            Mandatory,
+            ValueFromPipelineByPropertyName
         )]
         [Alias('NetworkId')]
-        [string]$Id
+        [string]$Id,
+        [string]$QosRuleId
     )
 
     Begin {
-
-        $Headers = Get-Headers
+        $Headers = Get-Headers    
     }
 
     Process {
-        $Uri = "{0}/networks/{1}/switch/qosRules" -f $BaseURI, $id
+        $Uri = "{0}/networks/{1}/switch/qosRules/{2}" -f $BaseURI, $Id
+
+        if ($QosRuleId) {
+            $Uri = "{0}/{1}" -f $Uri, $QosRuleId
+        }
 
         try {
             $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
@@ -2642,55 +2508,18 @@ function Get-MerakiSwitchQosRules() {
         }
     }
     <#
-    .SYNOPSIS 
-    Retrieve QOS rules for switches
     .DESCRIPTION
-    Retrieve the QOS rules for a Meraki network switches
-    .PARAMETER Id
-    The network Id to get the QOS rules from.
-    .OUTPUTS
-    Am array QOS rules objects.
-    #>    
-}
-
-function Get-MerakiSwitchQosRule() {
-    [CmdletBinding(DefaultParameterSetName = 'default')]
-    Param(
-        [Parameter(
-            Mandatory = $true,
-            ValueFromPipeline = $true,
-            ValueFromPipelineByPropertyName = $true
-        )]
-        [Alias('NetworkId')]
-        [string]$Id,
-        [Parameter(Mandatory = $true)]
-        [string]$QosRuleId
-    )
-
-    $Headers = Get-Headers
-
-    $Uri = "{0}/networks/{1}/switch/qosRules/{2}" -f $BaseURI, $Id, $QosRuleId
-
-    try {
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
-        return $response
-    } catch {
-        throw $_
-    }
-
-    <#
-    .SYNOPSIS
-    Retrieve switch QOS rule.
-    .DESCRIPTION
-    Retrieve a Meraki switch QOS rule.
+    Retrieve Meraki switch QOS rule(s).
     .PARAMETER Id
     Network ID to retrieve the rules from.
     .PARAMETER QosRuleId
-    ID of the QOS rule to retrieve.
+    ID of the QOS rule to retrieve. If omitted all rules are returned
     .OUTPUTS
     A QOS rule object.
     #>
 }
+
+Set-Alias -Name Get-MerakiSwitchQosRules -Value Get-MerakiSwitchQosRule -Option ReadOnly
 
 function Add-MerakiSwitchQosRule() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
@@ -2875,7 +2704,7 @@ function Remove-MerakiSwitchQosRule() {
 
     $Uri = "{0}/networks/{1}/switch/qosRules/{2}" -f $BaseURI, $NetworkId, $QosRuleId
 
-    if ($PSCmdlet.ShouldProcess('Delete',"QOS Rule: $QosRuleId")) {
+    if ($PSCmdlet.ShouldProcess("QOS Rule: $QosRuleId",'Delete')) {
         try {
             $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
@@ -2896,6 +2725,7 @@ function Remove-MerakiSwitchQosRule() {
     HTML status code. Code 204 = success
     #>
 }
+
 
 function Get-MerakiSwitchQosRulesOrder() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
@@ -2983,7 +2813,9 @@ function Set-MerakiSwitchQosRuleOrder() {
     An object containing an array of QOS rule IDs in order of processing
     #>
 }
+#endregion
 
+#region Access Policies
 function Get-MerakiSwitchAccessPolicies() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
@@ -3045,21 +2877,33 @@ function Get-MerakiSwitchAccessPolicies() {
 function Get-MerakiSwitchAccessPolicy() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
-        [Parameter(Mandatory = $true)]
-        [string]$NetworkId,
-        [Parameter(Mandatory = $true)]
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,        
         [string]$AccessPolicyNumber
     )
 
-    $Headers = Get-Headers
+    Begin {
+        $Headers = Get-Headers
+    }
 
-    $Uri = "{0}/network/{1}/switch/accessPolicies/{2}" -f $BaseURI, $NetworkId, $AccessPolicyNumber
+    Process {
 
-    try {
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
-        return $response
-    } catch {
-        throw $_
+        $Uri = "{0}/network/{1}/switch/accessPolicies" -f $BaseURI, $NetworkId
+
+        if ($AccessPolicyNumber) {
+            $Uri = "{0}/{1}" -f $Uri, $AccessPolicyNumber
+        }
+
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            return $response
+        } catch {
+            throw $_
+        }
     }
     <#
     .SYNOPSIS
@@ -3074,6 +2918,8 @@ function Get-MerakiSwitchAccessPolicy() {
     An object containing the access policy
     #>
 }
+
+Set-Alias -Name Get-MerakiSwitchAccessPolicies -Value Get-MerakiSwitchAccessPolicy -Option ReadOnly
 
 function Add-MerakiSwitchAccessPolicy() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
@@ -3412,7 +3258,10 @@ function Set-MerakiSwitchAccessPolicy() {
 }
 
 function Remove-MerakiSwitchAccessPolicy() {
-    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'default')]
+    [CmdletBinding(
+        SupportsShouldProcess, 
+        ConfirmImpact = 'high',
+        DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
@@ -3424,7 +3273,7 @@ function Remove-MerakiSwitchAccessPolicy() {
 
     $AccessPolicy = Get-MerakiSwitchAccessPolicy -NetworkId $NetworkId -AccessPolicyNumber $AccessPolicyNumber
 
-    if ($PSCmdlet.ShouldProcess('Delete', "Access Policy: $($AccessPolicy.Name)")) {
+    if ($PSCmdlet.ShouldProcess( "Access Policy: $($AccessPolicy.Name)", 'Delete')) {
         try {
             $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
@@ -3444,7 +3293,9 @@ function Remove-MerakiSwitchAccessPolicy() {
     The access policy number to delete.
     #>
 }
+#endregion
 
+#region Routing Multicast
 function Get-MerakiSwitchRoutingMulticast() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
@@ -3549,7 +3400,9 @@ function Set-MerakiSwitchRoutingMulticast() {
         switches:array[] List of switch serials for non-template network
     #>
 }
+#endregion
 
+#region Routing OSPF
 function Get-MerakiSwitchRoutingOspf() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
@@ -3694,8 +3547,9 @@ function Set-MerakiSwitchRoutingOspf() {
     * required
     #>
 }
+#endregion
 
-#Access control Lists
+#region Access Control Lists
 
 function Get-MerakiSwitchAccessControlList() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
@@ -3719,19 +3573,19 @@ function Get-MerakiSwitchAccessControlList() {
             $Uri = "{0}/networks/{1}/switch/accessControlLists" -f $BaseURI, $Id
 
             try {
-                $id = 1
                 $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
-                $Rules = [List[psobject]]::New()
-                $response | ForEach-Object {
+                $id = 1                
+                $response.rules | ForEach-Object {
                     $_.rules | Add-Member -MemberType NoteProperty -Name "Id" -Value $id
                     $id += 1
-                    $Rules.Add($_.rules)
                 }
 
-                return $Rules.ToArray()
+                return $response.rules
             } catch {
                 throw $_
             }
+        } else {
+            throw "This function only works with Networks with switches."
         }
     }
     <#
@@ -3789,7 +3643,9 @@ function Add-MerakiSwitchAccessControlEntry() {
     }
 
     $Acl += $Ace
-    $body = $acl | ConvertTo-Json -Depth 5 -Compress
+    $body = @{
+        rules = $acl
+    } | ConvertTo-Json -Depth 5 -Compress
 
     try {
         $id = 1
@@ -3831,7 +3687,11 @@ function Add-MerakiSwitchAccessControlEntry() {
 Set-Alias -Name AMSWAce -Value Add-MerakiSwitchAccessControlEntry
 
 function Remove-MerakiSwitchAccessControlEntry() {
-    [CmdletBinding(DefaultParameterSetName = 'default')]
+    [CmdletBinding(
+        DefaultParameterSetName = 'default', 
+        SupportsShouldProcess,
+        ConfirmImpact = 'high'
+    )]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
@@ -3846,18 +3706,22 @@ function Remove-MerakiSwitchAccessControlEntry() {
 
     $NewAcl = $Acl.Where({$_.Id -ne $id}) | Select-Object * -ExcludeProperty Id
 
-    $body = $NewAcl | ConvertTo-Json -Depth 5 -Compress
+    $body = @{
+        rules = $NewAcl
+    } | ConvertTo-Json -Depth 5 -Compress
 
-    try {
-        $Id = 1
-        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
-        $response | ForEach-Object {
-            $_ | Add-Member -MemberType NoteProperty -Name "Id" -Value $Id
-            $Id += 1
+    if ($PSCmdlet.ShouldProcess("Access Control Entry #$id", "DELETE")) {
+        try {
+            $Id = 1
+            $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
+            $response | ForEach-Object {
+                $_ | Add-Member -MemberType NoteProperty -Name "Id" -Value $Id
+                $Id += 1
+            }
+            return $response
+        } catch {
+            throw $_
         }
-        return $response
-    } catch {
-
     }
     <#
     .DESCRIPTION
@@ -3916,7 +3780,9 @@ function Set-MerakiSwitchAccessControlEntry() {
     $NewAce = $Ace | Select-Object * -ExcludeProperty Id
     $NewAcl += $NewAce
 
-    $body = $NewAcl | ConvertTo-Json -Depth 5 -Compress
+    $body = @{
+        rules = $NewAcl
+    } | ConvertTo-Json -Depth 5 -Compress
 
     Try {
         $id = 1
@@ -3954,3 +3820,4 @@ function Set-MerakiSwitchAccessControlEntry() {
     Description of the rule (optional)
     #>
 }
+#endregion
