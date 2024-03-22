@@ -90,14 +90,14 @@ $titleParams = @{
 
 }
 
-$TableParams = @{
+<# $TableParams = @{
     BorderColor="black";
     BorderRight="thin";
     BorderLeft="thin";
     BorderTop="thin";
     BorderBottom="thin";
     FontSize=9
-}
+} #>
 
 
 $Worksheet = $Network.Name
