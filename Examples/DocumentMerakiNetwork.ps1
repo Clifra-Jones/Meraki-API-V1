@@ -38,12 +38,18 @@ Param(
     [Parameter(
         Mandatory = $true
     )]
-    [string]$OutputFolder
+    [string]$OutputFolder,
+    [switch]$ExcludeAppliances,
+    [switch]$ExcludeSwitches,
+    [switch]$ExcludeAccessPoints
 )
 $ErrorActionPreference = "Break"
 
 Import-Module Meraki-API-V1
 Import-Module ImportExcel
+
+$savedWarningPreference = $Global:WarningPreference
+$Global:WarningPreference = 'SilentlyContinue'
 
 if ($NetworkName) {
     $Network = Get-MerakiNetworks | Where-Object {$_.Name -eq $NetworkName}    
@@ -81,16 +87,17 @@ if (Test-Path -Path $document) {
 $titleParams = @{
     TitleBold=$true;
     TitleSize=12;
+
 }
 
-$TableParams = @{
+<# $TableParams = @{
     BorderColor="black";
     BorderRight="thin";
     BorderLeft="thin";
     BorderTop="thin";
     BorderBottom="thin";
     FontSize=9
-}
+} #>
 
 
 $Worksheet = $Network.Name
@@ -109,7 +116,7 @@ $networkProps = $networkItems.PSObject.Properties
 $excel = $networkProps | Select-Object @{n="Property";e={$_.Name}}, Value | `
                 Export-Excel -ExcelPackage $excel -WorkSheetName $Worksheet -TableName "Network" `
                             -StartRow $script:StartRow -StartColumn $script:StartColumn -Title "Network" @titleParams `
-                            -AutoSize -NumberFormat Text -PassThru
+                            -AutoSize -NumberFormat Text -PassThru 
 
 $Network | ConvertTo-Json | Set-Content -Path "$jsonPath/network.json"             
 
@@ -396,7 +403,7 @@ function DocumentSwitchStacks() {
         $interfaceDHCP = $StackInterfaces | Get-MerakiSwitchStackRoutingInterfaceDHCP
         $x=0
         $interfaceDHCP | Where-Object {$_.dhcpMode -eq 'dhcpServer'} | ForEach-Object {
-            $tableName = ("dhcp{0}" -f $x).tostring()
+            $tableName = ("dhcp{0}" -f $x).ToString()
             $excel = $_ | Select-Object @{n="Interface Name";e={$_.interfaceName}}, `
                                         @{n="DHCP Mode";e={$_.dhcpMode}}, `
                                         @{n="DNS Name Servers";e={$_.dnsNameServersOption}}, `
@@ -456,7 +463,7 @@ function DocumentNonStackSwitches() {
         $NonStackSwitchInterfaces = $nonStackSwitches | Get-MerakiSwitchRoutingInterfaces 
         if ($NonStackSwitchInterfaces) {
             $excel = $NonStackSwitchInterfaces | Sort-Object -Property switchName | `
-                Select-Object @{Name="Switch";Expression={$_.switchName}}, @{Name="VLAN";Expression={$_.vlanid}}, `
+                Select-Object @{Name="Switch";Expression={$_.switchName}}, @{Name="VLAN";Expression={$_.VlanId}}, `
                                 Name, Subnet, @{Name="IP";Expression={$_.interfaceIp}}, `
                                 @{Name="OSPF Routing";Expression={$_.ospfSettings.area}}, @{Name="Multicast Routing";Expression={$_.multicastRouting}} | `
                             Export-Excel -ExcelPackage $excel -WorksheetName $Worksheet -StartRow $script:StartRow -StartColumn $script:StartColumn `
@@ -622,21 +629,27 @@ function DocumentAccessPoints() {
     }    
 }
 
-DocumentAppliances $Appliances
-DocumentUplinks $Network
-DocumentApplianceVLANs $ApplianceVLANS
-DocumentAppliancePorts $Network
-DocumentApplianceStaticRoutes $Network
+If (-not $ExcludeAppliances) {
+    DocumentAppliances $Appliances
+    DocumentUplinks $Network
+    DocumentApplianceVLANs $ApplianceVLANS
+    DocumentAppliancePorts $Network
+    DocumentApplianceStaticRoutes $Network
+    DocumentApplianceL3FirewallRules $Network
+    DocumentApplianceVLANDhcp  $ApplianceVLANS
+}
+if (-not $ExcludeSwitches) {
+    ExportSwitches $switches
+    DocumentSwitchStacks -Stacks $stacks -switches $Switches
+    DocumentNonStackSwitches -switches $switches -stacks $stacks
+    DocumentSwitchLags $network                   
+    DocumentSwitchPorts  $switches 
+}
+If (-not $ExcludeAccessPoints) {
+    DocumentAccessPoints $AccessPoints
+}
 
-DocumentApplianceL3FirewallRules $Network
-
-DocumentApplianceVLANDhcp  $ApplianceVLANS
-ExportSwitches $switches
-DocumentSwitchStacks -Stacks $stacks -switches $Switches
-DocumentNonStackSwitches -switches $switches -stacks $stacks
-DocumentSwitchLags $network                   
-DocumentSwitchPorts  $switches 
-DocumentAccessPoints $AccessPoints
+$Global:WarningPreference = $savedWarningPreference
 
 if ($IsWindows) {
     Close-ExcelPackage $excel -Show                        

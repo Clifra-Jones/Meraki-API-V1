@@ -1,4 +1,23 @@
+# Meraki-API-V1 version 1.1.0
+
 ## Release Notes
+
+### 02/02/2024
+
+Enabled all writable function in this module.
+Do not use these functions unless you are 100%, absolutely, without a doubt, sure you know what you are doing!
+If you run the example script DocumentMerakiNetwork.ps1 it will generate JSON files of your configurations in the JSON folder under the specified output folder.
+You can use these JSON files to recover any damaged configurations. This is not fool proof, and there is not a module function to use these JSON files to perform the recovery. You will have todo these manually using the API functions. I may build that sometime on the future.
+
+Improved the use of piping on many functions.
+Example:
+You can pipe an Interface object or a collection of interface objects to Get-MerakiSwitchRoutingStaticRoutes and Get-MerakiSwitchRoutingInterfaceDhcp and also the switch stack version of these commands.
+
+See the module reference for more details.
+
+Updated the help text for all commands.
+
+Added additional monitoring commands for wireless. See the module reference for more details.
 
 ### 11/14/2023
 

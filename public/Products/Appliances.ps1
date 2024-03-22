@@ -1,7 +1,10 @@
 #Meraki Appliance Functions
 using namespace System.Management
-function Get-MerakiNetworkApplianceContentFilteringCategories() {
-    [CmdletBinding()]
+using namespace System.Collections.Generic
+
+#region ContentFiltering
+function Get-MerakiApplianceContentFilteringCategories() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -30,18 +33,20 @@ function Get-MerakiNetworkApplianceContentFilteringCategories() {
     An array of content filtering categories.
     .NOTES
     Filtering category IDs are different between MX devices. You cannot use category IDs from an MX84 to set categories on an MX100.
-    It is best practive to pull the list of categories from the device before attempting to set any new categories.
+    It is best practice to pull the list of categories from the device before attempting to set any new categories.
     #>
 }
 
-Set-Alias GMNetAppCFCats -Value Get-MerakiNetworkApplianceContentFilteringCategories -Option ReadOnly
+Set-Alias -Name GMNetAppCFCats -Value Get-MerakiApplianceContentFilteringCategories -Option ReadOnly
+Set-Alias -Name Get-MerakiNetworkApplianceContentFilteringCategories -Value Get-MerakiApplianceContentFilteringCategories -Option ReadOnly
+Set-Alias -Name GMAppCFCats -Value Get-MerakiApplianceContentFilteringCategories -Option ReadOnly
 
 <#
 .Description
 Retrieve content filtering Rules for a network
 #>
-function Get-MerakiNetworkApplianceContentFiltering() {
-    [CmdletBinding()]
+function Get-MerakiApplianceContentFiltering() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -49,6 +54,7 @@ function Get-MerakiNetworkApplianceContentFiltering() {
             ValueFromPipelineByPropertyName = $true)]
         [string]$id
     )
+
 
     $Uri = "{0}/networks/{1}/appliance/contentFiltering" -f $BaseURI, $id
     $headers = Get-Headers
@@ -70,10 +76,12 @@ function Get-MerakiNetworkApplianceContentFiltering() {
     #>
 }
 
-Set-Alias GMNetCF -Value Get-MerakiNetworkApplianceContentFiltering -Option ReadOnly
+Set-Alias -Name GMNetCF -Value Get-MerakiApplianceContentFiltering -Option ReadOnly
+Set-Alias -Name Get-MerakiNetworkApplianceContentFiltering -Value Get-MerakiApplianceContentFiltering -Option ReadOnly
+Set-Alias -Name GMAppCF -Value Get-MerakiApplianceContentFiltering -Option ReadOnly
 
-function Update-MerakiNetworkApplianceContentFiltering() {
-    [CmdletBinding()]
+function Update-MerakiApplianceContentFiltering() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -106,12 +114,6 @@ function Update-MerakiNetworkApplianceContentFiltering() {
             ErrorMessage="The parameter ContentFilteringRules cannot be used with the allowedURLPatterns, blockedURLPatterns, blockedURLCategories -or urlCategoriesList parameters")]
         [psObject]$ContentFilteringRules
     )
-
-    If ($ContentFilteringRules) {
-        if ($allowedURLPatterns) {
-            Write-Host "The Parameter AlloweeUrlPatterns cannot be used with"
-        }
-    }
 
     $Uri = "{0}/networks/{1}/appliance/contentFiltering" -f $BaseURI, $id
     $Headers = Get-Headers
@@ -177,16 +179,19 @@ function Update-MerakiNetworkApplianceContentFiltering() {
     PS > Get-MerakiNetworks | Where-Object {$_.like "Dallas"} | Update-MerakiNetworkApplianceContentFiltering -ContentFilteringRules $cfr
     .EXAMPLE
     Updating Templates
-    If you have networks bound to templates, you should update the template and allow the template to trickle the changes down to the bound network.
-    PS> $cfr = Get-MerakiOrganizationConfigTemplates | Where-object {$_.Name -eq "Org-Tremplate"} | Get-MerakiNetworkApplianceContentFiltering
+    If you have networks bound to templates, you should must the template and allow the template to trickle the changes down to the bound network.
+    PS> $cfr = Get-MerakiOrganizationConfigTemplates | Where-object {$_.Name -eq "Org-Template"} | Get-MerakiNetworkApplianceContentFiltering
     PS> $cfr.clockedUrlPatterns += "example.com"
     PS> Get-MerakiOrganizationConfigTemplates | Where-Object ($_.Name -eq "Org-Template"} Update-MerakiNetworkApplianceContentFiltering -ContentFilteringRules $cfr
     #>
 }
 
-Set-Alias -Name UMNetAppCF -value Update-MerakiNetworkApplianceContentFiltering -Option ReadOnly
+Set-Alias -Name UMNetAppCF -value Update-MerakiApplianceContentFiltering -Option ReadOnly
+Set-Alias -Name Update-MerakiNetworkApplianceContentFiltering -Value Update-MerakiApplianceContentFiltering -Option ReadOnly
+Set-Alias -Name UMAppCF -value Update-MerakiApplianceContentFiltering -Option ReadOnly
 
-function Add-MerakiNetworkApplianceContentFilteringRules() {
+function Add-MerakiApplianceContentFilteringRules() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param (
         [Parameter(
             Mandatory = $true,
@@ -198,6 +203,10 @@ function Add-MerakiNetworkApplianceContentFilteringRules() {
         [String[]]$blockedURLPatterns
     )
 
+    Begin {
+
+    }
+    
     Process {
         if ((-not $allowedURLPatterns) -and (-not $blockedURLPatterns) ) {
             Write-Host "You must provide al least one of the content filtering patterns" -ForegroundColor Red
@@ -215,7 +224,7 @@ function Add-MerakiNetworkApplianceContentFilteringRules() {
             }
         }
     
-        Update-MerakiNetworkApplianceContentFiltering -Id $Id -ContentFilteringRules $Cfr
+        Update-MerakiApplianceContentFiltering -Id $Id -ContentFilteringRules $Cfr
     }
     <#
     .SYNOPSIS
@@ -236,9 +245,16 @@ function Add-MerakiNetworkApplianceContentFilteringRules() {
     #>
 }
 
-Set-Alias -Name AddMNetAppCFR -Value Add-MerakiNetworkApplianceContentFilteringRules -Option ReadOnly
+Set-Alias -Name AddMNetAppCFR -Value Add-MerakiApplianceContentFilteringRules -Option ReadOnly
+Set-Alias -Name Add-MerakiNetworkApplianceContentFilteringRules -Value Add-MerakiApplianceContentFilteringRules -Option ReadOnly
+Set-Alias -Name AddMAppCFR -Value Add-MerakiApplianceContentFilteringRules -Option ReadOnly
 
-function Remove-MerakiNetworkApplianceContentFilteringRules () {
+function Remove-MerakiApplianceContentFilteringRules () {
+    [CmdletBinding(
+        DefaultParameterSetName = 'default', 
+        SupportsShouldProcess,
+        ConfirmImpact = 'high'
+    )]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -271,8 +287,10 @@ function Remove-MerakiNetworkApplianceContentFilteringRules () {
             }
             $cfr.blockedUrlPatterns = $BUPList.ToArray()
         }
-
-        Update-MerakiNetworkApplianceContentFiltering -id $id -ContentFilteringRules $cfr
+        $NetworkName = (Get-MerakiNetwork -Id $Id).Name
+        if ($PSCmdlet.ShouldProcess("Network: $($NetworkName)", "Remove content filtering rules")) {
+            Update-MerakiNetworkApplianceContentFiltering -id $id -ContentFilteringRules $cfr
+        }
     }
     <#
     .SYNOPSIS
@@ -293,10 +311,14 @@ function Remove-MerakiNetworkApplianceContentFilteringRules () {
     #>
 }
 
-set-Alias -Name RemoveMNetAppCfr -Value Remove-MerakiNetworkApplianceContentFilteringRules -Option ReadOnly
+Set-Alias -Name RemoveMNetAppCfr -Value Remove-MerakiNetworkApplianceContentFilteringRules -Option ReadOnly
+Set-Alias -name Remove-MerakiNetworkApplianceContentFilteringRules -Value Remove-MerakiApplianceContentFilteringRules -Option ReadOnly
+Set-Alias -Name RemoveMAppCfr -Value Remove-MerakiNetworkApplianceContentFilteringRules -Option ReadOnly
+#endregion
 
+#region Ports
 function Get-MerakiAppliancePorts() {
-    [cmdletbinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -307,6 +329,7 @@ function Get-MerakiAppliancePorts() {
     )
 
     Begin {
+
         $Headers = Get-Headers
     }
 
@@ -315,6 +338,9 @@ function Get-MerakiAppliancePorts() {
 
         try {
             $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            $response | ForEach-Object {
+                $_ | Add-Member -MemberType NoteProperty -Name NetworkId -Value $Id
+            }
             return $response
         }catch {
             throw $_
@@ -322,7 +348,7 @@ function Get-MerakiAppliancePorts() {
     }
     <#
     .SYNOPSIS
-    Returns the port copnfiguration for the Network Appliance.
+    Returns the port configuration for the Network Appliance.
     .PARAMETER id
     The network Id.
     .OUTPUTS
@@ -332,8 +358,139 @@ function Get-MerakiAppliancePorts() {
 
 Set-Alias -Name GMAppPorts -value Get-MerakiAppliancePorts -Option ReadOnly
 
-function Get-MerakiNetworkApplianceStaticRoutes() {
+function Get-MerakiAppliancePort() {
     [CmdletBinding()]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('Id')]
+        [string]$NetworkId,
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [string]$Number
+    )
+
+    Begin {
+        $Headers = Get-Headers
+    }
+
+    Process {
+        $Uri = "{0}/networks/{1}/appliance/ports/{2}" -f $BaseURI, $NetworkId, $number
+
+        try {
+            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Return per-port VLAN settings for a single MX port.
+    .PARAMETER id
+    The ID of the Network
+    .PARAMETER Number
+    The port number
+    .OUTPUTS
+    An Appliance port object.
+    #>
+}
+
+Set-Alias -Name Get-MerakiNetworkAppliancePort -Value Get-MerakiAppliancePort -Option ReadOnly
+
+
+function Set-MerakiAppliancePort() {
+    [CmdletBinding()]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('Id')]
+        [string]$NetworkId,
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [string]$Number,
+        [int]$VlanId,
+        [Parameter(Mandatory)]
+        [ValidateSet('access','trunk')]
+        [string]$Type,
+        [ValidateSet('open', '8021x-radius', 'mac-radius', 'hybris-radius')]
+        [ValidateScript({
+            $_ -and $Type -eq 'access'
+        }, ErrorMessage = 'Parameter AccessPolicy Can only be used with a access port.')]
+        [string]$AccessPolicy,
+        [ValidateScript({
+            $_ -and $Type -eq 'trunk'
+        }, ErrorMessage = "Parameter AllowedVLANS can only be used with a trunk port.")]
+        [string]$AllowedVLANS,
+        [ValidateScript({
+            $_ -and $Type -eq 'trunk'
+        }, ErrorMessage = 'Parameter DropUnTaggedTraffic can only be used with a trunk port. ')]
+        [switch]$DropUntaggedTraffic,
+        [switch]$Enabled
+    )
+
+    Begin {
+        $Headers = Get-Headers
+
+        $_Body = @{}
+
+        if ($VlanId) {$_Body.Add("vlan", $VlanId)}
+        if ($Type) {$_Body.Add("type", $Type)}
+        if ($AccessPolicy) {$_Body.Add("accessPolicy", $AccessPolicy)}
+        if ($AllowedVLANS) {$_Body.add("allowedVlans", $AllowedVLANS)}
+        if ($DropUntaggedTraffic) {$_Body.Add("dropUntaggedTraffic", $true)}
+        if ($Enabled) {$_Body.Add("enabled", $true)}
+
+        $Body = $_Body | ConvertTo-Json -Depth 3 -Compress
+    }
+
+    Process{
+        $Uri = "{0}/networks/{1}/appliance/ports/{2}" -f $BaseURI, $NetworkId, $Number
+
+        try {
+            $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $Body
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Update the per-port VLAN settings for a single MX port.
+    .PARAMETER NetworkId
+    The Id of the network
+    .PARAMETER Number
+    The port number to be updated.
+    .PARAMETER VlanId
+    Native VLAN when the port is in Trunk mode. Access VLAN when the port is in Access mode.
+    .PARAMETER Type
+    The type of the port: 'access' or 'trunk'.
+    .PARAMETER AccessPolicy
+    The name of the policy. Only applicable to Access ports. Valid values are: 'open', '8021x-radius', 'mac-radius', 'hybris-radius' for MX64 or Z3 or any MX supporting the per port authentication feature. Otherwise, 'open' is the only valid value and 'open' is the default value if the field is missing.
+    .PARAMETER AllowedVLANS
+    Comma-delimited list of the VLAN ID's allowed on the port, or 'all' to permit all VLAN's on the port.
+    .PARAMETER DropUntaggedTraffic
+    Trunk port can Drop all Untagged traffic. When true, no VLAN is required. Access ports cannot have dropUntaggedTraffic set to true.
+    .OUTPUTS
+    A port object.
+    #>
+}
+
+Set-Alias -Name Set-MerakiNetworkAppliancePort -Value Set-MerakiAppliancePort -Option ReadOnly
+#endregion
+
+#region Static Routes
+
+function Get-MerakiApplianceStaticRoutes() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -347,15 +504,14 @@ function Get-MerakiNetworkApplianceStaticRoutes() {
     $Headers = Get-Headers
 
     try {
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
-
+        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect        
         return $response
     } catch {
         throw $_
     }
     <#
     .SYNOPSIS 
-    Returns the stauc routes for this network appliance.
+    Returns the static routes for this network appliance.
     .PARAMETER id
     The Network Id.
     .OUTPUTS 
@@ -364,10 +520,185 @@ function Get-MerakiNetworkApplianceStaticRoutes() {
 }
 
 Set-Alias -Name GMNetAppRoutes -Value Get-MerakiNetworkApplianceStaticRoutes -Option ReadOnly
+Set-Alias -Name Get-MerakiNetworkApplianceStaticRoutes -Value Get-MerakiApplianceStaticRoutes -Option ReadOnly
+Set-Alias -Name GMAppRoutes -Value Get-MerakiNetworkApplianceStaticRoutes -Option ReadOnly
+
+function Add-MerakiApplianceStaticRoute() {
+    [CmdletBinding()]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$id,
+        [Parameter(Mandatory)]
+        [string]$Name,
+        [Parameter(Mandatory)]
+        [string]$Subnet,
+        [Parameter(Mandatory)]
+        [Alias('GatewayIp')]
+        [string]$NextHop,
+        [Alias('GatewayVlanID')]
+        [string]$NextHopVlanID
+    )
+
+    Begin {
+        $Headers = Get-Headers
+
+        $_Body = @{
+            name = $Name
+            subnet = $Subnet
+            gatewayIp = $NextHop
+        }
+
+        if ($NextHopVlanID) {
+            $_Body.Add("gatewayVlanId", $NextHopVlanID)
+        }
+
+        $body = $_Body | ConvertTo-Json -Depth 3
+    }
+
+    Process {
+        $Uri = "{0}/networks/{1}/appliance/staticRoutes" -f $BaseURI, $Id
+        try {
+            $response = Invoke-RestMethod -Method Post -Uri $Uri -Headers $Headers -Body $body            
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Adds a static routes for an MX or teleworker network.
+    .PARAMETER id
+    The Id of the Network.
+    .PARAMETER Name
+    The name of the new static route
+    .PARAMETER Subnet
+    The subnet of the static route
+    .PARAMETER GatewayIp
+    The gateway IP (next hop) of the static route.
+    .PARAMETER GatewayVlanIDGIthub
+    .OUTPUTS
+    An array of static route objects.
+    #>    
+}
+
+function Set-MerakiApplianceStaticRoute() {
+    [CmdletBinding()]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [string]$NetworkId,
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('RouteId')]
+        [string]$Id,        
+        [string]$Name,
+        [switch]$Disable,
+        [string]$Subnet,
+        [Alias('GatewayIp')]
+        [string]$NextHopIp,
+        [Alias('GatewayVlanID')]
+        [string]$NextHopVlanID
+    )
+
+    $Headers = Get-Headers
+
+    $_Body = @{}
+    if ($Name) {
+        $_Body.Add("name", $Name)
+    }
+    if ($Disable.IsPresent) {
+        $_Body.Add("enabled", $false)
+    } else {
+        $_Body.Add("enabled", $true)
+    }
+    if ($subnet) {
+        $_Body.Add("subnet", $subnet)
+    }
+    if ($NextHopIp) {
+        $_Body.Add("gatewayIp", $NextHopIp)
+    }
+    if ($NextHopVlanID) {
+        $_Body.Add("gatewayVlanId", $NextHopVlanID)
+    }
+
+    $body = $_Body | ConvertTo-Json -Depth 3 -Compress
+
+    $Uri = "{0}/networks/{1}/appliance/staticRoutes/{0}" -F $BaseURI, $NetworkId, $ID
+
+    try {
+        $response = Invoke-RestMethod -Method Put -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
+        return $response
+    } catch {
+        throw $_
+    }
+    <#
+    .DESCRIPTION
+    Update a static route for an MX or teleworker network.
+    .PARAMETER NetworkId
+    The ID of the network
+    .PARAMETER Id
+    The Id of the static route.
+    .PARAMETER Name
+    The name of the static route.
+    .PARAMETER Disable
+    Disable the static route. Omitting this parameter will enable the static route.
+    .PARAMETER Subnet
+    The subnet of the static route
+    .PARAMETER NextHopIp
+    The next hop IP of the static route.
+    .PARAMETER NextHopVlanID
+    The next hop IP VLAN ID of the static route.
+    #>
+}
+
+function Remove-MerakiApplianceStaticRoute() {
+    [CmdletBinding(
+        SupportsShouldProcess,
+        ConfirmImpact = 'high'
+    )]
+    Param (
+        [Parameter(Mandatory)]
+        [Alias('NetworkId')]
+        [string]$NetworkId,
+        [Parameter(Mandatory)]
+        [Alias('StaticRouteId')]
+        [string]$id
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/appliance/staticRoutes/{2}" -f $BaseURI, $NetworkId, $Id
+
+    if ($PSCmdlet.ShouldProcess("Static route with Id: $Id", "Delete")) {
+        try {
+            $response = Invoke-RestMethod -Method Delete -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Delete a static route from an MX or teleworker network.
+    .PARAMETER NetworkId
+    The id of the network.
+    .PARAMETER id
+    The Id of the static route.
+    #>
+}
+#endregion
 
 #region VLANs
-function Get-MerakiNetworkApplianceVLANS() {
-    [cmdletbinding()]
+function Get-MerakiApplianceVLANS() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -375,7 +706,9 @@ function Get-MerakiNetworkApplianceVLANS() {
             ValueFromPipelineByPropertyName = $true)]
         [string]$id
     )
+
     Begin {
+    
         $Headers = Get-Headers       
     }
 
@@ -383,7 +716,7 @@ function Get-MerakiNetworkApplianceVLANS() {
         $Uri = "{0}/networks/{1}/appliance/vlans" -f $BaseURI, $id
 
         try {
-            $response =  Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            $response =  Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect            
             return $response
         } catch {
             throw $_
@@ -400,9 +733,11 @@ function Get-MerakiNetworkApplianceVLANS() {
 }
 
 Set-Alias -Name GMNetAppVLANs -Value Get-MerakiNetworkApplianceVLANS -Option ReadOnly
+Set-Alias -Name Get-MerakiNetworkApplianceVLANS -Value Get-MerakiApplianceVLANS -Option ReadOnly
+Set-Alias -Name GMAppVLANs -Value Get-MerakiApplianceVLANS -Option ReadOnly
 
-function Get-MerakiNetworkApplianceVLAN() {
-    [cmdletbinding()]    
+function Get-MerakiApplianceVLAN() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]    
     Param(
         [Parameter(
             Mandatory = $true,
@@ -415,7 +750,7 @@ function Get-MerakiNetworkApplianceVLAN() {
             ValueFromPipelineByPropertyName = $true)]
         [string]$id
     )
-    
+   
     $Uri = "{0}/networks/{1}/appliance/vlans/{2}" -f $BaseURI, $networkId, $id
     $Headers = Get-Headers
 
@@ -438,9 +773,12 @@ function Get-MerakiNetworkApplianceVLAN() {
     #>
 }
 
-Set-Alias -name GMNetAppVLAN -Value Get-MerakiNetworkApplianceVLAN -Option ReadOnly
+Set-Alias -Name GMNetAppVLAN -Value Get-MerakiApplianceVLAN -Option ReadOnly
+Set-Alias -Name Get-MerakiNetworkApplianceVLAN -Value Get-MerakiApplianceVLAN -Option ReadOnly
+Set-Alias -Name GMAppVLAN -Value Get-MerakiApplianceVLAN -Option ReadOnly
 
-function Add-MerakiNetworkApplianceVlan() {
+function Add-MerakiApplianceVlan() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
@@ -456,7 +794,7 @@ function Add-MerakiNetworkApplianceVlan() {
         [string]$CIDR,
         [int]$Mask,
         [switch]$Ipv6Enabled,
-        [hashtable]$Ipv6PrefixAssignments,
+        [hashtable[]]$Ipv6PrefixAssignments,
         [switch]$MandatoryDHCP
     )
 
@@ -496,10 +834,43 @@ function Add-MerakiNetworkApplianceVlan() {
     } catch {
         throw $_
     }
+    <#
+    .DESCRIPTION
+    Creates a VLAN on the appliance in the specified network.
+    .PARAMETER NetworkId
+    The ID of the network to create the VLAN.
+    .PARAMETER VlanId
+    The VLAN ID of the new VLAN (must be between 1 and 4094).
+    .PARAMETER Name
+    The name of the new VLAN.
+    .PARAMETER Subnet
+    The subnet of the VLAN.
+    .PARAMETER ApplianceIp
+    The local IP of the appliance on the VLAN
+    .PARAMETER GroupPolicyId
+    The id of the desired group policy to apply to the VLAN
+    .PARAMETER TemplateVlanType
+    Type of subnetting of the VLAN. Applicable only for template network. Valid values are 'same', 'unique'.
+    .PARAMETER CIDR
+    CIDR of the pool of subnets. Applicable only for template network. Each network bound to the template will automatically pick a subnet from this pool to build its own VLAN.
+    .PARAMETER Mask
+    Mask used for the subnet of all bound to the template networks. Applicable only for template network.
+    .PARAMETER Ipv6Enabled
+    Enable IPv6 on VLAN.
+    .PARAMETER Ipv6PrefixAssignments
+    Prefix assignments on the VLAN
+    .PARAMETER MandatoryDHCP
+    Mandatory DHCP will enforce that clients connecting to this VLAN must use the IP address assigned by the DHCP server. Clients who use a static IP address won't be able to associate. Only available on firmware versions 17.0 and above
+    #>
 }
+Set-Alias -Name Add-MerakiNetworkApplianceVlan -Value Add-MerakiApplianceVlan
 
-Function Remove-MerakiNetworkApplianceVlan() {
-    [CmdletBinding(SupportsShouldProcess)]
+Function Remove-MerakiApplianceVlan() {
+    [CmdletBinding(
+        SupportsShouldProcess, 
+        ConfirmImpact = 'High',
+        DefaultParameterSetName = 'default'
+    )]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
@@ -511,7 +882,7 @@ Function Remove-MerakiNetworkApplianceVlan() {
 
     $Uri = "{0}/networks/{1}/appliance/vlans/{2}" -f $BaseURI, $NetworkId, $VlanId
 
-    if ($PSCmdlet.ShouldProcess("Delete", "VLAN ID $VlanId")) {
+    if ($PSCmdlet.ShouldProcess("VLAN ID $VlanId", "Delete")) {
         try {
             $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
@@ -531,15 +902,20 @@ Function Remove-MerakiNetworkApplianceVlan() {
     #>
 }
 
-function Set-MerakiNetworkApplianceVLAN() {
-    [CmdletBinding()]
+Set-Alias -Name Remove-MerakiNetworkApplianceVlan -Value Remove-MerakiApplianceVlan -Option ReadOnly
+
+function Set-MerakiApplianceVLAN() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
-            Mandatory = $true
+            Mandatory,
+            ValueFromPipelineByPropertyName
         )]
-        [Alias("NetworkId")]
-        [string]$id,
-        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName)]
+        [Alias('id')]
         [string]$VlanId,
         [string]$VlanName,
         [String]$ApplianceIp,
@@ -547,11 +923,11 @@ function Set-MerakiNetworkApplianceVLAN() {
         [string]$GroupPolicyId,
         [ValidateSet("same","unique")]
         [string]$TemplateVlanType,
-        [string]$TranslateVPNSubnet,
+        [string]$VpnNatSUbnet,
         [string]$CIDR,
         [string]$Mask,
         [ValidateScript({$_ -is [hashtable]})]
-        [hashtable]$fixedIpAssignments,
+        [hashtable[]]$fixedIpAssignments,
         [hashtable[]]$ReservedIpRanges,
         [string]$DnsNameServers,
         [ValidateSet("Run a DHCP Server","Relay DHCP to another Server","Do not respond to DHCP requests")]
@@ -565,92 +941,100 @@ function Set-MerakiNetworkApplianceVLAN() {
         [bool]$DhcpBootOptionEnabled,
         [string]$DhcpBootNextServer,
         [string]$DhcpBootFilename,
-        [hashtable]$DhcpOptions,
-        [hashtable]$IPv6,
-        [bool]$MandatoryDhcp,
-        [string]$VpnNatSubnet
+        [hashtable[]]$DhcpOptions,
+        [switch]$Ipv6Enabled,
+        [hashtable[]]$IPv6PrefixAssignments,
+        [bool]$MandatoryDhcp
     )
+
+    Begin {
     
-    $Headers = Get-Headers
+        $Headers = Get-Headers
 
-    # Return the network Info so we can determine is thi snetwork is assinged to a template.
-    $Network = Get-MerakiNetwork -networkID $id
-
-    # check for Template only parameters.
-    if ($mask -or $CIDR -or $TemplateVlanType) {
-        if ($Network.$_isBoundToConfigTemplate -eq $false) {
-            Throw "Parameters 'mask', 'CIDR' and TemplateVLanType are only applicable to template networks."
+        $_body = @{}
+        if ($name) {
+            $_.Body.Add("name", $Name)
         }
+        if ($ApplianceIp) {
+            $_body.Add("applianceIp", $ApplianceIp)
+        }
+        if ($subnet) {
+            $_body.Add("subnet", $subnet)
+        }
+        if ($GroupPolicyId) {
+            $_body.Add("groupPolicyId", $GroupPolicyId)
+        }
+        if ($TemplateVlanType) {
+            $_body.Add("templateVlanType", $TemplateVlanType)
+        }
+        if ($CIDR) {
+            $_body.Add("cidr", $CIDR)
+        }
+        if ($Mask) {
+            $_body.Add("mask", $Mask)
+        }
+        if ($fixedIpAssignments) {
+            $_body.Add("fixedIpAssignments", $fixedIpAssignments)
+        }
+        if ($ReservedIpRanges) {
+            $_body.Add("reservedIpRanges", $ReservedIpRanges)
+        }
+        if ($DnsNameServers) {
+            $_body.Add("dnsNameservers", $DnsNameServers.Replace(",",[char]10))
+        }
+        if ($DhcpHandling) {
+            $_body.Add("dhcpHandling", $DhcpHandling)
+        }
+        if ($DhcpRelayServerIPs) {
+            $_body.Add("dhcpRelayServerIps", $DhcpRelayServerIPs)
+        }
+        if ($DhcpLeaseTime) {
+            $_body.Add("dhcpLeaseTime", $DhcpLeaseTime)
+        }
+        if ($DhcpBootOptionEnabled) {
+            $_body.Add("dhcpBootOptionsEnabled", $DhcpBootOptionEnabled)
+        }
+        if ($DhcpBootNextServer) {
+            $_body.Add("dhcpBootNextServer", $DhcpBootNextServer)
+        }
+        if ($DhcpBootFilename) {
+            $_body.Add("dhcpBoofFilename", $DhcpBootFilename)
+        }
+        if ($Ipv6Enabled) {
+            $_Body.Add("ipv6", @{
+                "enabled" = $true
+                "prefixAssignments" = $Ipv6PrefixAssignments
+            })        
+        }
+        if ($MandatoryDhcp) {
+            $_body.Add("mandatoryDhcp", $MandatoryDhcp)
+        }
+        if ($VpnNatSubnet) {
+            $_body.Add("vpnNatSubnet", $VpnNatSubnet)
+        }
+
+        $body = $_body | ConvertTo-Json -Depth 10 -Compress
     }
 
-    $Uri = "{0}/networks/{1}/appliance/vlans/{2}" -f $BaseURI, $id, $VlanId
+    Process {
+        # Return the network Info so we can determine is this network is assigned to a template.
+        $Network = Get-MerakiNetwork -networkID $NetworkId
 
-    $_body = @{}
-    if ($name) {
-        $_.Body.Add("name", $Name)
-    }
-    if ($ApplianceIp) {
-        $_body.Add("applianceIp", $ApplianceIp)
-    }
-    if ($subnet) {
-        $_body.Add("subnet", $subnet)
-    }
-    if ($GroupPolicyId) {
-        $_body.Add("groupPolicyId", $GroupPolicyId)
-    }
-    if ($TemplateVlanType) {
-        $_body.Add("templateVlanType", $TemplateVlanType)
-    }
-    if ($CIDR) {
-        $_body.Add("cidr", $CIDR)
-    }
-    if ($Mask) {
-        $_body.Add("mask", $Mask)
-    }
-    if ($fixedIpAssignments) {
-        $_body.Add("fixedIpAssignments", $fixedIpAssignments)
-    }
-    if ($ReservedIpRanges) {
-        $_body.Add("ReservedIpRanges", $ReservedIpRanges)
-    }
-    if ($DnsNameServers) {
-        $_body.Add("dnsNameservers", $DnsNameServers)
-    }
-    if ($DhcpHandling) {
-        $_body.Add("dhcpHandling", $DhcpHandling)
-    }
-    if ($DhcpRelayServerIPs) {
-        $_body.Add("dhcpRelayServerIps", $DhcpRelayServerIPs)
-    }
-    if ($DhcpLeaseTime) {
-        $_body.Add("dhcpLeaseTime", $DhcpLeaseTime)
-    }
-    if ($DhcpBootOptionEnabled) {
-        $_body.Add("dhcpBootOptionsEnabled", $DhcpBootOptionEnabled)
-    }
-    if ($DhcpBootNextServer) {
-        $_body.Add("dhcpBootNextServer", $DhcpBootNextServer)
-    }
-    if ($DhcpBootFilename) {
-        $_body.Add("dhcpBoofFilename", $DhcpBootFilename)
-    }
-    if ($IPv6) {
-        $_body.Add("ipv6", $IPv6)
-    }
-    if ($MandatoryDhcp) {
-        $_body.Add("mandatoryDhcp", $MandatoryDhcp)
-    }
-    if ($VpnNatSubnet) {
-        $_body.Add("vpnNatSubnet", $VpnNatSubnet)
-    }
+        # check for Template only parameters.
+        if ($mask -or $CIDR -or $TemplateVlanType) {
+            if ($Network.$_isBoundToConfigTemplate -eq $false) {
+                Throw "Parameters 'mask', 'CIDR' and TemplateVLanType are only applicable to template networks."
+            }
+        }
 
-    $body = $_body | ConvertTo-Json -Depth 10 -Compress
+        $Uri = "{0}/networks/{1}/appliance/vlans/{2}" -f $BaseURI, $NetworkId, $VlanId
 
-    Try {
-        $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
-        return $response
-    } catch {
-        Throw $_
+        Try {
+            $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
+            return $response
+        } catch {
+            Throw $_
+        }
     }
     <#
     .SYNOPSIS
@@ -671,17 +1055,238 @@ function Set-MerakiNetworkApplianceVLAN() {
     .ID of the group policy to apply to this VLAN"
     .PARAMETER TemplateVlanType
     "Type of subnetting of the VLAN. Applicable only for template network"
-    .PARAMETER TranslateVPNSubnet
-
+    .PARAMETER VpnNatSUbnet
+    The translated VPN subnet if VPN and VPN subnet translation are enabled on the VLAN
+    .PARAMETER CIDR
+    CIDR of the pool of subnets. Applicable only for template network. Each network bound to the template will automatically pick a subnet from this pool to build its own VLAN.
+    .PARAMETER Mask
+    Mask used for the subnet of all bound to the template networks. Applicable only for template network.
+    .PARAMETER fixedIpAssignments
+    The DHCP fixed IP assignments on the VLAN. This should be an object that contains mappings from MAC addresses to objects that themselves each contain "ip" and "name" string fields. See the sample request/response for more details.
+    A hash table that contains the following name value pairs.
+    MAC: The MAC address of the device to assign the IP to.
+    IP: the IP to assign. This must be withing the IP pool of the DHCP server.
+    Name: A descriptive name for the device.
+    .PARAMETER ReservedIpRanges
+    The DHCP reserved IP ranges on the VLAN
+    A hash table with the following name value pairs.
+    comment: A text comment for the reserved range
+    start: The first IP in the reserved range
+    end: The last IP in the reserved range
+    .PARAMETER DnsNameServers
+    The DNS nameservers used for DHCP responses, either "upstream_dns", "google_dns", "opendns", or a newline separated string of IP addresses or domain names
+    .PARAMETER DhcpHandling
+    The appliance's handling of DHCP requests on this VLAN. One of: 'Run a DHCP server', 'Relay DHCP to another server' or 'Do not respond to DHCP requests'
+    .PARAMETER DhcpRelayServerIPs
+    The IPs of the DHCP servers that DHCP requests should be relayed to. Must be an array od strings.
+    .PARAMETER DhcpLeaseTime
+    The term of DHCP leases if the appliance is running a DHCP server on this VLAN. One of: '30 minutes', '1 hour', '4 hours', '12 hours', '1 day' or '1 week'
+    .PARAMETER DhcpBootOptionEnabled
+    Use DHCP boot options specified in other properties.
+    .PARAMETER DhcpBootNextServer
+    DHCP boot option to direct boot clients to the server to load the boot file from
+    .PARAMETER DhcpBootFilename
+    DHCP boot option for boot filename
+    .PARAMETER DhcpOptions
+    An array of hashtables with the following name/value pairs.
+    .PARAMETER Ipv6Enabled
+    Enable IPv6 on VLAN.
+    .PARAMETER IPv6PrefixAssignments
+    An array of hashtables containing IPv6 prefix assignments. 
+    The hashtable must have the following name/value pairs.
+    prefixAssignments: array[] Prefix assignments on the VLAN
+    staticApplianceIp6: string Manual configuration of the IPv6 Appliance IP
+    staticPrefix: string  Manual configuration of a /64 prefix on the VLAN
+    autonomous: boolean Auto assign a /64 prefix from the origin to the VLAN
+    .PARAMETER MandatoryDhcp
+    Mandatory DHCP will enforce that clients connecting to this VLAN must use the IP address assigned by the DHCP server. Clients who use a static IP address won't be able to associate. Only available on firmware versions 17.0 and above
     #>
 }
 
-Set-Alias -Name SetMNAppVLAN  -Value Set-MerakiNetworkApplianceVLAN
+Set-Alias -Name SetMNAppVLAN  -Value Set-MerakiNetworkApplianceVLAN -Option ReadOnly
+Set-Alias -Name Set-MerakiNetworkApplianceVLAN -Value Set-MerakiApplianceVLAN -Option ReadOnly
+#endregion
+
+#region Monitoring
+function Get-MerakiApplianceDhcpSubnets() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
+    Param(
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [string]$serial
+    )
+
+    Begin {        
+        $Headers = Get-Headers
+    }
+
+    Process {
+        $Url = "{0}/devices/{1}/appliance/dhcp/subnets" -f $BaseURI, $Serial
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Url -Headers $Headers -PreserveAuthorizationOnRedirect
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .SYNOPSIS
+    Returns DHCP Subnets for an appliance.
+    .DESCRIPTION
+    Returns information and statistics for an appliances DHCP subnets. Including used count and free count.
+    .PARAMETER serial
+    The serial number of the appliance.
+    .OUTPUTS
+    A collection of Subnet objects.
+    #>
+}
+
+function Get-MerakiApplianceClientSecurityEvents() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [string]$ClientId,
+        [Parameter(
+            Mandatory,
+            ParameterSetName = 'dates'
+        )]
+        [ValidateScript({
+            $_ -gt (Get-Date).AddDays(-791)
+        }, ErrorMessage = "StartDate cannot be more that 791 days prior to today")]
+        [datetime]$StartDate,
+        [Parameter(
+            Mandatory,
+            ParameterSetName = 'dates'
+        )]
+        [ValidateScript({
+            $_ -lt $StartDate.AddDays(791)
+        }, ErrorMessage = "End date cannot be more than 791 days after StartDate")]
+        [datetime]$EndDate,
+        [Parameter(
+            Mandatory,
+            ParameterSetName = 'days'
+        )]
+        [ValidateScript({
+            $_ -lt 791
+        })]
+        [int]$Days,
+        [int]$PerPage       
+    )
+
+    Begin {
+
+        $Headers = Get-Headers
+
+        $Results = [List[PsObject]]::New()
+        
+        if (StartDate) {
+            $query = "?t0={0}" -f ($StartDate.ToString("0"))
+        }
+        if ($EndDate) {
+            if ($query) {
+                $query = "{0}&" -f $query
+            } else {
+                $Query = "?"
+            }
+            $query = "{0}t1={1}" -f $query, ($EndDate.ToString("0"))
+        }
+        if ($Days) {
+            $seconds = [TimeSpan]::FromDays($Days).TotalSeconds
+            if ($query) {
+                $query = "{0}&" -f $query
+            } else {
+                $query = "?"
+            }
+            $Query = "{0}timespan={1}" -f $Query, $seconds
+        }
+        if ($PerPage) {
+            if ($query) {
+                $query = "{0}&" -f $query
+            } else {
+                $query = "?"
+            }
+            $query = "{0}perPage={1}" -f $query, $PerPage
+        }
+    }
+
+    Process {
+        $Uri = "{0}/networks/{1}/appliance/clients/{2}/security/events" -f $BaseURI, $Id, $ClientId
+
+        try {
+
+            $response = Invoke-WebRequest -Method Get -Uri $Uri -Headers -PreserveAuthorizationOnRedirect
+
+            [List[PsObject]]$result = $response.Content | ConvertFrom-Json
+            if ($result) {
+                $Results.AddRange($result)
+            }
+            $page = 1
+            if ($Pages -ne 1) {
+                $done = $false
+                do {
+                    if ($response.RelationLink['next']) {
+                        $Uri = $response.RelationLink['next']
+                        $response = Invoke-WebRequest -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+                        [List[PsObject]]$result = $response.Content | ConvertFrom-Json
+                        if ($result) {
+                            $Results.AddRange($result)
+                        }
+                        $page += 1
+                        if ($page -gt $Pages) {
+                            $done = $true
+                        }
+                    } else {
+                        $done = $true
+                    }
+                } until ($done)
+            }
+            return $Results
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Returns the security events for a client. Clients can be identified by a client key or either the MAC or IP depending on whether the network uses Track-by-IP.
+    .PARAMETER Id
+    The ID of the network.
+    .PARAMETER ClientId
+    The ID of the client.
+    .PARAMETER StartDate
+    The beginning of the timespan for the data. Data is gathered after the specified StartDate value. The maximum lookback period is 791 days from today.
+    .PARAMETER EndDate
+    The end of the timespan for the data. t1 can be a maximum of 791 days after StartDate.
+    .PARAMETER Days
+    The timespan for which the information will be fetched. If specifying timespan, do not specify parameters StartDate and EndDate. The value must be less than or equal to 791 days. The default is 31 days.
+    .PARAMETER PerPage
+    The number of entries per page returned. Acceptable range is 3 - 1000. Default is 100.
+    .OUTPUTS
+    An array of security event objects.
+    #>
+}
+
 
 #endregion
 
-function Get-MerakiNetworkApplianceSiteToSiteVPN() {
-    [CmdletBinding()]
+Set-Alias -Name GMNetAppDhcpSubnet -Value Get-MerakiApplianceDhcpSubnets -Option ReadOnly
+Set-ALias -Name Get-MerakiNetworkApplianceDhcpSubnets -Value Get-MerakiNetworkApplianceDhcpSubnets -Option ReadOnly
+Set-Alias -Name GMAppDhcpSubnet -Value Get-MerakiApplianceDhcpSubnets -Option ReadOnly
+
+
+#region VPN
+function Get-MerakiApplianceSiteToSiteVPN() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -691,6 +1296,7 @@ function Get-MerakiNetworkApplianceSiteToSiteVPN() {
         [string]$id,
         [switch]$hr
     )
+
 
     $Uri = "{0}/networks/{1}/appliance/vpn/siteToSiteVpn" -f $BaseURI, $id
     $Headers = Get-Headers
@@ -745,9 +1351,11 @@ function Get-MerakiNetworkApplianceSiteToSiteVPN() {
 }
 
 Set-Alias -Name GMNetAppSSVpn -Value Get-MerakiNetworkApplianceSiteToSiteVPN -Option ReadOnly
+Set-Alias -Name Get-MerakiNetworkApplianceSiteToSiteVPN -Value Get-MerakiApplianceSiteToSiteVPN -Option ReadOnly
+Set-Alias -Name GMAppSSVpn -Value Get-MerakiApplianceSiteToSiteVPN -Option ReadOnly
 
-function Set-MerakiNetworkApplianceSiteToSiteVpn() {
-    [CmdletBinding()]
+function Set-MerakiApplianceSiteToSiteVpn() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]        
         [string]$NetworkId,
@@ -860,238 +1468,58 @@ function Set-MerakiNetworkApplianceSiteToSiteVpn() {
     #>
 }
 
+Set-Alias -Name Set-MerakiNetworkApplianceSiteToSiteVpn -Value Set-MerakiApplianceSiteToSiteVpn -Option ReadOnly
+#endregion
 
-function Get-MerakiApplianceUplinkStatuses() {
-    [CmdletBinding()]
+
+
+
+#region CellularFirewall
+function Get-MerakiApplianceCellularFirewallRules () {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
-            ValueFromPipeline = $true,
-            ValueFromPipelineByPropertyName = $true
-        )]
-        [String]$networkId="*",
-        [Parameter(
-            ValueFromPipeline = $true,
-            ValueFromPipelineByPropertyName = $true
-        )]
-        [String]$serial="*",
-        [string]$profileName
-    )
-
-    $config = Read-Config
-    if ($profileName) {
-        $OrgID = $config.profiles.$profileName
-        if (-not $orgId) {
-            throw "invalid profile name!"
-        }
-    } else {
-        $OrgID = $config.profiles.default
-    }
-
-    $Uri = "{0}/organizations/{1}/appliance/uplink/statuses" -f $BaseURI, $OrgID
-    $Headers = Get-Headers
-
-    try {
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
-
-        return $response | Where-Object {$_.networkID -like $networkID -and $_.serial -like $serial}
-    } catch {
-        throw $_
-    }
-    <#
-    .SYNOPSIS
-    Returns the Uplink status of Meraki Networks.
-    .PARAMETER networkId
-    Filters the output by network Id.
-    .PARAMETER serial
-    Filters the output by Appliance serial number.
-    .PARAMETER profileName
-    Returns uplink status for appliances in this profile. if omitted uses the default profile.
-    .OUTPUTS
-    An array of Meraki uplink objects.
-    #>
-}
-
-Set-Alias -Name GMAppUpStat -value Get-MerakiApplianceUplinkStatuses -Option ReadOnly
-
-function Get-MerakiNetworkApplianceVpnStats() {
-    [cmdletBinding()]
-    Param(
-        [Parameter(
-            Mandatory = $true,
-            ValueFromPipeline = $true,
-            ValueFromPipelineByPropertyName = $true
-        )]
-        [string]$id,
-        [ValidateSet({$_ -is [int]})]
-        [int]$perPage=100,
-        [ValidateSet({$_ -is [int]})]
-        [int]$timespan=5,
-        [switch]$Sumarize,
-        [string]$profileName
-    )
-
-    Begin {
-        $Headers = Get-Headers
-        $config = read-config
-        if ($profileName) {
-            $OrgID = $config.profiles.$profileName
-            if (-not $OrgId) {
-                throw "Invalid profile name!"
-            }
-        } else {
-            $OrgID = $config.profiles.default
-        }
-
-        class vpnPeer {
-            [string]$networkID
-            [string]$networkName
-            [string]$peerNetworkId
-            [string]$peerNetworkName
-            [int]$receivedKilobytes
-            [int]$sentKilobytes
-        }
-
-        class summaryVpnPeer {
-            [string]$networkID
-            [string]$networkName
-            [int]$totalReceivedKilobytes
-            [int]$totalSentKilobytes
-        }
-    }
-
-    Process {
-        $Network = Get-MerakiNetwork -networkID $id
-
-        $Uri = "{0}/organizations/{1}/appliance/vpn/stats" -f $BaseURI, $OrgID
-
-        $TimeSpan_Seconds = (New-TimeSpan -Days $timespan).TotalSeconds
-
-        $Uri = "{0}?perPage={1}&networkIds%5B%5D={2}&timespan={3}" -f $Uri, $timespan, $id, $TimeSpan_Seconds
-
-        try {
-            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
-            
-            $peers = $response.merakiVpnPeers
-            $PeerNetworks = New-object System.Collections.Generic.List[psobject]
-            foreach ($peer in $peers) {
-                $P = [vpnPeer]::New()
-                $P.networkID = $id
-                $P.networkName = $Network.name
-                $P.peerNetworkId = $peer.networkId
-                $P.peerNetworkName = $peer.networkName
-                $P.receivedKilobytes = $peer.usageSummary.receivedInKilobytes
-                $P.sentKiloBytes = $peer.usageSummary.sentInKilobytes
-
-                $PeerNetworks.Add($P)
-            }
-            $vpnPeers = $PeerNetworks.ToArray()
-
-            if ($Sumarize) {   
-                $summary = [summaryVpnPeer]::New()
-                $summary.networkID = $id
-                $Summary.networkName = $Network.name
-                $summary.totalReceivedKilobytes = ($vpnPeers | Measure-Object -Property receivedKilobytes -Sum).Sum
-                $summary.totalSentKilobytes = ($vpnPeers | Measure-Object -Property sentKilobytes -Sum).Sum            
-
-                return $summary
-            } else {
-                $vpnPeers
-            }
-        } catch {
-            throw $_
-        }
-    }
-    <#
-    .SYNOPSIS
-    Returns VPN statistics for the given organization network.
-    .PARAMETER id
-    The Network Id.
-    .PARAMETER perPage
-    The number of entries per page returned. Acceptable range is 3 - 300. Default is 300.
-    .PARAMETER timespan
-    Number of seconds to return data for. default = 5.
-    .PARAMETER Sumarize
-    Summerize the statistics,
-    .PARAMETER profileName
-    Return statistics for this profile. Note: The network ID must exist in this organization.
-    .OUTPUTS 
-    AN array op VPN peer objects or a summary object.
-    #>
-}
-
-Set-Alias -Name GMAVpnStats -Value Get-MerakiNetworkApplianceVpnStats -Option ReadOnly
-
-function Get-MerakiNetworkApplianceDhcpSubnets() {
-    [CmdletBinding()]
-    Param(
-        [Parameter(
-            Mandatory = $true,
-            ValueFromPipelineByPropertyName = $true
-        )]
-        [string]$serial
-    )
-
-    Begin {
-        $Headers = Get-Headers
-
-    }
-
-    Process {
-        $Url = "{0}/devices/{1}/appliance/dhcp/subnets" -f $BaseURI, $Serial
-        try {
-            $response = Invoke-RestMethod -Method GET -Uri $Url -Headers $Headers -PreserveAuthorizationOnRedirect
-            return $response
-        } catch {
-            throw $_
-        }
-    }
-    <#
-    .SYNOPSIS
-    Returns DHCP Subnets for an appliance.
-    .DESCRIPTION
-    Returns inforation and statistics for an appliances DHCP subnets. Including used count and free count.
-    .PARAMETER serial
-    The serial number of the appliance.
-    .OUTPUTS
-    A collection of Subnet objects.
-    #>
-}
-
-Set-Alias -Name GMNetAppDhcpSubnet -Value Get-MerakiNetworkApplianceDhcpSubnets -Option ReadOnly
-
-#region Firewall
-function Get-MerakiNetworkApplianceCellularFirewallRules () {
-    [CmdletBinding()]
-    Param(
-        [Parameter(Mandatory = $true)]
+            Mandatory,
+            ValueFromPipelineByPropertyName)]
         [Alias('NetworkId')]
-        [string]$Id        
+        [string]$Id
     )
 
     Begin {
         $Headers = Get-Headers
-
-        $Uri = "{0}/network/{1}/appliance/firewall/cellularFirewallRules" -f $BaseURI, $Id        
     }
     
     Process {
+        $Uri = "{0}/networks/{1}/appliance/firewall/cellularFirewallRules" -f $BaseURI, $Id        
 
         $Network = Get-MerakiNetwork -networkID $Id
 
         try {
             $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
-            $response | Add-Member -MemberType NoteProperty -Name "NetworkId" -Value $Id
-            $response | Add-Member -MemberType NoteProperty -Name "NetworkName" -Value $Network.Name
-            return $response
+            $rules = $response.rules
+            $number = 1
+            $rules | ForEach-Object {
+                $_ | Add-Member -MemberType NoteProperty -Name "NetworkId" -Value $Id
+                $_ | Add-Member -MemberType NoteProperty -Name "NetworkName" -Value $Network.Name
+                $_ | Add-Member -MemberType NoteProperty -Name "RuleNumber" -Value $number
+                $number += 1
+            }
+            return $rules
         }
         catch {
             throw $_
         }
     }
+    <#
+    .DESCRIPTION
+    Returns the Cellular firewall rules for this network.
+    .PARAMETER Id
+    The Network ID to retrieve the rules from.
+    #>
 }
 
-function Set-MerakiNetworkApplianceCellularFirewallRules() {
-    [CmdletBinding()]
+function Set-MerakiApplianceCellularFirewallRules() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [Alias('NetworkId')]
@@ -1104,24 +1532,154 @@ function Set-MerakiNetworkApplianceCellularFirewallRules() {
 
     $Uri = "{0}/networks/{1}/appliance/firewall/cellularFirewallRules" -f $BaseURI, $Id
 
-    $body = $Rules | ConvertTo-Json -Depth 4 -Compress
+    # Remove the default rule if it exists.
+    $Rules = $Rules.where({$_.comment -ne 'Default rule'})
 
+    # Remove the RuleNumber, NetworkName, and NetworkId properties if it exists
+    $Rules = $Rules | Select-Object -ExcludeProperty RuleNumber, NetworkId, NetworkName
+
+    $_Rules = @{
+        rules = $Rules
+    }
+
+    $body = $_Rules | ConvertTo-Json -Depth 4 
+
+    $Network = Get-MerakiNetwork -Id $Id
     try {
-        $response = Invoke-RestMethod -Method Put -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
+        $Rules = Invoke-RestMethod -Method Put -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
+        $Number = 1
+        $Rules | ForEach-Object {
+            $_ | Add-Member -MemberType NoteProperty -Name 'NetworkId' -Value $Id
+            $_ | Add-Member -MemberType NoteProperty -Name 'NetworkName' -Value $Network.Name
+            $_ | Add-Member -MemberType NoteProperty -Name 'RuleNumber' -Value $Number
+            $Number += 1
+        }
         return $response
     } catch {
         throw $_
     }
+    <#
+    .DESCRIPTION
+    Update the network's cellular firewall rules
+    .PARAMETER Id
+    The network ID to update the rules on.
+    .PARAMETER Rules
+    An array of objects containing the following properties.
+    comment: string Description of the rule (optional)
+    destCidr*: string Comma-separated list of destination IP address(es) (in IP or CIDR notation), fully-qualified domain names (FQDN) or 'any'
+    destPort: string Comma-separated list of destination port(s) (integer in the range 1-65535), or 'any'
+    policy*: string 'allow' or 'deny' traffic specified by this rule
+    protocol*: string The type of protocol (must be 'tcp', 'udp', 'icmp', 'icmp6' or 'any')
+    srcCidr*: string Comma-separated list of source IP address(es) (in IP or CIDR notation), or 'any' (note: FQDN not supported for source addresses)
+    srcPort: string Comma-separated list of source port(s) (integer in the range 1-65535), or 'any'
+    syslogEnabled: boolean Log this rule to syslog (true or false, boolean value) - only applicable if a syslog has been configured (optional)
+    .NOTES
+    The Rules returned from Get-MerakiApplianceCellularFirewallRules contain the properties RuleNumber, NetworkId, and NetworkName.
+    These properties are removed by this function before being sent to the API endpoint.
+    If you create the rules array manually you do not need to include these properties.
+    Changes to these rules should be done with the associated Add-, Set-, and Remove- functions.
+    #>
 }
 
-function Set-MerakiNetworkApplianceCellularFirewallRule() {
-    [CmdletBinding()]
+function Set-MerakiApplianceCellularFirewallRule() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
-        [Alias('Networkid')]
+        [Alias('NetworkId')]
         [string]$Id,
         [Parameter(Mandatory = $true)]
-        [int]$RuleIndex,
+        [int]$RuleNumber,
+        [ValidateSet('allow','deny')]
+        [string]$Policy,
+        [ValidateSet('tcp', 'udp', 'icmp', 'icmp6', 'any')]
+        [string]$Protocol,
+        [Alias('srcPort')]
+        [string]$SourcePort,
+        [ALias('srcCidr')]
+        [string]$SourceCidr,
+        [Alias('DestCidr')]
+        [string]$DestinationCidr,
+        [Alias('destPort')]
+        [string]$DestinationPort,
+        [switch]$SyslogEnabled,
+        [string]$Comment
+    )
+
+    $Rules = @{}
+    Get-MerakiApplianceCellularFirewallRules -id $Id | ForEach-Object {
+        $Rules.Add($_.RuleNumber, $_)
+    }
+
+    If ($Policy) {
+        $Rules[$RuleNumber].Policy = $Policy
+    }
+    if ($Protocol) {
+        $Rules[$RuleNumber].Protocol = $Protocol
+    }
+    if ($SourceCidr) {
+        $Rules[$RuleNumber].srcCidr = $SourceCidr
+    }
+    if ($SourcePort) {
+        $Rules[$RuleNumber].srcPort = $SourcePort
+    }
+    if ($DestinationCidr) {
+        $Rules[$RuleNumber].destCidr = $DestinationCidr
+    }
+    if ($DestinationPort) {
+        $Rules[$RuleNumber].destPort = $DestinationPort
+    }
+    if ($Comment) {
+        $Rules[$RuleNumber].comment = $Comment
+    }
+    if ($SyslogEnabled) {
+        $Rule[$RuleNumber].syslogEnabled = $true
+    }
+
+    $Rules = $Rules.Values 
+
+    
+    try {
+        $Rules = Set-MerakiApplianceCellularFirewallRules -Id $Id -rules $Rules
+        return $Rules
+    }
+    catch {
+        throw $_
+    }
+    <#
+    .DESCRIPTION
+    Updates a single cellular firewall rule in the specified network.    
+    .PARAMETER Id
+    The ID of the network.
+    .PARAMETER RuleNumber
+    The RuleNumber to update.
+    .PARAMETER Policy
+    'allow' or 'deny' traffic specified by this rule
+    .PARAMETER protocol
+    The type of protocol (must be 'tcp', 'udp', 'icmp', 'icmp6' or 'any')
+    .PARAMETER SourcePort
+    Comma-separated list of source port(s) (integer in the range 1-65535), or 'any'
+    .PARAMETER SourceCidr
+    Comma-separated list of source IP address(es) (in IP or CIDR notation), or 'any' (note: FQDN not supported for source addresses)
+    .PARAMETER DestinationCidr
+    Comma-separated list of destination IP address(es) (in IP or CIDR notation), fully-qualified domain names (FQDN) or 'any'
+    .PARAMETER DestinationPort
+    Comma-separated list of destination port(s) (integer in the range 1-65535), or 'any'
+    .PARAMETER SyslogEnabled
+    Log this rule to syslog (true or false, boolean value) - only applicable if a syslog has been configured (optional)
+    .PARAMETER Comment
+    Description of the rule (optional)
+    #>
+}
+
+function Add-MerakiApplianceCellularFirewallRule() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
+    Param(
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
         [Parameter(Mandatory = $true)]
         [ValidateSet('allow','deny')]
         [string]$Policy,
@@ -1143,125 +1701,102 @@ function Set-MerakiNetworkApplianceCellularFirewallRule() {
         [string]$Comment
     )
 
-    $rules = (Get-MerakiNetworkApplianceCellularFirewallRules -id $Id).rules
+    Begin {
 
-    $alRules = [System.Collections.ArrayList]$rules
-    $alRules.RemoveAt($RuleIndex)
-    $Properties = [PSCustomObject]@{
-        "policy" = $Policy
-        "srcCidr" = $SourceCidr
-        "srcPort" = $SourcePort
-        "protocol" = $protocol
-        "destCidr" = $DestinationCidr
-        "destPort" = $DestinationPort
-        "comment" = $Comment
     }
-    if ($SyslogEnabled.IsPresent) { $properties.Add("syslogEnabled", $SyslogEnabled) }
-    $rule = [PSCustomObject]$Properties
-    
-    $alRules.Insert($RuleIndex, $rule)
-    $newRules = $alRules.ToArray()
-    
-    try {
-        $response = Set-MerakiNetworkApplianceCellularFirewallRules -Id $NetworkId, -rules $newRules
-        return $response
-    }
-    catch {
-        throw $_
-    }
-}
 
-function Add-MerakiNetworkApplianceCellularFirewallRule() {
-    [CmdletBinding()]
-    Param(
-        [Parameter(Mandatory = $true)]
-        [Alias('Networkid')]
-        [string]$Id,
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('allow','deny')]
-        [string]$Policy,
-        [Parameter(Mandatory = $true)]
-        [ValidateSet('tcp', 'udp', 'icmp', 'icmp6', 'any')]
-        [string]$protocol,
-        [Alias('srcPort')]
-        [string]$SourcePort = 'any',
-        [Parameter(Mandatory = $true)]
-        [ALias('srcCidr')]
-        [string]$SourceCidr,
-          [Parameter(Mandatory = $true)]
-        [Alias('DestCidr')]
-        [string]$DestinationCidr,
-        [Alias('destPort')]
-        [string]$DestinationPort = 'any',
-        [switch]$SyslogEnabled,
-        [Parameter(Mandatory = $true)]
-        [string]$Comment
-    )
+    Process {
+        $Rules = Get-MerakiApplianceCellularFirewallRules -Id $Id
 
-    $Rules = (Get-MerakiNetworkApplianceCellularFirewallRules -Id $Id).rules
+        # Remove the default rule
 
-    $Properties = [PSCustomObject]@{
-        "policy" = $Policy
-        "srcCidr" = $SourceCidr
-        "srcPort" = $SourcePort
-        "protocol" = $protocol
-        "destCidr" = $DestinationCidr
-        "destPort" = $DestinationPort
-        "comment" = $Comment
-    }
-    if ($SyslogEnabled.IsPresent) { $properties.Add("syslogEnabled", $SyslogEnabled) }
-    $rule = [PSCustomObject]$Properties
+        
+        $Properties = @{
+            "policy"        = $Policy
+            "srcCidr"       = $SourceCidr
+            "srcPort"       = $SourcePort
+            "protocol"      = $protocol
+            "destCidr"      = $DestinationCidr
+            "destPort"      = $DestinationPort
+            "comment"       = $Comment
+            "RuleNUmber"    = -1
+        }
+        if ($SyslogEnabled.IsPresent) { $properties.Add("syslogEnabled", $SyslogEnabled) }
+        $rule = [PSCustomObject]$Properties
 
-    $Rules += $rule
+        $Rules += $rule
 
-    try {
-        $response = Set-MerakiNetworkApplianceCellularFirewallRules -Id $id, -Rules $Rules
-        return $response
-    }
-    catch {
-        throw $_
-    }
-}
-
-function Remove-MerakiNetworkApplianceCellularFirewallRule() {
-    [CmdletBinding(SupportsShouldProcess)]
-    Param(
-        [Parameter(Mandatory = $true)]
-        [string]$NetworkId,
-        [Parameter(Mandatory = $true)]
-        [int]$RuleIndex
-    )
-
-    $Rules = (Get-MerakiNetworkApplianceCellularFirewallRules -id $NetworkId).Rules
-    $alRules = [System.Collections.ArrayList]$Rules
-
-    $alRules.RemoveAt($RuleIndex)
-
-    $newRules = $alRules.ToArray()
-
-    if ($PSCmdlet.ShouldProcess('DELETE', "Cellular Firewall Rule at index $ruleIndex")) {
         try {
-            $response = Set-MerakiNetworkApplianceCellularFirewallRules -Id $NetworkId -Rules $newRules
+            $response = Set-MerakiNetworkApplianceCellularFirewallRules -Id $id -Rules $Rules
             return $response
         }
         catch {
             throw $_
         }
     }
+    <#
+    Adds a cellular firewall rule to the network
+    .PARAMETER Id
+    The ID of the network.
+    .PARAMETER Policy
+    'allow' or 'deny' traffic specified by this rule
+    .PARAMETER protocol
+    The type of protocol (must be 'tcp', 'udp', 'icmp', 'icmp6' or 'any')
+    .PARAMETER SourcePort
+    Comma-separated list of source port(s) (integer in the range 1-65535), or 'any'
+    .PARAMETER SourceCidr
+    Comma-separated list of source IP address(es) (in IP or CIDR notation), or 'any' (note: FQDN not supported for source addresses)
+    .PARAMETER DestinationCidr
+    Comma-separated list of destination IP address(es) (in IP or CIDR notation), fully-qualified domain names (FQDN) or 'any'
+    .PARAMETER DestinationPort
+    Comma-separated list of destination port(s) (integer in the range 1-65535), or 'any'
+    .PARAMETER SyslogEnabled
+    Log this rule to syslog (true or false, boolean value) - only applicable if a syslog has been configured (optional)
+    .PARAMETER Comment
+    Description of the rule (optional)
+    #>
 }
 
-#endregion
-
-#region Firewalled Services
-function Get-MerakiNetworkApplianceFirewalledServices() {
-    [CmdletBinding()]
+function Remove-MerakiApplianceCellularFirewallRule() {
+    [CmdletBinding(SupportsShouldProcess)]
     Param(
+        [Parameter(Mandatory = $true)]
+        [string]$NetworkId,
+        [Parameter(Mandatory = $true)]
+        [int]$RuleNumber
+    )
+
+    $Rules = Get-MerakiApplianceCellularFirewallRules -id $NetworkId | Where-Object {$_.RuleNumber -ne $RuleNumber} | `
+        Select-Object -ExcludeProperty RuleNumber
+
+
+    if ($PSCmdlet.ShouldProcess("Cellular Firewall Rule number $RuleNumber", 'DELETE')) {
+        try {
+            $response = Set-MerakiApplianceCellularFirewallRules -Id $NetworkId -Rules $Rules
+            return $response
+        }
+        catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Deletes a cellular firewall rule.
+    .PARAMETER NetworkId
+    The ID of the network to remove the rule.
+    .PARAMETER RuleIndex
+    The rule number to be removed.
+    #>
+}
+
+function Get-MerakiApplianceInboundCellularFirewallRules() {
+    [CmdletBinding()]
+    Param (
         [Parameter(
-            Mandatory = $true,
-            ValueFromPipeline = $true,
-            ValueFromPipelineByPropertyName = $true
+            Mandatory,
+            ValueFromPipelineByPropertyName
         )]
-        [Alias('Networkid')]
+        [Alias('NetworkId')]
         [string]$Id
     )
 
@@ -1270,16 +1805,707 @@ function Get-MerakiNetworkApplianceFirewalledServices() {
     }
 
     Process {
-        $Uri = "{0}/networks/{1}/appliance/firewall/firewalledServices" -f $BaseURI, $Id
+        $Uri = "{0}/networks/appliance/firewall/inboundCellularFirewallRule" -f $BaseURI, $Id
+        
         $Network = Get-MerakiNetwork -networkID $Id
+
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            $Number = 1
+            $response | ForEach-Object {
+                $_ | Add-Member -MemberType NoteProperty -Name "NetworkId" -Value $Id
+                $_ | Add-Member -MemberType NoteProperty -Name "NetworkName" -Value $Network.Name
+                $_ | Add-Member -MemberType NoteProperty -Name "RuleNumber" -Value $Number
+                $Number += 1
+            }
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION 
+    Return the inbound cellular firewall rules for an MX network
+    .PARAMETER Id
+    The Id of the network.
+    .OUTPUTS
+    An array of inbound cellular firewall rule objects.
+    #>
+}
+
+function Set-MerakiApplianceInboundCellularFirewallRules () {
+    [CmdletBinding()]
+    param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [Parameter(Mandatory)]
+        [PsObject[]]$Rules
+    )
+
+    Begin {
+        $Headers = Get-Headers
+
+        # Remove the default rule if it exists.
+        $Rules = $Rules.Where({$_.comment -ne "Default rule"})
+
+        # Remove the RuleNumber, NetworkId, amd NetworkName properties if they exists
+        $Rules = $Rules | Select-Object -ExcludeProperty RuleNumber, NetworkId, NetworkName
+
+        $rules = @{
+            rules = $Rules
+        }
+
+        $Body = $rules | ConvertTo-Json -Depth 4 -Compress
+    }
+
+    Process {
+        $Uri = "{0}/networks/{1}/appliance/firewall/inboundCellularFirewallRules" -f $BaseURI, $Id
+
+        $Network = Get-MerakiNetwork -Id $Id
+
+        try {
+            $Rules = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $Body
+            $Number = 1
+            $Rules | ForEach-Object {
+                $_ | Add-Member -MemberType NoteProperty -Name 'NetworkId' -Value $Id
+                $_ | Add-Member -MemberType NoteProperty -Name 'NetworkName' -Value $Network.Name
+                $_ | Add-Member -MemberType NoteProperty -Name 'RuleNumber' -Value $Number
+                $Number += 1
+            }
+            return $response
+        } catch {
+            throw $_
+        }
+
+    }
+    <#
+    .DESCRIPTION
+    Update the inbound cellular firewall rules of an MX network
+    .PARAMETER Id
+    The Id of the network.
+    .PARAMETER Rules
+    An array of inbound cellular firewall rules that include the following properties
+    comment: string Description of the rule (optional)
+    destCidr*: string Comma-separated list of destination IP address(es) (in IP or CIDR notation), fully-qualified domain names (FQDN) or 'any'
+    destPort: string Comma-separated list of destination port(s) (integer in the range 1-65535), or 'any'
+    policy*: string 'allow' or 'deny' traffic specified by this rule
+    protocol*: string The type of protocol (must be 'tcp', 'udp', 'icmp', 'icmp6' or 'any')
+    srcCidr*: string Comma-separated list of source IP address(es) (in IP or CIDR notation), or 'any' (note: FQDN not supported for source addresses)
+    srcPort: string Comma-separated list of source port(s) (integer in the range 1-65535), or 'any'
+    syslogEnabled: boolean Log this rule to syslog (true or false, boolean value) - only applicable if a syslog has been configured (optional)
+    .NOTES
+    The Rules returned from Get-MerakiApplianceInboundFirewallRules contain the properties RuleNumber, NetworkId, and NetworkName.
+    These properties are removed by this function before being sent to the API endpoint.
+    If you create the rules array manually you do not need to include these properties.
+    Changes to these rules should be done with the associated Add-, Set-, and Remove- functions.   
+    .OUTPUTS
+    An array of updated inbound cellular firewall rules.
+    #>
+}
+
+function Add-MerakiApplianceInboundCellularFirewallRule() {
+    [CmdletBinding()]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [string]$Comment,
+        [Parameter(Mandatory)]
+        [ValidateSet('allow','deny' )]
+        [string]$Policy,
+        [Alias('srcCidr')]
+        [string]$SourceCIDR,
+        [ALias('srcPort')]
+        [string]$SourcePort = 'any',
+        [ValidateSet('tcp', 'udp', 'icmp', 'icmp6', 'any')]
+        [string]$Protocol = 'any',
+        [Parameter(Mandatory)]
+        [Alias('destCidr')]
+        [string]$DestinationCIDR,
+        [Alias('destPort')]
+        [string]$DestinationPort = 'any',
+        [switch]$SyslogEnabled
+    )
+
+    Begin {
+
+        $Rules = Get-MerakiApplianceInboundCellularFirewallRules -Id $Id
+
+        $Rules = $Rules.Where({$_.Comment -ne 'Default rule'}) | Select-Object -ExcludeProperty RuleNumber
+
+        $Properties = @{
+            "policy"    = $Policy
+            "srcCidr"   = $SourceCidr
+            "srcPort"   = $SourcePort
+            "protocol"  = $protocol
+            "destCidr"  = $DestinationCidr
+            "destPort"  = $DestinationPort
+            "comment"   = $Comment
+        }
+
+        if ($SyslogEnabled.IsPresent) {$Properties.Add("syslogEnabled", $true)}
+        $Rule = [PSCustomObject]$Properties
+
+        $Rules += $Rule
+
+        try {
+            $response = Set-MerakiNetworkApplianceInboundCellularFirewallRules -Id $id -Rules $Rules
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Add an inbound cellular firewall rule to an MX network.
+    .PARAMETER Id
+    The ID of the network.
+    .PARAMETER Policy
+    'allow' or 'deny' traffic specified by this rule
+    .PARAMETER protocol
+    The type of protocol (must be 'tcp', 'udp', 'icmp', 'icmp6' or 'any')
+    .PARAMETER SourcePort
+    Comma-separated list of source port(s) (integer in the range 1-65535), or 'any'
+    .PARAMETER SourceCidr
+    Comma-separated list of source IP address(es) (in IP or CIDR notation), or 'any' (note: FQDN not supported for source addresses)
+    .PARAMETER DestinationCidr
+    Comma-separated list of destination IP address(es) (in IP or CIDR notation), fully-qualified domain names (FQDN) or 'any'
+    .PARAMETER DestinationPort
+    Comma-separated list of destination port(s) (integer in the range 1-65535), or 'any'
+    .PARAMETER SyslogEnabled
+    Log this rule to syslog (true or false, boolean value) - only applicable if a syslog has been configured (optional)
+    .PARAMETER Comment
+    Description of the rule (optional)
+    #>
+}
+
+function Set-MerakiApplianceInboundCellularFirewallRule() {
+    [CmdletBinding()]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [Parameter(Mandatory = $true)]
+        [int]$RuleNumber,
+        [ValidateSet('allow','deny')]
+        [string]$Policy,
+        [ValidateSet('tcp', 'udp', 'icmp', 'icmp6', 'any')]
+        [string]$Protocol,
+        [Alias('srcPort')]
+        [string]$SourcePort,
+        [ALias('srcCidr')]
+        [string]$SourceCidr,
+        [Alias('DestCidr')]
+        [string]$DestinationCidr,
+        [Alias('destPort')]
+        [string]$DestinationPort,
+        [switch]$SyslogEnabled,
+        [string]$Comment
+    )
+
+    Begin {
+        $Rules = @{}
+    }
+
+    Process {
+        Get-MerakiApplianceInboundCellularFirewallRules -id $Id | Foreach-Object {
+            $Rules.Add($_.RuleNumber, $_)
+        }
+
+        If ($Policy) {
+            $Rules[$RuleNumber].Policy = $Policy
+        }
+        if ($Protocol) {
+            $Rules[$RuleNumber].Protocol = $Protocol
+        }
+        if ($SourceCidr) {
+            $Rules[$RuleNumber].srcCidr = $SourceCidr
+        }
+        if ($SourcePort) {
+            $Rules[$RuleNumber].srcPort = $SourcePort
+        }
+        if ($DestinationCidr) {
+            $Rules[$RuleNumber].destCidr = $DestinationCidr
+        }
+        if ($DestinationPort) {
+            $Rules[$RuleNumber].destPort = $DestinationPort
+        }
+        if ($Comment) {
+            $Rules[$RuleNumber].comment = $Comment
+        }
+        if ($SyslogEnabled) {
+            $Rule[$RuleNumber].syslogEnabled = $true
+        }        
+
+        $Rules = $Rules.Values
+
+        try {
+            $Rules = Set-MerakiApplianceInboundCellularFirewallRules -id -Rules $Rules
+            return $Rules
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Updates a single inbound cellular firewall rule in the specified network.
+    You must get the rule index using the Get-MerakiNetworkApplianceCellularFirewallRule function.
+    .PARAMETER Id
+    The ID of the network.
+    .PARAMETER RuleIndex
+    The RuleIndex to update.
+    .PARAMETER Policy
+    'allow' or 'deny' traffic specified by this rule
+    .PARAMETER protocol
+    The type of protocol (must be 'tcp', 'udp', 'icmp', 'icmp6' or 'any')
+    .PARAMETER SourcePort
+    Comma-separated list of source port(s) (integer in the range 1-65535), or 'any'
+    .PARAMETER SourceCidr
+    Comma-separated list of source IP address(es) (in IP or CIDR notation), or 'any' (note: FQDN not supported for source addresses)
+    .PARAMETER DestinationCidr
+    Comma-separated list of destination IP address(es) (in IP or CIDR notation), fully-qualified domain names (FQDN) or 'any'
+    .PARAMETER DestinationPort
+    Comma-separated list of destination port(s) (integer in the range 1-65535), or 'any'
+    .PARAMETER SyslogEnabled
+    Log this rule to syslog (true or false, boolean value) - only applicable if a syslog has been configured (optional)
+    .PARAMETER Comment
+    Description of the rule (optional)
+    #>
+}
+
+function Remove-MerakiApplianceInboundCellularFirewallRule() {
+    [CmdletBinding(SupportsShouldProcess)]
+    Param (
+        [Parameter(Mandatory)]
+        [string]$NetworkId,
+        [Parameter(Mandatory)]
+        [int]$RuleNumber
+    )
+
+    $Rules = Get-MerakiApplianceInboundCellularFirewallRules -id $NetworkId | Where-Object {$_.RuleNumber -ne $RuleNumber} | `
+        Select-Object -ExcludeProperty RuleNumber
+
+    if ($PSCmdlet.ShouldProcess("Inbound Cellular Firewall Rule Number $ruleNumber", "Delete")) {
+        try {
+            $response = Set-MerakiApplianceInboundCellularFirewallRules -Id $NetworkId -Rules $Rules
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Deleted an inbound cellular firewall rule.
+    .PARAMETER NetworkId
+    The Id of the network.
+    .PARAMETER RuleNumber
+    The rule number to be removed.
+    #>
+}
+#endregion
+
+#region InboundFirewallRules
+function Get-MerakiApplianceInboundFirewallRules() {
+    [CmdletBinding()]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id
+    )
+
+    Begin {
+        $Headers = get-Headers
+    }
+
+    Process{
+        $Uri = "{0}/networks/{1}/appliance/firewall/inboundFirewallRules" -f $BaseURI, $Id
+
+        $Network = Get-MerakiNetwork -id $Id
+
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers
+            $Rules = $response.rules
+            $Number = 1
+            $Rules | Foreach-Object {
+                $_ | Add-Member -MemberType NoteProperty -Name "NetworkId" -Value $id
+                $_ | Add-Member -MemberName NoteProperty -Name "NetworkName" -Value $Network.Name
+                $_ | Add-Member -MemberType NoteProperty -Name "RuleNumber" -Value $Number
+                $number += 1
+            }
+            return $Rules
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Return the inbound firewall rules for an MX network
+    .PARAMETER Id
+    The Id of the network.
+    .OUTPUTS
+    An array of inbound firewall rules.
+    #>
+}
+
+function Set-MerakiApplianceInboundFirewallRules() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [Parameter(Mandatory)]
+        [PsObject[]]$Rules
+    )
+
+    Begin {
+        $Headers = Get-Headers
+
+        # Remove the default rule if it exists
+        $Rules = $Rules.Where({$_.comment -ne 'Default rule'})
+
+        #Remove the RuleNumber, NetworkId, and NetworkName properties if they exist.
+        $Rules = $Rules | Select-Object -ExcludeProperty RuleNumber, NetworkName, NetworkId
+
+        $_Rules = @{
+            rules = $Rules
+        }
+
+        $body = $_Rules |ConvertTo-Json -Depth 4 -Compress
+    }
+
+    Process {
+        $Uri = "{0}/networks/{1}/appliance/firewall/inboundFirewallRules" -f $BaseURI, $id
+
+        try {
+            $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
+            $rules = $response.range
+            return $response.rules
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Update the inbound firewall rules of an MX network
+    .PARAMETER Id
+    The Id of the network.
+    .PARAMETER Rules
+    An array of inbound firewall rules objects.
+    .OUTPUTS
+    An array of updated inbound firewall rules.
+    #>
+}
+
+ function Add-MerakiApplianceInboundFirewallRule() {
+    [CmdletBinding()]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('allow','deny')]
+        [string]$Policy,
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('tcp', 'udp', 'icmp', 'icmp6', 'any')]
+        [string]$protocol,
+        [Alias('srcPort')]
+        [string]$SourcePort = 'any',
+        [Parameter(Mandatory = $true)]
+        [ALias('srcCidr')]
+        [string]$SourceCidr,
+          [Parameter(Mandatory = $true)]
+        [Alias('DestCidr')]
+        [string]$DestinationCidr,
+        [Alias('destPort')]
+        [string]$DestinationPort = 'any',
+        [switch]$SyslogEnabled,
+        [Parameter(Mandatory = $true)]
+        [string]$Comment
+    )
+
+    Begin {
+        $Rules = Get-MerakiApplianceInboundFirewallRules -Id $Id Select-Object -ExcludeProperty RuleNumber
+
+        $Rules = $Rules | Where-Object {$_.comment -ne 'Default rule'}
+
+        $Properties = @{
+            "policy"        = $Policy
+            "srcCidr"       = $SourceCidr
+            "srcPort"       = $SourcePort
+            "protocol"      = $protocol
+            "destCidr"      = $DestinationCidr
+            "destPort"      = $DestinationPort
+            "comment"       = $Comment
+            "RuleNumber"    = -1
+            "NetworkId"     = "NA"
+            "NetworkName"   = "NA"
+        }
+        if ($SyslogEnabled.IsPresent) { $Properties.Add("syslogEnabled", $true)}
+        $rule = [PSCustomObject]$Properties
+
+        $Rules += $rule
+
+        try {
+            $response = Set-MerakiApplianceInboundCellularFirewallRules -id $id -Rules $Rules
+            return $response.rules
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Adds an inbound firewall rule to the network.
+    .PARAMETER Policy
+    'allow' or 'deny' traffic specified by this rule
+    .PARAMETER protocol
+    The type of protocol (must be 'tcp', 'udp', 'icmp', 'icmp6' or 'any')
+    .PARAMETER SourcePort
+    Comma-separated list of source port(s) (integer in the range 1-65535), or 'any'
+    .PARAMETER SourceCidr
+    Comma-separated list of source IP address(es) (in IP or CIDR notation), or 'any' (note: FQDN not supported for source addresses)
+    .PARAMETER DestinationCidr
+    Comma-separated list of destination IP address(es) (in IP or CIDR notation), fully-qualified domain names (FQDN) or 'any'
+    .PARAMETER DestinationPort
+    Comma-separated list of destination port(s) (integer in the range 1-65535), or 'any'
+    .PARAMETER SyslogEnabled
+    Log this rule to syslog (true or false, boolean value) - only applicable if a syslog has been configured (optional)
+    .PARAMETER Comment
+    Description of the rule (optional)
+    #>
+ }
+
+ function Set-MerakiApplianceInboundFirewallRule() {
+    [CmdletBinding()]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [Parameter(Mandatory = $true)]
+        [int]$RuleNumber,
+        [ValidateSet('allow','deny')]
+        [string]$Policy,
+        [ValidateSet('tcp', 'udp', 'icmp', 'icmp6', 'any')]
+        [string]$Protocol,
+        [Alias('srcPort')]
+        [string]$SourcePort,
+        [ALias('srcCidr')]
+        [string]$SourceCidr,
+        [Alias('DestCidr')]
+        [string]$DestinationCidr,
+        [Alias('destPort')]
+        [string]$DestinationPort,
+        [switch]$SyslogEnabled,
+        [string]$Comment
+    )
+
+    Begin {
+        $Rules = @{}
+    }
+
+    Process {
+        Get-MerakiApplianceInboundFirewallRules -id $id | ForEach-Object {
+            $Rules.Add($_.RuleNumber, $_)
+        }
+
+        If ($Policy) {
+            $Rules[$RuleNumber].Policy = $Policy
+        }
+        if ($Protocol) {
+            $Rules[$RuleNumber].Protocol = $Protocol
+        }
+        if ($SourceCidr) {
+            $Rules[$RuleNumber].srcCidr = $SourceCidr
+        }
+        if ($SourcePort) {
+            $Rules[$RuleNumber].srcPort = $SourcePort
+        }
+        if ($DestinationCidr) {
+            $Rules[$RuleNumber].destCidr = $DestinationCidr
+        }
+        if ($DestinationPort) {
+            $Rules[$RuleNumber].destPort = $DestinationPort
+        }
+        if ($Comment) {
+            $Rules[$RuleNumber].comment = $Comment
+        }
+        if ($SyslogEnabled) {
+            $Rule[$RuleNumber].syslogEnabled = $true
+        }
+
+        $Rules = $Rules.Values
+
+        try {
+            $response = Set-MerakiApplianceInboundFirewallRules -id $Id -Rules $Rules
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Updates a single inbound firewall rule in the specified network.
+    .PARAMETER Id
+    The ID of the network.
+    .PARAMETER RuleNumber
+    The RuleNumber to update.
+    .PARAMETER Policy
+    'allow' or 'deny' traffic specified by this rule
+    .PARAMETER protocol
+    The type of protocol (must be 'tcp', 'udp', 'icmp', 'icmp6' or 'any')
+    .PARAMETER SourcePort
+    Comma-separated list of source port(s) (integer in the range 1-65535), or 'any'
+    .PARAMETER SourceCidr
+    Comma-separated list of source IP address(es) (in IP or CIDR notation), or 'any' (note: FQDN not supported for source addresses)
+    .PARAMETER DestinationCidr
+    Comma-separated list of destination IP address(es) (in IP or CIDR notation), fully-qualified domain names (FQDN) or 'any'
+    .PARAMETER DestinationPort
+    Comma-separated list of destination port(s) (integer in the range 1-65535), or 'any'
+    .PARAMETER SyslogEnabled
+    Log this rule to syslog (true or false, boolean value) - only applicable if a syslog has been configured (optional)
+    .PARAMETER Comment
+    Description of the rule (optional)
+    #>
+ }
+
+ function Remove-MerakiApplianceInboundFirewallRule() {
+    [CmdletBinding(SupportsShouldProcess)]
+    Param (
+        [Parameter(Mandatory)]
+        [string]$NetworkId,
+        [Parameter(Mandatory)]
+        [int]$RuleNumber
+    )
+
+    $Rules = Get-MerakiApplianceInboundFirewallRules -id $NetworkId | Where-Object {$_.RuleNUmber -ne $RuleNumber}
+
+    if ($PSCmdlet.ShouldProcess("Inbound Firewall Rule number $RuleNumber", "Delete")) {
+        try {
+            $response = Set-MerakiApplianceInboundFirewallRules -id $NetworkId -Rules $Rules
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Deletes an inbound firewall rule.
+    .PARAMETER NetworkId
+    The ID of the network.
+    .PARAMETER RuleNumber
+    The rule number to remove.    
+    #>
+ }
+#endregion
+
+#region Firewalled Services
+function Get-MerakiApplianceFirewalledService() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipeline = $true,
+            ValueFromPipelineByPropertyName = $true
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [ValidateSet('ICMP','web','SNMP')]
+        [string]$Service
+    )
+
+    Begin {
+
+        $Headers = Get-Headers
+    }
+
+    Process {
+        $Uri = "{0}/networks/{1}/appliance/firewall/firewalledServices" -f $BaseURI, $Id
+        if ($Service) {
+            $Uri = "{0}/{1}" -f $Uri, $Service
+        }
         try {
             $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             $response | Add-Member -MemberType NoteProperty -Name "NetworkId" -Value $Id
-            $response | Add-Member -MemberType NoteProperty -Name "NetworkName" -Value $Network.Name
             return $response
         }
         catch {
             Throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Retrieve the Appliance firewalled services.
+    .PARAMETER Id
+    The Id of the network.
+    #>
+}
+
+function Set-MerakiApplianceFirewalledService() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [string]$Service,
+        [Parameter(Mandatory)]
+        [ValidateSet('blocked', 'restricted', 'unrestricted')]
+        [string]$Access,
+        [ValidateScript({
+            ($_ -and $Access -eq 'restricted') -or
+            ((-not $_) -and ($Access -in 'blocked','unrestricted'))
+        })]
+        [string[]]$AllowedIps
+    )
+
+    Begin {
+        $Headers = Get-Headers
+
+        $_Body = @{
+            access = $Access
+        }
+        if ($Access -eq 'restricted') {
+            $_Body.Add("allowedIps", $AllowedIps)
+        }
+
+        $body = $_Body | ConvertTo-Json -Depth 3 -Compress
+    }
+
+    Process {
+        $Uri = "{0}/networks/{1}/appliance/firewall/firewalledServices/{2}" -f $BaseURI, $Id, $Service
+
+        try {
+            $response = Invoke-RestMethod -Method Put -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
+            return $response
+        } catch {
+            throw $_
         }
     }
 }
@@ -1287,7 +2513,7 @@ function Get-MerakiNetworkApplianceFirewalledServices() {
 
 #region L3 Firewall Rules
 Function Get-MerakiApplianceL3FirewallRules() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory,
@@ -1313,10 +2539,16 @@ Function Get-MerakiApplianceL3FirewallRules() {
     } catch {
         Throw $_
     }
+    <#
+    .DESCRIPTION
+    Retrieve the network appliance level 3 firewall rules.
+    .PARAMETER id
+    The network Id.
+    #>
 }
 
 function Set-MerakiApplianceL3FirewallRules() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory,
@@ -1327,40 +2559,61 @@ function Set-MerakiApplianceL3FirewallRules() {
         [Parameter(
             Mandatory
         )]
-        [psobject[]]$Rules,
-        [switch]$PassThru
-    )    
+        [psobject[]]$Rules
+    )
 
     Begin {
+
         $Headers = Get-Headers
 
         # The below statements are used if rules are being copied from another network/
 
-        # Remove the RuleId property. This is added and used by this module and is not part of the Meraki configuration.
-        if ($Rules[0].PSObject.Properties.Name -contains 'RuleId') {
-            $Rules = $Rules | Select-Object -Property * -ExcludeProperty RuleId
-        }
+        # Remove the RuleNumber, NetworkId, and NetworkName property if they exist.
+        $Rules = $Rules | Select-Object -Property * -ExcludeProperty RuleNumber, NetworkId, NetworkName
+        
 
-        # remove the default rule if it exists.
+        # Remove the default rule if it exists.
         $Rules = $Rules | Where-Object {$_.comment -ne 'Default rule'}
     }
+
     Process {
     
         $Uri = "{0}/networks/{1}/appliance/firewall/l3FirewallRules" -f $BaseUri, $id
-        $_body = @{"rules" = $Rules}
+        $_body = @{
+            "rules" = $Rules
+        }
         $body = $_body | ConvertTo-Json -Depth 5 -Compress
 
+        $Network = Get-MerakiNetwork -Id $Id
         try {
             $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
+            $Rules = $response.rules
+            $Number = 1
+            $Rules | ForEach-Object {
+                $_ | Add-Member -MemberType NoteProperty -Name 'NetworkId' -Value $Id
+                $_ | Add-Member -MemberType NoteProperty -Name 'NetworkName' -Value $Network.Name
+                $_ | Add-Member -MemberType NoteProperty -Name 'RuleNumber' -Value $Number
+                $Number += 1
+            }
             return $response.rules
         } catch {
             throw $_
         }
     }
+    <#
+    .DESCRIPTION
+    Removes the specified level 3 firewall rules from a network. (This is irreversible!)
+    .PARAMETER Id
+    The ID of the network.
+    .PARAMETER Rules
+    An array of firewall rules objects.
+    .PARAMETER PassThru
+    Returns the updated list of rules.
+    #>
 }
 
 function Add-MerakiApplianceL3FirewallRule() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory,
@@ -1392,22 +2645,11 @@ function Add-MerakiApplianceL3FirewallRule() {
         [switch]$SyslogEnabled,
         [switch]$PassThru
     )
-
-    Begin {
-        $Headers = Get-Headers
-    }
     
     Process {
-
-        $Uri = "{0}/networks/{1}/appliance/firewall/l3FirewallRules" -f $BaseUri, $Id
-
-
-        $Rules = Get-MerakiApplianceL3FirewallRules -id $Id | Select-Object * -ExcludeProperty RuleId
-
-        # Remove the default rule
-        $Rules = $Rules | Where-Object {$_.comment -ne "Default rule"}
-
-        $NewRule = [PSCustomObject]@{
+        $Rules = Get-MerakiApplianceL3FirewallRules -id $Id 
+        
+        $Properties = [PSCustomObject]@{
             policy = $policy
             comment = $Comment
             protocol = $Protocol
@@ -1415,16 +2657,17 @@ function Add-MerakiApplianceL3FirewallRule() {
             destCidr = $DestinationCIDR
             srcPort = $SourcePort
             srcCidr = $SourceCIDR
-            syslogEnabled = $SyslogEnabled.IsPresent
+            $RuleNumber = -1
+            $NetworkId = "NA"
+            $NetworkName = "NA"
         }
-        $Rules += $NewRule
+        If ($SyslogEnabled) {$Properties.Add("syslogEnabled", $true)}
+        $Rule = [PSCustomObject]$Properties
         
-        $_Body = @{rules = $Rules}
-        $body = $_body | ConvertTo-JSON -Depth 5 -Compress
-
+        $Rules += $Rule
         try {
-            $response = Invoke-RestMethod -Method Put -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
-            return $response.rules
+            $Rules = Set-MerakiApplianceL3FirewallRules -Id $Id -Rules $Rules
+            return $Rules
         } catch {
             throw $_
         }
@@ -1458,13 +2701,13 @@ function Add-MerakiApplianceL3FirewallRule() {
 }
 
 function Set-MerakiApplianceL3FirewallRule() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory
         )]
         [string]$NetworkId,
-        [int]$RuleId,
+        [int]$RuleNumber,
         [ValidateSet('allow','deny')]
         [string]$Policy,
         [string]$Comment,
@@ -1489,44 +2732,45 @@ function Set-MerakiApplianceL3FirewallRule() {
         [switch]$SyslogEnabled
     )
 
-    $Uri = "{0}/networks/{1}/appliance/firewall/l3FirewallRules" -f $BaseUri, $NetworkId
+    $Rules_ = @{}
+    Get-MerakiApplianceL3FirewallRules -id $NetworkId | ForEach-Object {
+        $Rules_.Add($_.RuleNumber, $_)
+    }
 
-    $Headers = Get-Headers
-
-    $Rules = Get-MerakiApplianceL3FirewallRules -id $NetworkId
-
-    # Remove the Default Rule
-    $Rules = $Rules | Where-Object {$_.comment -ne "Default rule"}
-    
-    $Rule = $Rules | Where-Object {$_.RuleId -eq $RuleId}
-    if (-not $Rule) {
+    if (-not $Rule_[$RuleNumber]) {
         throw "Invalid Rule Id"
     }
 
-    $Rules = $Rules | Where-Object {$_.RuleId -ne $RuleId}
+    If ($Policy) {
+        $Rules_[$RuleNumber].policy = $Policy
+    }
+    if ($Comment) {
+        $Rules_[$RuleNumber].comment = $Comment
+    }
+    if ($Protocol) {
+        $Rules_[$RuleNumber].protocol = $Protocol
+    }
+    if ($SourceCIDR) {
+        $Rule_[$RuleNumber].srcCIDR - $SourceCIDR
+    }
+    if ($SourcePort) {
+        $Rule_[$RuleNumber].srcPort = $SourcePort
+    }
+    if ($DestinationCIDR) {
+        $Rule_[$RuleNumber].destCIDR = $DestinationCIDR
+    }
+    if ($DestinationPort) {
+        $Rule_[$RuleNumber].destPort = $DestinationPort
+    }
+    if ($SyslogEnabled) {
+        $Rule_[$RuleNumber].syslogEnabled = $SyslogEnabled
+    }
 
-    If ($Policy) {$Rule.policy = $Policy}
-    if ($Comment) {$Rule.comment = $Comment}
-    if ($Protocol) {$Rule.protocol = $Protocol}
-    if ($SourceCIDR) {$Rule.srcCIDR - $SourceCIDR}
-    if ($SourcePort) { $Rule.srcPort = $SourcePort}
-    if ($DestinationCIDR) {$Rule.destCIDR = $DestinationCIDR}
-    if ($DestinationPort) {$Rule.destPort = $DestinationPort}
-    if ($SyslogEnabled) {$Rule.syslogEnabled = $SyslogEnabled}
-
-
-    $Rules += $Rule
-
-    # Remove the RuleId Property
-    $newRules = $Rules | Select-Object * -ExcludeProperty RuleId
-
-    $_Body = @{rules = $newRules}
-
-    $body = $_Body | ConvertTo-Json
+    $Rules = $Rules_.Values
 
     try {
-        $response = Invoke-RestMethod -Method PUT -Uri $uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
-        return $response.rules  
+        $Rules = Set-MerakiApplianceL3FirewallRules -Id $Id -Rules $Rules
+        return $Rules  
     } catch {
         throw $_
     }
@@ -1536,12 +2780,32 @@ function Set-MerakiApplianceL3FirewallRule() {
     Update an existing level 3 firewall rule.
     .DESCRIPTION
     Update an existing Level 3 firewall rule on a meraki Appliance.
+    .PARAMETER NetworkId
+    The Id of the network
+    .PARAMETER RuleId
+    The Id of the rule to update.
+    .PARAMETER Policy
+    allow' or 'deny' traffic specified by this rule
+    .PARAMETER Comment
+    Description of the rule (optional)
+    .PARAMETER Protocol
+    The type of protocol (must be 'tcp', 'udp', 'icmp', 'icmp6' or 'any')
+    .PARAMETER SourceCIDR
+    Comma-separated list of source IP address(es) (in IP or CIDR notation), or 'any' (note: FQDN not supported for source addresses)
+    .PARAMETER SourcePort
+    Comma-separated list of source port(s) (integer in the range 1-65535), or 'any'
+    .PARAMETER DestinationCIDR
+    Comma-separated list of destination IP address(es) (in IP or CIDR notation), fully-qualified domain names (FQDN) or 'any'
+    .PARAMETER DestinationPort
+    Comma-separated list of destination port(s) (integer in the range 1-65535), or 'any'
+    .PARAMETER SyslogEnabled
+    Log this rule to syslog (true or false, boolean value) - only applicable if a syslog has been configured (optional)
     .PARAMETER 
     #>
 }
 
 function Remove-MerakiApplianceL3FirewallRule() {
-    [CmdletBinding(SupportsShouldProcess)]
+    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory
@@ -1551,6 +2815,7 @@ function Remove-MerakiApplianceL3FirewallRule() {
         [string]$RuleId,
         [switch]$PassThru
     )
+
     $Uri = "{0}/networks/{1}/appliance/firewall/l3FirewallRules" -f $BaseUri, $NetworkId
 
     $Headers = Get-Headers
@@ -1574,7 +2839,7 @@ function Remove-MerakiApplianceL3FirewallRule() {
     $_Body = @{rules = $Rules}
 
     $body = $_Body | ConvertTo-Json -Depth 5 -Compress
-    if ($PSCmdlet.ShouldProcess("Delete","Rule:$($Rule.Comment)")) {
+    if ($PSCmdlet.ShouldProcess("Rule:$($Rule.Comment)", "Delete")) {
         try {
             $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
             return $response.rules
@@ -1582,5 +2847,1700 @@ function Remove-MerakiApplianceL3FirewallRule() {
             throw $_
         }
     }
+    <#
+    .DESCRIPTION 
+    Delete the specified level 3 firewall rule. (This cannot be undone!)
+    .PARAMETER NetworkId
+    The Id of the network.
+    .PARAMETER RuleId
+    The Rule Id to be deleted.
+    .PARAMETER PassThru
+    return the updated rules.
+    #>
 }
+#endregion
+
+#region L7 firewall rules
+function Get-MerakiApplianceL7FirewallRules() {
+    [CmdletBinding()]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id
+    )
+
+    Begin {
+        $Headers = Get-Headers
+    }
+
+    Process {
+        $Uri = "{0}/networks/{networkId}/appliance/firewall/l7FirewallRules" -f $BaseURI, $Id
+
+        $Network = Get-MerakiNetwork -Id $Id
+        try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            $Rules = $response.rules
+            $Number = 1
+            $Rules | ForEach-Object {
+                $_ | Add-Member -MemberType NoteProperty -Name 'NetworkId' -Value $Id
+                $_ | Add-Member -MemberType NoteProperty -Name "NetworkName" -Value $Network.Name
+                $_ | Add-Member -MemberType NoteProperty -Name "RuleNumber" -Value $Number
+                $Number += 1
+            }
+            return $Rules
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Returns the MX L7 firewall rules for an MX network.
+    .PARAMETER Id
+    The Id of the network.
+    .OUTPUTS
+    An array of level 7 firewall rules.    
+    #>
+}
+
+function Set-MerakiApplianceL7FirewallRules() {
+    [CmdletBinding()]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [PsObject[]]$Rules
+    )
+
+    Begin {
+        $Headers = Get-Headers
+    }
+
+    Process {
+        $Uri = "{0}/networks/{1}/appliance/firewall/l7FirewallRules" -f $BaseURI, $Id
+
+        # Remove the default rule if it exists
+        $Rules = $Rules.where({$_.comment -ne 'Default rule'})
+
+        # Remove the RuleNumber property
+        $Rules = $Rules | Select-Object -ExcludeProperty RuleNumber
+
+        $_Rules = @{
+            rules = $Rules
+        }
+
+        $Body = $_Rules | ConvertTo-Json -Depth 4 -Compress
+
+        try {
+            $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $Body -PreserveAuthorizationOnRedirect
+            return $response.rule
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Update the MX L7 firewall rules for an MX network
+    .PARAMETER Id
+    The ID of the network.
+    .PARAMETER Rules
+    An array of level 7 firewall rules.
+    .OUTPUTS
+    AN array of updated level 7 firewall rules.
+    #>
+}
+
+function Add-MerakiApplianceL7FirewallRule() {
+    [CmdletBinding()]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [Parameter(Mandatory)]
+        [ValidateSet('application', 'applicationCategory', 'host', 'port', 'ipRange')]
+        [string]$Type,
+        [Parameter(Mandatory)]
+        [string]$Value
+    )
+
+    Begin {
+        $Properties = @{
+            policy      = 'deny'
+            type        = $Type
+            value       = $Value
+            RuleNumber  = -1
+            NetworkId = "NA"
+            NetworkName = "NA"
+
+        }
+        $Rule = [PsCustomObject]$Properties        
+    }
+
+    Process {
+        $Rules = Get-MerakiNetworkApplianceL7FirewallRules -id $Id
+        $Rules += $Rule
+
+        try {
+            $Rules = Set-MerakiNetworkApplianceL7FirewallRules -Id $Id -Rules $Rules
+            return $Rules
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Add a new MX L7 firewall rules for an MX network.
+    .PARAMETER Id
+    The Id if the Network.
+    .PARAMETER Type
+    Type of the L7 rule. One of: 'application', 'applicationCategory', 'host', 'port', 'ipRange'
+    .PARAMETER Value
+    The 'value' of what you want to block. Format of 'value' varies depending on type of the rule. 
+    The application categories and application ids can be retrieved from the the 
+    'Get-MerakiNetworkApplianceApplicationCategories' endpoint. The countries follow the two-letter ISO 3166-1 alpha-2 format
+    .OUTPUTS
+    An array of Level 7 Firewall Rules
+    #>
+}
+
+function Set-MerakiApplianceL7FirewallRule () {
+    [CmdletBinding()]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [Parameter(Mandatory)]
+        [int]$RuleNumber,        
+        [ValidateSet('application', 'applicationCategory', 'host', 'port', 'ipRange')]
+        [string]$Type,
+        [string]$Value
+    )
+
+    Process {
+        $Rules_ = @{}
+        Get-MerakiNetworkApplianceL7FirewallRules -id $Id| ForEach-Object {
+            $Rules_.Add($_.RuleNumber, $_)            
+        }
+
+        if ($type) {
+            $Rules_[$RuleNumber].type = $Type
+        }
+        if ($Value) {
+            $Rules_[$RuleNumber].value = $Value
+        }
+
+        $Rules = $Rules_.Values
+
+        try {
+            $Rules = Set-MerakiNetworkApplianceL7FirewallRules -Id $Id -Rules $Rules
+            return $Rules
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Update an MX L7 firewall rule for an MX network.
+    .PARAMETER Id
+    The ID of the network.
+    .PARAMETER RuleNumber
+    The rule number to update.
+    .PARAMETER Type
+    Type of the L7 rule. One of: 'application', 'applicationCategory', 'host', 'port', 'ipRange'
+    .PARAMETER Value
+    The 'value' of what you want to block. Format of 'value' varies depending on type of the rule. 
+    The application categories and application ids can be retrieved from the the 
+    'Get-MerakiNetworkApplianceApplicationCategories' endpoint. The countries follow the two-letter ISO 3166-1 alpha-2 format
+    .OUTPUTS
+    An array of Level 7 Firewall Rules
+    #>
+}
+
+function Remove-MerakiApplianceL7FirewallRule() {
+    [CmdletBinding(SupportsShouldProcess)]
+    Param (
+        [Parameter(Mandatory)]
+        [string]$NetworkId,
+        [Parameter(Mandatory)]
+        [string]$RuleNumber
+    )
+
+    $Rules = Get-MerakiNetworkApplianceL7FirewallRules -id $Id | Where-Object {$_.RuleNumber -ne $RuleNumber}
+
+    if ($PSCmdlet.ShouldProcess("Level7 firewall rule number $RuleNumber", "Delete")) {
+        try {
+            $Rules = Set-MerakiNetworkApplianceL7FirewallRules -Id $Id -Rules $Rules
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Deletes an MX L7 firewall rule for an MX network.
+    .PARAMETER Id
+    The ID of the network.
+    .PARAMETER RuleNumber
+    The rule number to update.
+    .OUTPUTS
+    An array of Level 7 Firewall Rules
+    #>
+}
+
+Function Get-MerakiApplianceL7ApplicationCategories() {
+    [CmdletBinding()]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id
+    )
+
+    Begin {
+        $Headers = Get-Headers
+    }
+
+    Process {
+        $Uri = "{0}/networks/{1}/appliance/firewall/l7FirewallRules/applicationCategories" -f $BaseURI, $Id
+
+        try {
+            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            return $response.ApplicationCategories
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Return the L7 firewall application categories and their associated applications for an MX network.
+    .PARAMETER Id
+    The ID of the Network.
+    .OUTPUTS
+    An array of application category objects.
+    #>
+}
+
+function Get-MerakiApplianceFirewallNatRules() {
+    [CmdletBinding()]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [Parameter(Mandatory)]
+        [ValidateSet('OneToMany','OneToOne','PortForwarding')]
+        [string]$Type
+    )
+
+    Begin {
+        $Headers = Get-Headers
+        switch ($type) {
+            'OneToMany' {
+                $Uri = "{0}/networks/{1}/appliance/firewall/oneToManyNatRules"
+            }
+            'OneToOne' {
+                $Uri = "{0}/networks/{1}/appliance/firewall/oneToOneNatRules"
+            }
+            'PortForwarding'{
+                $Uri = "{0}/networks/{networkId}/appliance/firewall/portForwardingRules"
+            }
+        }
+    }
+
+    Process {
+        $Uri = $Uri -f $BaseURI, $Id
+
+        $Network = Get-MerakiNetworks -Id $Id
+
+        try {
+            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            $Rules = $response.rules
+            $number = 1
+            $Rules | ForEach-Object {
+                $_ | Add-Member -MemberType NoteProperty -Name 'NetworkId' -Value $Id
+                $_ | Add-Member -MemberType NoteProperty -Name 'NetworkName' -Value $Network.Name
+                $_ | Add-Member -MemberType NoteProperty -Name 'RuleNumber' -Value $number
+                $Number += 1
+            }
+            return $Rules
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Return the NAT mapping rules for an MX network
+    .PARAMETER Id
+    The ID of the network.
+    .PARAMETER Type
+    The type of mapping rule. One of OneToMany, OneToOne, or PortForwarding
+    .OUTPUTS
+    An array of NAT mapping rules.\
+    #>
+}
+
+function Set-MerakiApplianceFirewallNatRules() {
+    [CmdletBinding()]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [Parameter(Mandatory)]
+        [PsObject]$Rules,
+        [Parameter(Mandatory)]
+        [ValidateSet('OneToMany','OneToOne','PortForwarding')]
+        [string]$Type
+    )
+
+    Begin {
+        switch ($type) {
+            'OneToMany' {
+                $Uri = "{0}/networks/{1}/appliance/firewall/oneToManyNatRules"
+            }
+            'OneToOne' {
+                $Uri = "{0}/networks/{1}/appliance/firewall/oneToOneNatRules"
+            }
+            'PortForwarding'{
+                $Uri = "{0}/networks/{networkId}/appliance/firewall/portForwardingRules"
+            }
+        }
+    }
+
+    Process {
+        $Uri = $Uri -f $BaseURI, $Id
+
+        # Remove the RuleNumber, NetworkId, and NetworkName properties.
+        $Rules = $Rules | Select-Object -ExcludeProperty RuleNumber, NetworkName, NetworkId
+        $Rules_ = @{
+            rules = $Rules
+        }
+
+        $Body = $Rules_ | ConvertTo-Json -Depth 4 -Compress
+
+        $Network = Get-MerakiNetwork -Id $Id
+
+        try {
+            $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers -Body $Body
+            $Rules = $response.rules
+            $Number = 1
+            $Rules | ForEach-Object {
+                $_ | Add-Member -MemberType NoteProperty -Name 'NetworkId' -Value $Id
+                $_ | Add-Member -MemberType NoteProperty -Name 'NetworkName' -Value $Network.name
+                $_ | Add-Member -MemberType NoteProperty -Name 'RuleNumber' -Value $number
+                $number += 1
+            }
+
+            Return $Rules
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Set the one to many NAT mapping rules for an MX network/
+    .PARAMETER Id
+    The Id of the network.
+    .PARAMETER Rules
+    An array of mapping rules. This object depends on the rule type. Incompatible rule(s) fo the specified type will throw an error.
+    .PARAMETER Type
+    The type of mapping rule. One of OneToMany, OneToOne, or PortForwarding
+    .OUTPUTS an array of NAT Mapping Rules
+    .NOTES
+    The Rules collection varies depending on the type of rules being written.
+    This parameter can accept either a PSCustomObject or a HashTable
+
+    One to Many rules consist of the following Schema: * = required
+    publicIp*: string The IP address that will be used to access the internal resource from the WAN
+    uplink*: string The physical WAN interface on which the traffic will arrive ('internet1' or, if available, 'internet2')
+    portRules*: array[] An array of associated forwarding rules with the following properties:
+        localIp: string Local IP address to which traffic will be forwarded
+        localPort: string Destination port of the forwarded traffic that will be sent from the MX to the specified host on the LAN. If you simply wish to forward the traffic without translating the port, this should be the same as the Public port
+        name: string A description of the rule
+        protocol: string 'tcp' or 'udp'
+        publicPort: string Destination port of the traffic that is arriving on the WAN
+        allowedIps: array[] Remote IP addresses or ranges that are permitted to access the internal resource via this port forwarding rule, or 'any'
+
+    One To One Mapping rules consist of the following schema: * = required
+    lanIp*: string The IP address of the server or device that hosts the internal resource that you wish to make available on the WAN
+    name: string A descriptive name for the rule
+    publicIp: string The IP address that will be used to access the internal resource from the WAN
+    uplink: string The physical WAN interface on which the traffic will arrive ('internet1' or, if available, 'internet2')
+    allowedInbound: array[] The ports this mapping will provide access on, and the remote IPs that will be allowed access to the resource
+        protocol: string Either of the following: 'tcp', 'udp', 'icmp-ping' or 'any'
+        allowedIps: array[] An array of ranges of WAN IP addresses that are allowed to make inbound connections on the specified ports or port ranges, or 'any'
+        destinationPorts: array[] An array of ports or port ranges that will be forwarded to the host on the LAN
+
+    Port Forwarding rules consist of the following schema: * = required
+    lanIp*: string The IP address of the server or device that hosts the internal resource that you wish to make available on the WAN
+    localPort*: string A port or port ranges that will receive the forwarded traffic from the WAN
+    name: string A descriptive name for the rule
+    protocol*: string TCP or UDP. Valid values are 'tcp', 'udp' 
+    publicPort*: string A port or port ranges that will be forwarded to the host on the LAN
+    uplink: string The physical WAN interface on which the traffic will arrive ('internet1' or, if available, 'internet2' or 'both')    
+    allowedIps*: array[] An array of ranges of WAN IP addresses that are allowed to make inbound connections on the specified ports or port ranges (or any)
+    #>
+}
+
+function Add-MerakiApplianceFirewallNatRule() {
+    [CmdletBinding()]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [Parameter(Mandatory)]
+        [ValidateSet('OneToMany','OneToOne','PortForwarding')]
+        [string]$Type,
+        [ValidateScript({
+            ($_ -and $Type -eq 'OneToMany') -or ($_ -and $Type -eq 'OneToOne')
+        }, ErrorMessage = 'Property PublicIp is invalid for a PortForwarding rule')]
+        [string]$PublicIp,
+        [Parameter(Mandatory)]
+        [ValidateSet('internet1', 'internet2')]
+        [string]$Uplink,
+        [ValidateScript({
+            $_ -and $Type -eq 'OneToMany'
+        }, ErrorMessage = 'Parameter PortRules is only valid for a OneToMany Rule')]
+        [Parameter(Mandatory)]
+        [PsObject[]]$PortRules,
+        [ValidateScript({
+            ($_ -and $Type -eq 'OneToOne') -or ($_ -and $type -eq 'PortForwarding')
+        }, ErrorMessage = 'Parameter LanIp is invalid for a OneToMany rule.')]
+        [string]$LanIp,
+        [ValidateScript({
+            ($_ -and $Type -eq 'OneToOne') -or ($_ -and $Type -eq 'PortForwarding')
+        }, ErrorMessage = 'Parameter Name is invalid for a OneToMany rule.')]
+        [string]$Name,
+        [ValidateScript({
+            $_ -and $Type -eq 'OneToMany'
+        }, ErrorMessage = 'Parameter AllowedInbound is only valid for a OneToMany rule')]
+        [PsObject]$AllowedInbound,
+        [ValidateScript({
+            $_ -and $Type -eq 'PortForwarding'
+        }, ErrorMessage = 'Parameter Protocol is only valid for a PortForwarding rule.')]
+        [ValidateSet('tcp','udp')]
+        [string]$Protocol,
+        [ValidateScript({
+            $_ -and $Type -eq 'PortForwarding'
+        }, ErrorMessage = 'Parameter PublicPort is only valid for a PortForwarding rule.')]
+        [string]$PublicPort,
+        [ValidateScript({
+            $_ -and $Type -eq 'PortForwarding'
+        },ErrorMessage = 'Parameter LocalPort is only valid for a PortForwarding rule.')]
+        [string]$LocalPort,
+        [ValidateScript({
+            $_ -and $Type -eq 'PortForwarding'
+        }, ErrorMessage = 'Parameter AllowedIps is only valid for a PortForwarding rule.')]
+        [string[]]$AllowedIps
+    )
+
+    Begin {
+        switch ($Type) {
+            'OneToMany' {
+                $Properties = @{
+                    publicIp    = $PublicIP
+                    uplink      = $Uplink
+                    portRules   = $PortRules
+                    RuleNumber  = -1
+                    NetworkId   = 'NA'
+                    NetworkName = 'NA'
+                }
+                $Rule = [PSCustomObject]$Properties
+            }
+            'OneToOne' {
+                $Properties = @{
+                    publicIp        = $PublicIP
+                    uplink          = $Uplink
+                    lanIp           = $lanIp
+                    name            = $Name
+                    allowedInbound  = $AllowedInbound
+                    RuleNNumber     = -1
+                    NetworkId       = 'NA'
+                    NetworkName     = 'NA'
+                }
+                $Rule = [PSCustomObject]$Properties
+            }
+            'PortForwarding' {
+                $Properties = @{
+                    lanIp       = $lanIp
+                    localPort   = $LocalPort
+                    name        = $Name
+                    protocol    = $Protocol
+                    publicPort  = $PublicPort
+                    uplink      = $Uplink
+                    allowedIps  = $AllowedIps
+                    RuleNumber  = -1
+                    NetworkId   = 'NA'
+                    NetworkName = 'NA'
+                }
+            }
+        }        
+    }
+
+    Process {
+        $Rules = Get-MerakiApplianceFirewallNatRules -Id $Id -Type $Type
+        $Rules += $Rule
+        try{
+            $Rules = Set-MerakiApplianceFirewallNatRules -Id $Id -Type $Type -Rules $Rules
+            return $Rules
+        } catch {
+            throw $_
+        }    
+    }
+    <#
+    .DESCRIPTION
+    Add a One to Many NAT mapping rule to an MX network
+    .PARAMETER Id
+    The Id of tye network.
+    .PARAMETER Type
+    The type of rule, can be one of: 'OneToMany','OneToOne',or 'PortForwarding'
+    .PARAMETER PublicIP
+    The IP address that will be used to access the internal resource from the WAN.
+    This parameter is only valid for for OneToMany and OneToOne rules.
+    .PARAMETER Uplink
+    The physical WAN interface on which the traffic will arrive ('internet1' or, if available, 'internet2')    
+    .PARAMETER PortRules
+    An array of associated forwarding rules with the following properties:
+        localIp: string Local IP address to which traffic will be forwarded
+        localPort: string Destination port of the forwarded traffic that will be sent from the MX to the specified host on the LAN. If you simply wish to forward the traffic without translating the port, this should be the same as the Public port
+        name: string A description of the rule
+        protocol: string 'tcp' or 'udp'
+        publicPort: string Destination port of the traffic that is arriving on the WAN
+        allowedIps: array[] Remote IP addresses or ranges that are permitted to access the internal resource via this port forwarding rule, or 'any'
+
+        This property can be either a PsObject or a HashTable
+        This property is only valid for OneToMany rules.
+    .PARAMETER LanIp
+    The IP address of the server or device that hosts the internal resource that you wish to make available on the WAN
+    This parameter is only valid for OneToOne or PortForwarding rules.
+    .PARAMETER Name
+    A descriptive name for the rule.
+    This parameter is only valid for OneToOne or PortForwarding rules.
+    .PARAMETER AllowedInbound
+    The ports this mapping will provide access on, and the remote IPs that will be allowed access to the resource
+    The parameter is only valid for OneToMany rules.
+    .PARAMETER Protocol
+    TCP or UDP. Valid values are 'tcp', 'udp'
+    The parameter is only valid for PortForwarding rules.
+    .PARAMETER PublicPort
+    A port or port ranges that will be forwarded to the host on the LAN.
+    The parameter is only valid for PortForwarding rules.
+    .PARAMETER LocalPort
+    A port or port ranges that will receive the forwarded traffic from the WAN
+    The parameter is only valid for PortForwarding rules.
+    .PARAMETER AllowedIps
+    An array of ranges of WAN IP addresses that are allowed to make inbound connections on the specified ports or port ranges (or any)
+    The parameter is only valid for PortForwarding rules.
+    .OUTPUTS
+    An array of One top Many Firewall NAT rules
+    #>
+}
+
+Function Set-MerakiApplianceFirewallNatRule() {
+    [CmdletBinding()]
+    Param (
+        [Parameter(
+            Mandatory
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [Parameter(Mandatory)]
+        [int]$RuleNumber,
+        [Parameter(Mandatory)]
+        [ValidateSet('OneToMany','OneToOne','PortForwarding')]
+        [string]$Type,
+        [ValidateScript({
+            ($_ -and $Type -eq 'OneToMany') -or ($_ -and $Type -eq 'OneToOne')
+        }, ErrorMessage = 'Property PublicIp is invalid for a PortForwarding rule')]
+        [string]$PublicIp,
+        [Parameter(Mandatory)]
+        [ValidateSet('internet1', 'internet2')]
+        [string]$Uplink,
+        [ValidateScript({
+            $_ -and $Type -eq 'OneToMany'
+        }, ErrorMessage = 'Parameter PortRules is only valid for a OneToMany Rule')]
+        [Parameter(Mandatory)]
+        [PsObject[]]$PortRules,
+        [ValidateScript({
+            ($_ -and $Type -eq 'OneToOne') -or ($_ -and $type -eq 'PortForwarding')
+        }, ErrorMessage = 'Parameter LanIp is invalid for a OneToMany rule.')]
+        [string]$LanIp,
+        [ValidateScript({
+            ($_ -and $Type -eq 'OneToOne') -or ($_ -and $Type -eq 'PortForwarding')
+        }, ErrorMessage = 'Parameter Name is invalid for a OneToMany rule.')]
+        [string]$Name,
+        [ValidateScript({
+            $_ -and $Type -eq 'OneToMany'
+        }, ErrorMessage = 'Parameter AllowedInbound is only valid for a OneToMany rule')]
+        [PsObject]$AllowedInbound,
+        [ValidateScript({
+            $_ -and $Type -eq 'PortForwarding'
+        }, ErrorMessage = 'Parameter Protocol is only valid for a PortForwarding rule.')]
+        [ValidateSet('tcp','udp')]
+        [string]$Protocol,
+        [ValidateScript({
+            $_ -and $Type -eq 'PortForwarding'
+        }, ErrorMessage = 'Parameter PublicPort is only valid for a PortForwarding rule.')]
+        [string]$PublicPort,
+        [ValidateScript({
+            $_ -and $Type -eq 'PortForwarding'
+        },ErrorMessage = 'Parameter LocalPort is only valid for a PortForwarding rule.')]
+        [string]$LocalPort,
+        [ValidateScript({
+            $_ -and $Type -eq 'PortForwarding'
+        }, ErrorMessage = 'Parameter AllowedIps is only valid for a PortForwarding rule.')]
+        [string[]]$AllowedIps
+
+    )
+
+    $Rules_ = @{}
+    Get-MerakiApplianceFirewallNatRules -Id $NetworkId -Type $Type | ForEach-Object {
+        $Rules_.Add($_.RuleNumber, $_)
+    }
+    if ($PublicIP) {
+        $Rules_[$RuleNumber].publicIp = $PublicIP
+    }
+    if ($Uplink) {
+        $Rules_[$RuleNumber].Uplink = $Uplink
+    }
+    if ($PortRules) {
+        $Rules_[$RuleNumber].portRules = $PortRules
+    }                
+    if ($PublicIp) {
+        $Rules_[$RuleNumber].PublicIp = $PublicIp
+    }
+    if ($Uplink) {
+        $Rules_[$RuleNumber].Uplink = $Uplink
+    }
+    if ($LanIp) {
+        $Rules_[$RuleNumber].lanIp = $LanIp
+    }
+    if ($Name) {
+        $Rules_[$RuleNumber].Name = $Name
+    }
+    if ($AllowedInbound) {
+        $Rules_[$RuleNumber].allowedInbound = $AllowedInbound
+    }
+    if ($LocalPort) {
+        $Rules_[$RuleNumber].localPort = $LocalPort
+    }
+    if ($PublicPort) {
+        $Rules_[$RuleNumber].publicPort = $PublicPort
+    }
+    if ($AllowedIps) {
+        $Rules_[$RuleNumber].allowedIps = $AllowedIps
+    }
+
+    try {
+        $Rules = Set-MerakiApplianceFirewallNatRules -Id $Id -Type $Type -Rules $Rules.Values
+        return $Rules
+    } catch {
+        throw $_
+    }
+    <#
+    .DESCRIPTION
+    Add a One to Many NAT mapping rule to an MX network
+    .PARAMETER Id
+    The Id of tye network.
+    .PARAMETER RuleNumber
+    The rule number oto be updated.
+    .PARAMETER Type
+    The type of rule, can be one of: 'OneToMany','OneToOne',or 'PortForwarding'
+    .PARAMETER PublicIP
+    The IP address that will be used to access the internal resource from the WAN.
+    This parameter is only valid for for OneToMany and OneToOne rules.
+    .PARAMETER Uplink
+    The physical WAN interface on which the traffic will arrive ('internet1' or, if available, 'internet2')    
+    .PARAMETER PortRules
+    An array of associated forwarding rules with the following properties:
+        localIp: string Local IP address to which traffic will be forwarded
+        localPort: string Destination port of the forwarded traffic that will be sent from the MX to the specified host on the LAN. If you simply wish to forward the traffic without translating the port, this should be the same as the Public port
+        name: string A description of the rule
+        protocol: string 'tcp' or 'udp'
+        publicPort: string Destination port of the traffic that is arriving on the WAN
+        allowedIps: array[] Remote IP addresses or ranges that are permitted to access the internal resource via this port forwarding rule, or 'any'
+
+        This property can be either a PsObject or a HashTable
+        This property is only valid for OneToMany rules.
+    .PARAMETER LanIp
+    The IP address of the server or device that hosts the internal resource that you wish to make available on the WAN
+    This parameter is only valid for OneToOne or PortForwarding rules.
+    .PARAMETER Name
+    A descriptive name for the rule.
+    This parameter is only valid for OneToOne or PortForwarding rules.
+    .PARAMETER AllowedInbound
+    The ports this mapping will provide access on, and the remote IPs that will be allowed access to the resource
+    The parameter is only valid for OneToMany rules.
+    .PARAMETER Protocol
+    TCP or UDP. Valid values are 'tcp', 'udp'
+    The parameter is only valid for PortForwarding rules.
+    .PARAMETER PublicPort
+    A port or port ranges that will be forwarded to the host on the LAN.
+    The parameter is only valid for PortForwarding rules.
+    .PARAMETER LocalPort
+    A port or port ranges that will receive the forwarded traffic from the WAN
+    The parameter is only valid for PortForwarding rules.
+    .PARAMETER AllowedIps
+    An array of ranges of WAN IP addresses that are allowed to make inbound connections on the specified ports or port ranges (or any)
+    The parameter is only valid for PortForwarding rules.
+    .OUTPUTS
+    An array of One top Many Firewall NAT rules
+    #>
+}
+
+function Remove-MerakiApplianceFirewallNatRule {
+    [CmdletBinding(SupportsShouldProcess)]
+    Param (
+        [Parameter(Mandatory)]
+        [string]$NetworkId,
+        [Parameter(Mandatory)]
+        [ValidateSet('OneToMany','OneToOne','PortForwarding')]
+        [string]$Type,
+        [Parameter(Mandatory)]
+        [int]$RuleNumber
+    )
+
+    $Rules = Get-MerakiApplianceFirewallNatRules -Id $Id -Type $Type
+    
+    $Rules = $Rules.Where({$_.RuleNumber -ne $RuleNumber})
+
+    if ($PSCmdlet.ShouldProcess("$Type rule number $RuleNumber", "Delete")) {
+        try {
+            $Rules = Set-MerakiApplianceFirewallNatRules -Id $Id -Type OneToMany -Rules $Rules
+            return $Rules
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION 
+    Deletes a One To Many firewall NAT rule
+    .PARAMETER NetworkId
+    The Id of the network.
+    .PARAMETER RuleNumber
+    The rule number to delete
+    #>
+}
+#endregion
+
+#region prefixes
+function Get-MerakiApplianceDelegatesStaticPrefixes() {
+    [CmdletBinding()]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id
+    )
+
+    Begin {
+        $Headers = Get-Headers
+    }
+
+    Process {
+        $Uri = "{0}/networks/{1}/appliance/prefixes/delegated/statics" -f $BaseURI, $Id
+
+        Try {
+            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            $response | ForEach-Object {
+                $_ | Add-Member -MemberType NoteProperty -Name 'NetworkId' -Value $Id
+            }
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Retrieves static delegated prefixes for a network.
+    .PARAMETER Id
+    The Id of the network.
+    .OUTPUTS
+    An array of static prefixes.
+    #>
+
+ 
+}
+function Get-MerakiApplianceDelegatesStaticPrefix() {
+    [CmdletBinding()]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [string]$PrefixId
+    )
+
+    Begin {
+        $Headers = Get-Headers
+    }
+
+    Process {
+        $Uri = "{0}/networks/{1}/appliance/prefixes/delegated/statics/{2}" -f $BaseURI, $id, $PrefixId
+
+        try {
+            $response = Invoke-RestMethod -Method Get -URI $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            $response | ForEach-Object {
+                $_ | Add-Member -MemberType NoteProperty -Name 'NetworkId' -Value $Id                
+            }
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Return a static delegated prefix from a network
+    .PARAMETER Id
+    The ID of the network.
+    .PARAMETER PrefixId
+    The Static Prefix Id.
+    .OUTPUTS
+    A Delegated Static prefix object.
+    #>
+}
+
+function Add-MerakiApplianceDelegatedStaticPrefix() {
+    [CmdletBinding()]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [string]$Description,
+        [Parameter(Mandatory)]
+        [string]$Prefix,
+        [Parameter(Mandatory)]
+        [ValidateSet('independent', 'internet')]
+        [string]$Type,
+        [Parameter(Mandatory)]
+        [string[]]$Interfaces
+    )
+
+    Begin {
+        $Headers = Get-Headers
+
+        $_Body = @{
+            prefix = $Prefix
+            origin = @{
+                type = $Type
+                interfaces = $Interfaces
+            }
+        }
+
+        if ($Description) {
+            $_Body.Add("description", $Description)
+        }
+
+        $body = $_Body | ConvertTo-Json -Depth 4 -Compress
+    }
+
+    Process{
+        $Uri = "{0}/networks/{1}/appliance/prefixes/delegated/statics" -f $BaseURI, $Id 
+
+        try {
+            $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
+            $response | Add-Member -MemberType NoteProperty -Name 'NetworkId' -Value $Id
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Add a static delegated prefix from a network
+    .PARAMETER Id
+    The Id of the network.
+    .PARAMETER Description
+    A name or description for the prefix
+    .PARAMETER Prefix
+    A static IPv6 prefix
+    .PARAMETER Type
+    Type of the origin. Valid values are 'independent', 'internet'
+    .PARAMETER Interfaces
+    An array of interfaces associated with the prefix. i.e. 'wan1'
+    .OUTPUTS
+    A delegated static prefix object.
+    #>    
+}
+
+function Set-MerakiApplianceDelegatedStaticPrefix() {
+    [CmdletBinding()]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [string]$PrefixId,
+        [string]$Description,
+        [string]$Prefix,
+        [ValidateSet('independent', 'internet')]
+        [string]$Type,
+        [string[]]$Interfaces
+    )
+
+    Begin {
+        $Headers = Get-Headers
+        
+        $_Body = @{}
+        if ($Description) {
+            $_Body.Add("description", $Description)
+        }
+        if ($Prefix) {
+            $_Body.Add("prefix", $Prefix)
+        }
+        if ($Type) {
+            $_Body['origin'].type = $Type
+        }
+        if ($Interfaces) {
+            $_Body['origin'].interfaces = $Interfaces
+        }
+
+        $body = $_Body | ConvertTo-Json -Depth 4 -Compress
+    }
+
+    Process {
+        $Uri = "{0}/networks/{networkId}/appliance/prefixes/delegated/statics/{staticDelegatedPrefixId}" -f $BaseURI, $Id, $PrefixId
+
+        try {
+            $response = Invoke-RestMethod -Method Put -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
+            $response | Add-Member -MemberType NoteProperty -Name 'NetworkId' -Value $Id
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Update a static delegated prefix from a network.
+    .PARAMETER Id
+    The ID of the network.
+    .PARAMETER PrefixId
+    The Prefix Id.
+    .PARAMETER Prefix
+    A static IPv6 prefix
+    .PARAMETER Type
+    Type of the origin. Valid values are 'independent', 'internet'
+    .PARAMETER Interfaces
+    An array of interfaces associated with the prefix. i.e. 'wan1'
+    .OUTPUTS
+    A delegated static prefix object.   
+    #>
+}
+
+function Remove-MerakiApplianceDelegatedStaticPrefix() {
+    [CmdletBinding(SupportsShouldProcess)]
+    Param (
+        [Parameter(Mandatory)]
+        [string]$NetworkId,
+        [Parameter(Mandatory)]
+        [string]$PrefixId
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/appliance/prefixes/delegated/statics/{2}" -f $BaseURI, $Id, $PrefixId
+
+    if ($PSCmdlet.ShouldProcess("Static Prefix ID $PrefixId", "Delete")) {
+        $response = Invoke-RestMethod -Method Delete -Uri $Uri -Headers $Headers
+        return $response
+    } catch {
+        throw $_
+    }
+    <#
+    .DESCRIPTION
+    Delete a static delegated prefix from a network
+    .PARAMETER NetworkId
+    The ID of te network
+    .PARAMETER PrefixId
+    The Prefix Id
+    .OUTPUTS
+    HTTP response, response status 204 = success.
+    #>
+}
+#endregion
+
+#region IntrusionMalware
+function Get-MerakiApplianceSecurityIntrusion() {
+    [CmdletBinding()]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id
+    )
+
+    Begin {
+        $Headers = Get-Headers
+    }
+
+    Process {
+        $Uri = "{0}/networks/{1}/appliance/security/intrusion" -f $BaseURI, $Id
+
+        try {
+            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Returns all supported intrusion settings for an organization
+    .PARAMETER Id
+    The ID of the network.
+    .OUTPUTS
+    An intrusion settings object.
+    #>
+}
+
+function Set-MerakiApplianceSecurityIntrusion() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,        
+        [ValidateSet('connectivity','balanced','security')]
+        [string]$IdsRuleSets,
+        [ValidateSet('disabled','detection','prevention' )]
+        [string]$Mode,
+        [Parameter(ParameterSetName = "default")]
+        [switch]$UseDefault,
+        [Parameter(ParameterSetName = 'non-default')]
+        [string[]]$ExcludeCidr,
+        [Parameter(ParameterSetName = 'non-default')]
+        [string[]]$IncludeCidr
+    )
+
+    Begin {
+        $_Body = @{}
+
+        if ($IdsRuleSets) {
+            $_Body.Add("idsRuleSets", $IdsRuleSets)
+        }
+        if ($Mode) {
+            $_Body.add("mode", $Mode)
+        }
+        if ($UseDefault.IsPresent) {
+            $_Body["protectedNetworks"].useDefault = $true
+        }
+        if ($ExcludeCidr) {
+            $_Body["protectedNetworks"].excludeCidr = $ExcludeCidr
+        }
+        if ($IncludeCidr) {
+            $_Body["protectedNetworks"].includeCidr = $IncludeCidr
+        }
+
+        $body = $_Body | ConvertTo-Json -Depth 4 -Compress
+    }    
+
+    Process {
+        $Uri = "{0}/networks/{1}/appliance/security/intrusion" -f $BaseURI, $Id
+
+        try {
+            $response = Invoke-RestMethod -Method Put -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Set the supported intrusion settings for an MX network
+    .PARAMETER Id
+    The ID of the Network.
+    .PARAMETER IdsRuleSets
+    Set the detection ruleset 'connectivity','balanced','security' (optional - omitting will leave current config unchanged). 
+    Default value is 'balanced' if none currently saved
+    .PARAMETER Mode
+    Set mode to 'disabled','detection','prevention' (optional - omitting will leave current config unchanged)
+    .PARAMETER UseDefault
+    Whether to use special IPv4 addresses: https://tools.ietf.org/html/rfc5735 (required). Default value is true if none currently saved.
+    .PARAMETER ExcludeCidr
+    List of IP addresses or subnets being excluded from protection (required if 'useDefault' is false)
+    .PARAMETER IncludeCidr
+    list of IP addresses or subnets being protected (required if 'useDefault' is false)
+    #>
+}
+
+function Get-MerakiApplianceSecurityMalwareSettings() {
+    [CmdletBinding()]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id
+    )
+
+    Begin {
+        $Headers = Get-Headers
+    }
+
+    Process {
+        $Uri = "{0}/networks/{1}/appliance/security/malware" -f $BaseURI, $Id
+
+        try {
+            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            $number = 1
+            $response.AllowedFiles | ForEach-Object {
+                $_ | Add-Member -MemberType NoteProperty -Name 'Number' -Value $number
+                $number += 1
+            }
+            $number = 1
+            $response.AllowedUrls | ForEach-Object {
+                $_ | Add-Member -MemberType NoteProperty -Name 'Number' -Value $number
+                $number += 1
+            }
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Returns all supported malware settings for an MX network.
+    .PARAMETER Id
+    The ID of the network.
+    .OUTPUTS
+    A malware settings object
+    #>
+}
+
+function Set-MerakiApplianceSecurityMalwareSettings() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [Parameter(Mandatory)]
+        [bool]$Enabled,
+        [PsObject[]]$AllowedFiles,
+        [PsObject[]]$AllowedUrls
+    )
+
+    Begin {
+        $Headers = Get-Headers
+
+        if ($Enabled.IsPresent) {
+            $_Body = @{
+                mode = 'enabled'
+            }
+
+            if ($AllowedFiles) {
+                $_Body.Add("allowedFiles", $AllowedFiles)
+            }
+
+            if ($AllowedUrls) {
+                $_Body.Add("allowedUrls", $AlloweeUrls)
+            }
+        } else {
+            $_Body = @{
+                mode = 'disabled'
+                allowedFiles = @()
+                allowedUrls = @()
+            }
+        }
+
+        $body = $_Body | ConvertTo-Json -Depth 4 -Compress
+    }
+
+    Process {
+        $Uri = "{0}/networks/{1}/appliance/security/malware" -f $BaseURI, $id
+
+        try {
+            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -Body $body  -PreserveAuthorizationOnRedirect
+            $number = 1
+            $response.AllowedFiles | ForEach-Object {
+                $_ | Add-Member -MemberType NoteProperty -Name 'Number' -Value $number
+                $number += 1
+            }
+            $number = 1
+            $response.AllowedUrls | ForEach-Object {
+                $_ | Add-Member -MemberType NoteProperty -Name 'Number' -Value $number
+                $number += 1
+            }         
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Set the supported malware settings for an MX network
+    .PARAMETER Id
+    The Id of the network.
+    .PARAMETER Enabled
+    Set the malware prevention to enabled or disabled. Setting this to false will clear the AllowedFiles and AllowedUrl settings.
+    .PARAMETER AllowedFiles
+    An array of allowed file Objects. Properties are:
+        comment*: string Comment about the allowed entity
+        sha256*: string The file sha256 hash to allow
+    .PARAMETER AllowedUrls
+    An array of allowed Url objects Properties are:
+        comment*: string Comment about the allowed entity
+        url*: string The url to allow
+    #>
+}
+
+#endregion
+
+#region Single Lan
+function Get-MerakiApplianceSingleLan() {
+    [CmdletBinding()]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$id
+    )
+
+    Begin {
+        $Headers = Get-Headers
+    }
+
+    Process {
+        $Uri = "{0}/networks/{1}/appliance/singleLan" -f $BaseURI, $Id
+
+        try {
+            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Return single LAN configuration.
+    .PARAMETER id
+    The id of the Network.
+    .OUTPUTS
+    A single LAN configuration object.
+    #>
+}
+
+function Set-MerakiApplianceSingleLan() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
+    Param (
+        [Parameter(Mandatory)]
+        [string]$NetworkId,
+        [string]$ApplianceIp,
+        [string]$subnet,
+        [Parameter(ParameterSetName = 'ipv6')]
+        [switch]$Ipv6Enabled,
+        [Parameter(ParameterSetName = 'ipv6')]
+        [PSObject[]]$Ipv6PrefixAssignments,
+        [switch]$MandatoryDHCP
+    )
+
+    $_Body = @{}
+
+    if ($ApplianceIp) {
+        $_Body.Add("applianceIp", $ApplianceIp)
+    }
+    if ($subnet) {
+        $_.Body.Add("subnet", $subnet)
+    }
+    if ($Ipv6Enabled.IsPresent) {
+        $_Body['ipv6'].Enabled = $true
+    }
+    if ($Ipv6PrefixAssignments) {
+        $_Body['ipv6'].prefixAssignments = $Ipv6PrefixAssignments
+    }
+    if ($MandatoryDHCP.IsPresent) {
+        $Body['mandatoryDhcp'].Enabled = $true
+    }
+
+    $body = $_Body | ConvertTo-Json
+    
+    $Uri = "{0}/networks/{networkId}/appliance/singleLan" -f $BaseURI, $Id
+    
+    try {
+        $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+        return $response
+    } catch {
+        throw $_
+    }
+    <#
+    .DESCRIPTION
+    Return single LAN configuration
+    .PARAMETER NetworkId
+    The Id of the Network.
+    .PARAMETER ApplianceIp
+    The local IP of the appliance on the single LAN
+    .PARAMETER subnet
+    The subnet of the single LAN
+    .PARAMETER Ipv6Enabled
+    Enable IPv6 on single LAN
+    .PARAMETER Ipv6PrefixAssignments
+    An array of Ipv6 prefix assignments on the single LAN.
+    .PARAMETER MandatoryDHCP
+    Mandatory DHCP will enforce that clients connecting to this single LAN must use the IP address assigned by the DHCP server. Clients who use a static IP address won't be able to associate.
+    #>
+}
+#endregion
+
+#region SSIDs
+function Get-MerakiApplianceSSID() {
+    [CmdletBinding()]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [int]$SsidNumber
+    )
+
+    Begin {
+        $Headers = Get-Headers
+    }
+
+    Process {
+        $Uri = "{0}/networks/{1}/appliance/ssids" -f $BaseURI, $Id
+        if ($SsidNumber) {
+            $Uri = "{0}/{1}" -f $Uri, $SsidNumber
+        }
+
+        try {
+            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Return the SSID(s) in this network
+    .PARAMETER Id
+    The IDof the network
+    .PARAMETER SsidNumber
+    The ssid number to return a single ssid.
+    .OUTPUTS
+    A single or an array of SSID objects
+    #>
+}
+
+Set-Alias -Name Get-MerakiApplianceSSIDs -Value Get-MerakiApplianceSSID -Option ReadOnly
+
+function Set-MerakiApplianceSSID() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('SSIDNumber')]
+        [int]$Number,
+        [string]$Name,
+        [bool]$Enabled,
+        [int]$DefaultVlanId,
+        [ValidateSet('8021x-meraki', '8021x-radius', 'open', 'psk')]
+        [string]$AuthMode,
+        [ValidateSet('wep', 'wpa')]
+        [ValidateScript({
+            $_ -and $AuthMode -eq 'psk'
+        })]
+        [string]$EncryptionMode,
+        [ValidateScript({
+            $_ -and $AuthMode -eq 'psk'
+        }, ErrorMessage = "Parameter Passkey is only valid when AuthMode = 'psk'")]
+        [string]$Passkey,
+        [ValidateSet('WPA1 and WPA2', 'WPA2 only', 'WPA3 Transition Mode', 'WPA3 only')]
+        [ValidateScript({
+            ($_ -and ($AuthMode -eq 'psk' -and $EncryptionMode -eq 'wpa')) -or
+            ($_ -and $AuthMode -in '8021x-meraki','8021x-radius')
+        }, ErrorMessage = "The parameter WpaEncryptionMOde is only valid if (1) the AuthMode is 'psk' & the EncryptionMode is 'wpa' OR (2) the AuthMode is '8021x-meraki' OR (3) the authMode is '8021x-radius'")]
+        [string]$WpaEncryptionMode,
+        [switch]$Hide,
+        [switch]$DhcpEnforcedDeAuthentication,
+        [switch]$Dot11wEnabled,
+        [switch]$Dot11wRequired,
+        [ValidateScript({
+            $_ -and $AuthMode -eq '8021x-radius'
+        })]
+        [PsObject]$RadiusServers
+    )
+
+    Begin {
+        $Headers = Get-Headers
+
+        $_Body = @{}
+        if ($Name) {
+            $_Body.Add("Name", $Name)
+        }
+        if ($Enabled) {
+            $_Body.Add("enabled", $Enabled)
+        }
+        if ($DefaultVlanId) {
+            $_Body.Add("defaultVlanId",$DefaultVlanId)
+        }
+        if ($AuthMode) {
+            $_Body.Add("authMode", $AuthMode)
+        }
+        if ($Passkey) {
+            $_Body.Add("Psk", $Passkey)
+        }
+        if ($EncryptionMode) {
+            $_Body.Add("encryptionMode", $EncryptionMode)
+        }
+        if ($Hide.IsPresent) {
+            $_Body.Add("visible", $False)
+        } else {
+            $_Body.Add("visible", $true)
+        }
+        if ($DhcpEnforcedDeAuthentication) {
+            $_Body.Add("dhcpEnforceDeauthentication",@{
+                enabled = $true
+            })
+        }
+        if ($Dot11wEnabled) {
+            $_Body["dot11w"].enabled = $true
+        }
+        if ($Dot11wRequired) {
+            $_Body["dot11w"].required = $true
+        }
+        if ($RadiusServers) {
+            $_Body.Add("radiusServers", $RadiusServers)
+        }
+
+        $body = $_Body | ConvertTo-Json -Depth 6 -Compress
+    }
+
+    Process {
+        $Uri = "{0}/networks/{1}/appliance/ssids/{2}" -f $BaseURI, $Id, $Number
+        try {
+            $response = Invoke-RestMethod -Method Put -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Update the attributes of an MX SSID
+    .PARAMETER Id
+    The Id of the network.
+    .PARAMETER Number
+    The number of the ssid.
+    .PARAMETER Name
+    The name of the ssid.
+    .PARAMETER Enabled
+    Enable or disable an ssid.
+    .PARAMETER DefaultVlanId
+    The default VLAN for the ssid.
+    .PARAMETER AuthMode
+    The association control method for the SSID ('open', 'psk', '8021x-meraki' or '8021x-radius').
+    .PARAMETER EncryptionMode
+    The psk encryption mode for the SSID ('wep' or 'wpa'). This param is only valid if the authMode is 'psk'.
+    .PARAMETER Passkey
+    The passkey for the SSID. This param is only valid if the authMode is 'psk'.
+    .PARAMETER WpaEncryptionMode
+    The types of WPA encryption. ('WPA1 and WPA2', 'WPA2 only', 'WPA3 Transition Mode' or 'WPA3 only'). This param is only valid if (1) the authMode is 'psk' & the encryptionMode is 'wpa' OR (2) the authMode is '8021x-meraki' OR (3) the authMode is '8021x-radius'
+    .PARAMETER Hide
+    Hide this SSID. Omitting this parameter will make the ssid visible.
+    .PARAMETER DhcpEnforcedDeAuthentication
+    DHCP Enforced Deauthentication enables the disassociation of wireless clients in addition to Mandatory DHCP. This param is only valid on firmware versions >= MX 17.0 where the associated LAN has Mandatory DHCP Enabled.
+    .PARAMETER Dot11wEnabled
+    Enable 802.11w
+    .PARAMETER Dot11wRequired
+    Require 802.11w
+    .PARAMETER RadiusServers
+    The RADIUS 802.1x servers to be used for authentication. This param is only valid if the authMode is '8021x-radius'.
+    .OUTPUTS
+    An SSID Object.
+    #>
+}
+#endregion
+
+#region WarmSpare
+function Get-MerakiApplianceWarmSpare() {
+    [CmdletBinding()]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id
+    )
+
+    Begin {
+        $Headers = Get-Headers
+    }
+
+    Process {
+        $Uri = "{0}/networks/{2}/appliance/warmSpare/swap" -f $BaseURI, $Id
+
+        try {
+            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Return MX warm spare settings
+    .PARAMETER Id
+    The Id of the network.
+    .OUTPUTS
+    An appliance warm spare object
+    #>
+}
+
+function Set0MerakiApplianceWarmSpare() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
+    Param(
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [bool]$Enabled,
+        [string]$SpareSerial,
+        [ValidateSet('virtual','public')]
+        [string]$UplinkMode,
+        [string]$Wan1Ip,
+        [string]$Wan2Ip
+    )
+
+    Begin {
+        $Headers = Get-Headers
+
+        $_Body = @{}
+        if ($Enable) {
+            $_Body.Add("enabled", $Enabled)
+        }
+        if ($SpareSerial) {
+            $_Body.Add("spareSerial", $SpareSerial)
+        }
+        if ($UplinkMode) {
+            $_Body.Add("uplinkMOde", $UplinkMode)
+        }
+        if ($Wan1Ip) {
+            $_Body.Add("virtualIp1", $Wan1Ip)
+        }
+        if ($Wan2Ip) {
+            $_Body.Add("virtualIp2", $Wan2Ip)
+        }
+
+        $body = $_Body | ConvertTo-Json -Depth 3 -Compress
+    }
+
+    Process {
+        $Uri = "{0}/networks/{networkId}/appliance/warmSpare" -f $BaseURI, $Id
+
+        try {
+            $response = Invoke-RestMethod -Method Put -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Update MX warm spare settings.
+    .PARAMETER Id
+    The Id of the network.
+    .PARAMETER Enabled
+    Enable pr disable the warm spare.
+    .PARAMETER SpareSerial
+    Serial number of the warm spare appliance
+    .PARAMETER UplinkMode
+    Uplink mode, either virtual or public
+    .PARAMETER Wan1Ip
+    The WAN 1 shared IP
+    .PARAMETER Wan2Ip
+    The WAN 2 shared IP
+    .OUTPUTS
+    A warm spare object.
+    #>
+}
+
+function Invoke-SwapMerakiApplianceWarmSpare() {
+    [CmdletBinding(
+        SupportsShouldProcess,
+        ConfirmImpact = 'high'
+    )]
+    Param (
+        [Parameter(Mandatory)]
+        [Alias('NetworkId')]
+        [string]$Id
+    )
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/networks/{1}/appliance/warmSpare/swap" -f $BaseURI, $Id
+    $NetworkName = (Get-MerakiNetwork -Id $Id).Name
+    if ($PSCmdlet.ShouldProcess("Network $NetworkName to warm spare", "Swap")) {
+        try {
+            $response = Invoke-RestMethod -Method Post -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    Swap MX primary and warm spare appliances
+    .PARAMETER Id
+    The network Id
+    .OUTPUTS 
+    A warm spare object.
+    #>
+}
+
 #endregion

@@ -3,12 +3,14 @@ using namespace System.Collections.Generic
 
 #region Networks
 function Get-MerakiNetwork() {
+    [CmdletBinding(DefaultParameterSetName='default')]
     Param(
         [Parameter(
             Mandatory = $true
         )]
         [String]$networkID
     )
+
     $Uri = "{0}/networks/{1}" -f $BaseURI, $networkID
     $Headers = Get-Headers
 
@@ -32,7 +34,7 @@ function Get-MerakiNetwork() {
 Set-Alias -Name GMNet -Value Get-MerakiNetwork -Option:ReadOnly
 
 function Set-MerakiNetwork() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
@@ -86,8 +88,43 @@ function Set-MerakiNetwork() {
     #>
 }
 
+function Remove-MerakiNetwork() {
+    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'default')]
+    Param(
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id
+    )
+
+    $Headers = Get-Headers
+
+    $URI = "{0}/networks/{1}" -f $BaseURI, $Id
+
+    $Network = Get-MerakiNetwork -networkID $Id
+
+    if ($PSCmdlet.ShouldProcess("Network $($Network.Name). This cannot be undone!", "DELETE")){
+        try {
+            $response = Invoke-RestMethod -Method Delete -Uri $Uri -Headers $Headers
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+
+    <#
+    .DESCRIPTION
+    Removes a Meraki Network from the Organization. Devices will remain in the Organization's inventory.
+    This is irreversible, all configuration data and client data will be lost.
+    .PARAMETER Id
+    The Network ID of the network to be deleted.
+    #>
+}
+
 function Connect-MerakiNetworkToTemplate() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
@@ -137,7 +174,7 @@ function Connect-MerakiNetworkToTemplate() {
 }
 
 function Disconnect-MerakiNetworkFromTemplate() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
@@ -165,102 +202,16 @@ function Disconnect-MerakiNetworkFromTemplate() {
     .PARAMETER NetworkId
     The ID of the network
     .PARAMETER RetainConfigs
-    Optional boolean to retain all the current configs given by the template
+    Optional boolean to retain all the current configs given by the template.
     .OUTPUTS
     A network object
     #>
 }
 
-function Merge-MerakiNetworks() {
-    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'default')]
-    Param(
-        [Parameter(Mandatory = $true)]
-        [string]$Name,
-        [Parameter(
-            Mandatory,
-            ValueFromPipelineByPropertyName
-        )]
-        [Alias('NetworkId')]
-        [string]$Id,
-        [string]$EnrollmentString,
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgID,
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$profileName
-    )
-<# 
-    if ($OrgID -and $profileName) {
-        Write-Host "The OrgId and ProfileName parameters cannot be used together." -ForegroundColor Red
-        return
-    }
- #>
-    Begin {
-        if (-not $OrgID) {
-            $config = Read-Config
-            if ($profileName) {
-                $OrgID = $config.profiles.$profileName
-                if (-not $OrgID) {
-                    throw "Invalid profile name!"
-                }
-            } else {
-                $OrgID = $config.profiles.default
-            }
-        }
 
-        $Networks = [List[string]]::New()
-
-        $Header = Get-Headers
-        $Uri = "{0}/organizations/{1}/networks/combine" -f $BaseURI, $OrgID
-   }
-
-    Process {
-        $Networks.Add($Id)
-    }
-
-    End {
-
-        $_Body = @{
-            "name" = $Name
-            "networkIds" = ($Networks.ToArray())
-        }
-        if ($EnrollmentString) { $_Body.Add("enrollmentString", $EnrollmentString) }
-
-        $body = $_Body | ConvertTo-Json -Compress
-
-        if ($PSCmdlet.ShouldProcess('Merge',"Networks $($Networks -join ',')")) {
-            try {
-                $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Header -Body $Body -PreserveAuthorizationOnRedirect
-                return $response
-            } catch {
-                throw $_
-            }
-        }
-    }
-    <#
-    .SYNOPSIS
-    Combine multiple networks into a single network.
-    .DESCRIPTION
-    Combine multiple Meraki networks into a single network.
-    .PARAMETER Name
-    The name of the combined network.
-    .PARAMETER NetworkIds
-    A list of the network IDs that will be combined. 
-    If an ID of a combined network is included in this list, the other networks in the list will be grouped into that network.
-    .PARAMETER EnrollmentString
-    A unique identifier which can be used for device enrollment or easy access through the Meraki SM Registration page or the Self Service Portal. 
-    Please note that changing this field may cause existing bookmarks to break. All networks that are part of this combined network will have their enrollment string appended by '-network_type'. 
-    If left empty, all existing enrollment strings will be deleted.
-    .PARAMETER OrgID
-    The Organization ID
-    .PARAMETER profileName
-    The saved Profile name.
-    .OUTPUTS
-    A network object
-    #>
-}
 
 function Split-MerakiNetwork() {
-    [CmdletBinding(SupportsShouldProcess)]
+    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'default')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId
@@ -282,11 +233,11 @@ function Split-MerakiNetwork() {
     }
     <#
     .SYNOPSIS
-    Split network into individual networks
+    Split network into individual networks.
     .DESCRIPTION
-    Split a combined network into individual networks for each type of device
+    Split a combined network into individual networks for each type of device.
     .PARAMETER NetworkId
-    The Id of then network
+    The Id of then network.
     .OUTPUTS
     An array of network objects
     #>
@@ -295,16 +246,18 @@ function Split-MerakiNetwork() {
 
 #endregion
 function Get-MerakiNetworkDevices () {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param (
         [Parameter(
             Mandatory   = $true,
             ValueFromPipeline = $true,
             ValueFromPipelineByPropertyName = $True)]
+        [Alias('NetworkId')]
         [string]$id
     )
 
     Begin {
+
         $Headers = Get-Headers
     }
 
@@ -332,7 +285,7 @@ Set-Alias -Name GMNetDevs -Value Get-MerakiNetworkDevices -Option ReadOnly
 
 
 function Get-MerakiNetworkEvents() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -362,6 +315,7 @@ function Get-MerakiNetworkEvents() {
     )
 
     Begin {
+
         $Headers = Get-Headers
 
         if ($PerPage) {
@@ -512,7 +466,7 @@ Set-Alias -Name GMNetEvents -value Get-MerakiNetworkEvents -Option ReadOnly
 
 
 function Get-MerakiNetworkEventTypes() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -542,7 +496,7 @@ function Get-MerakiNetworkEventTypes() {
     #>
 }
 
-Set-Alias -Name GMNetET  Get-MerakiNetworkEventTypes -Option ReadOnly
+Set-Alias -Name GMNetET -Value Get-MerakiNetworkEventTypes -Option ReadOnly
 
 function Get-MerakiNetworkClients () {
     [CmdletBinding(DefaultParameterSetName = 'default')]
@@ -583,26 +537,10 @@ function Get-MerakiNetworkClients () {
         [ValidateRange(1,4096)]
         [string]$VLAN,
 
-        [string[]]$recentDeviceConnections,
+        [string[]]$recentDeviceConnections
 
-        [Parameter(ParameterSetName = 'org')]
-        [string]$OrgID,
-
-        [Parameter(ParameterSetName = 'profile')]
-        [string]$profileName
     )
     Begin {          
-        If (-not $OrgID) {
-            $config = Read-Config
-            if ($profileName) {
-                $OrgId = $config.profiles.$profileName
-                if (-not $OrgID) {
-                    throw "Invalid profile name!"
-                }
-            } else {
-                $OrgID = $config.profiles.default
-            }
-        }
 
         $Results = [List[PsObject]]::New()
         $Headers = Get-Headers
@@ -735,12 +673,14 @@ function Get-MerakiNetworkClients () {
     Filters clients based on the full match for the VLAN field.
     .PARAMETER recentDeviceConnections
     Filters clients based on recent connection type. Can be one of 'Wired' or 'Wireless'.
+    .PARAMETER PskGroup
+    Filters clients based on partial or full match for the iPSK name field.
     .OUTPUTS
     A collection of client objects.
     #>
 }
 
-Set-Alias GMNetClients -Value Get-MerakiNetworkClients -Option ReadOnly
+Set-Alias -Name GMNetClients -Value Get-MerakiNetworkClients -Option ReadOnly
 
 function Get-MerakiNetworkClientApplicationUsage() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
@@ -751,11 +691,7 @@ function Get-MerakiNetworkClientApplicationUsage() {
         )]
         [Alias('NetworkId')]
         [string]$Id,
-        [Parameter(
-            Mandatory,
-            ValueFromPipelineByPropertyName)]
-        [string]$ClientId,
-        
+
         [string]$Clients,
 
         [ValidateScript({$_ -is [int]})]
@@ -786,32 +722,10 @@ function Get-MerakiNetworkClientApplicationUsage() {
         [int]$PerPage,
 
         [ValidateScript({$_ -is [int]})]
-        [int]$Pages = 1,
-
-        [Parameter(ParameterSetName = 'org', Mandatory)]
-        [Parameter(ParameterSetName = 'datesWithOrg', Mandatory)]
-        [Parameter(ParameterSetName = 'daysWithOrg', Mandatory)]
-        [string]$OrgId,
-
-        [Parameter(ParameterSetName = 'profile')]
-        [Parameter(ParameterSetName = 'datesWithProfile')]
-        [Parameter(ParameterSetName = 'daysWithProfile')]
-        [string]$ProfileName
-
+        [int]$Pages = 1
     )
 
     Begin {      
-        If (-not $OrgID) {
-            $config = Read-Config
-            if ($profileName) {
-                $OrgId = $config.profiles.$profileName
-                if (-not $OrgID) {
-                    throw "Invalid profile name!"
-                }
-            } else {
-                $OrgID = $config.profiles.default
-            }
-        }
 
         $Headers = Get-Headers
         
@@ -819,6 +733,11 @@ function Get-MerakiNetworkClientApplicationUsage() {
             $Query = "perPage={0}" -f $perPage
         }
 
+        if ($Clients) {
+            if ($Query) {$Query += '&'}
+            $Query = "{0}clients = {1}" -f $Query, $Clients 
+        }
+    
         if ($SSIDNumber) {
             if ($Query) {$Query += "&"}
             $Query = "{0}ssidNumber={1}" -f $Query, $SSIDNumber
@@ -902,6 +821,10 @@ function Get-MerakiNetworkClientApplicationUsage() {
     Number of days before to day to retrieve date. (Cannot be more than 31 days before today). Default is 1 day.
     .PARAMETER PerPage
     The number of entries per page returned. Acceptable range is 3 - 1000.
+    .PARAMETER ClientId
+    A list of client keys, MACs or IPs separated by comma.
+    .PARAMETER Pages
+    Number of pages to return. Default is all.
     .OUTPUTS
     An array of application usage statistics.
     #>
@@ -945,33 +868,12 @@ function Get-MerakiNetworkClientBandwidthUsage() {
         [int]$perPage,
 
         [ValidateScript({$_ -is [int]})]
-        [Int]$Pages,
+        [Int]$Pages
 
-        [Parameter(ParameterSetName = 'org', Mandatory)]
-        [Parameter(ParameterSetName = 'datesWithOrg', Mandatory)]
-        [Parameter(ParameterSetName = 'daysWithOrg', Mandatory)]
-        [string]$OrgId,
-
-        [Parameter(ParameterSetName = 'profile')]
-        [Parameter(ParameterSetName = 'datesWithProfile')]
-        [Parameter(ParameterSetName = 'daysWithProfile')]
-        [string]$ProfileName
     )
 
     Begin {
 
-        If (-not $OrgID) {
-            $config = Read-Config
-            if ($profileName) {
-                $OrgId = $config.profiles.$profileName
-                if (-not $OrgID) {
-                    throw "Invalid profile name!"
-                }
-            } else {
-                $OrgID = $config.profiles.default
-            }
-        }
-       
         $Headers = Get-Headers
 
         Set-Variable -Name Query
@@ -1041,14 +943,16 @@ function Get-MerakiNetworkClientBandwidthUsage() {
     Returns a time series of total traffic consumption rates for all clients on a network within a given timespan, in megabits per second.
     .PARAMETER id
     Network Id
-    .PARAMETER StartTime
+    .PARAMETER StartDate
     The beginning of the timespan for the data. Must be no more than 31 days from today.
-    .PARAMETER EndTime
+    .PARAMETER EndDate
     The end time for the data. Must be no more than 31 days after StartTime.
     .PARAMETER Days
     Number fo days prior to today to return data.
     .PARAMETER perPage
     The number of entries per page returned. Acceptable range is 3 - 1000. Default is 1000.
+    .PARAMETER Pages
+    Number of pages to return. Default is all.
     .OUTPUTS
     Am array of usage statistics.
     #>
@@ -1057,7 +961,7 @@ function Get-MerakiNetworkClientBandwidthUsage() {
 Set-Alias -Name GMNetCltBWUsage -Value Get-MerakiNetworkClientBandwidthUsage -Option ReadOnly
 
 function Get-MerakiNetworkTraffic() {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
             Mandatory,
@@ -1085,6 +989,7 @@ function Get-MerakiNetworkTraffic() {
     )
 
     Begin {
+
         if ($Days) {
             $Seconds = [TimeSpan]::FromDays($Days).TotalSeconds
             $Query = "timespan={0}" -f $Seconds
@@ -1110,4 +1015,16 @@ function Get-MerakiNetworkTraffic() {
             throw $_
         }
     }
+    <#
+    .DESCRIPTION
+    Return the traffic analysis data for this network. Traffic analysis with hostname visibility must be enabled on the network.
+    .PARAMETER Id
+    The Id of the network to retrieve the traffic.
+    .PARAMETER StartDate
+    The beginning date/time to retrieve the data. Maximum is 30 days prior to the current date.
+    .PARAMETER Days
+    Days prior to the current date to retrieve data. Cannot be more than 30 day prior to the current date.
+    .PARAMETER DeviceType
+    The device type to retrieve the data for. Defaults to 'combined'. When using 'combined', for each rule the data will come from the device type with the most usage.
+    #>
 }

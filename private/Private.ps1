@@ -1,12 +1,17 @@
 #Private Variables
 
-$BaseURI = "https://api.meraki.com/api/v1"
-
+$script:BaseURI = "https://api.meraki.com/api/v1"
 
 #Private function
 function Read-Config () {
     $ConfigPath = "$home/.meraki/config.json"
     $config = Get-Content -Raw -Path $ConfigPath | ConvertFrom-Json
+
+    if ($config.APIKey -eq "Secure") {
+         $Secret = Get-Secret -Name "MerakiAPI" -AsPlainText | ConvertFrom-Json
+         $config.APIKey = $Secret.APIKey
+    }
+
     return $config
 }
 
@@ -39,3 +44,4 @@ function Get-Headers() {
     }
     return $Headers
 }
+
