@@ -48,6 +48,9 @@ $ErrorActionPreference = "Break"
 Import-Module Meraki-API-V1
 Import-Module ImportExcel
 
+$savedWarningPreferrence = $Global:WarningPreference
+$Global:WarningPreference = 'SilentlyContinue'
+
 if ($NetworkName) {
     $Network = Get-MerakiNetworks | Where-Object {$_.Name -eq $NetworkName}    
 } else {
@@ -84,6 +87,7 @@ if (Test-Path -Path $document) {
 $titleParams = @{
     TitleBold=$true;
     TitleSize=12;
+
 }
 
 $TableParams = @{
@@ -112,7 +116,7 @@ $networkProps = $networkItems.PSObject.Properties
 $excel = $networkProps | Select-Object @{n="Property";e={$_.Name}}, Value | `
                 Export-Excel -ExcelPackage $excel -WorkSheetName $Worksheet -TableName "Network" `
                             -StartRow $script:StartRow -StartColumn $script:StartColumn -Title "Network" @titleParams `
-                            -AutoSize -NumberFormat Text -PassThru
+                            -AutoSize -NumberFormat Text -PassThru 
 
 $Network | ConvertTo-Json | Set-Content -Path "$jsonPath/network.json"             
 
@@ -644,6 +648,8 @@ if (-not $ExcludeSwitches) {
 If (-not $ExcludeAccessPoints) {
     DocumentAccessPoints $AccessPoints
 }
+
+$Global:WarningPreference = $savedWarningPreferrence
 
 if ($IsWindows) {
     Close-ExcelPackage $excel -Show                        
