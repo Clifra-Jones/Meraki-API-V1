@@ -48,7 +48,7 @@ $ErrorActionPreference = "Break"
 Import-Module Meraki-API-V1
 Import-Module ImportExcel
 
-$savedWarningPreferrence = $Global:WarningPreference
+$savedWarningPreference = $Global:WarningPreference
 $Global:WarningPreference = 'SilentlyContinue'
 
 if ($NetworkName) {
@@ -403,7 +403,7 @@ function DocumentSwitchStacks() {
         $interfaceDHCP = $StackInterfaces | Get-MerakiSwitchStackRoutingInterfaceDHCP
         $x=0
         $interfaceDHCP | Where-Object {$_.dhcpMode -eq 'dhcpServer'} | ForEach-Object {
-            $tableName = ("dhcp{0}" -f $x).tostring()
+            $tableName = ("dhcp{0}" -f $x).ToString()
             $excel = $_ | Select-Object @{n="Interface Name";e={$_.interfaceName}}, `
                                         @{n="DHCP Mode";e={$_.dhcpMode}}, `
                                         @{n="DNS Name Servers";e={$_.dnsNameServersOption}}, `
@@ -463,7 +463,7 @@ function DocumentNonStackSwitches() {
         $NonStackSwitchInterfaces = $nonStackSwitches | Get-MerakiSwitchRoutingInterfaces 
         if ($NonStackSwitchInterfaces) {
             $excel = $NonStackSwitchInterfaces | Sort-Object -Property switchName | `
-                Select-Object @{Name="Switch";Expression={$_.switchName}}, @{Name="VLAN";Expression={$_.vlanid}}, `
+                Select-Object @{Name="Switch";Expression={$_.switchName}}, @{Name="VLAN";Expression={$_.VlanId}}, `
                                 Name, Subnet, @{Name="IP";Expression={$_.interfaceIp}}, `
                                 @{Name="OSPF Routing";Expression={$_.ospfSettings.area}}, @{Name="Multicast Routing";Expression={$_.multicastRouting}} | `
                             Export-Excel -ExcelPackage $excel -WorksheetName $Worksheet -StartRow $script:StartRow -StartColumn $script:StartColumn `
@@ -649,7 +649,7 @@ If (-not $ExcludeAccessPoints) {
     DocumentAccessPoints $AccessPoints
 }
 
-$Global:WarningPreference = $savedWarningPreferrence
+$Global:WarningPreference = $savedWarningPreference
 
 if ($IsWindows) {
     Close-ExcelPackage $excel -Show                        
