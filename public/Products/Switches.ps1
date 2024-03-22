@@ -78,7 +78,10 @@ function Add-MerakiSwitchStackRoutingInterface() {
         [string]$InterfaceIp,
         [string]$DefaultGateway,
         [string]$Ipv6Address,
-        [ValidateScript({$_ -eq 'static' -and ($Ipv6Address)}, ErrorMessage = "Parameter Ipv6Assignment must be 'static' if Parameter Ipv6Address is specified.")]
+        [ValidateScript({
+            $_ -eq 'static' -and ($Ipv6Address)
+            }, ErrorMessage = "Parameter Ipv6Assignment must be 'static' if Parameter Ipv6Address is specified."
+        )]
         [string]$Ipv6AssignmentMode,
         [string]$Ipv6Gateway,
         [string]$Ipv6Prefix,
@@ -2939,13 +2942,15 @@ function Add-MerakiSwitchAccessPolicy() {
         [string]$AccessPolicyType,
         [ValidateSet('','11')]
         [String]$RadiusGroupAttribute = '',
-        [ValidateScript({$_.isPresent -and $AccessPolicyType -eq 'Hybrid Authentication'}, ErrorMessage = "AccessPolicyType must equal 'Hybrid Authentication'")]
+        [ValidateScript({
+            $_.isPresent -and $AccessPolicyType -eq 'Hybrid Authentication'
+        }, ErrorMessage = "AccessPolicyType must equal 'Hybrid Authentication'")]
         [switch]$IncreaseAccessSpeed,
         [Parameter(ParameterSetName = 'RadiusAccounting')]
         [switch]$RadiusAccountingEnabled,
         [switch]$RadiusCoaSupportEnabled,
         [switch]$RadiusTestingEnabled,
-        [switch]$UrlredirectWalledGardenEnabled,
+        [switch]$UrlRedirectWalledGardenEnabled,
         [switch]$VoiceVlanClients,
         [string[]]$UrlRedirectWalledGardenRanges,
         [string]$Dot1xControlDirection,
@@ -3145,7 +3150,9 @@ function Set-MerakiSwitchAccessPolicy() {
         [string]$AccessPolicyType,
         [ValidateSet('','11')]
         [String]$RadiusGroupAttribute = '',
-        [ValidateScript({$_.IsPresent -and $AccessPolicyType -eq "Hybrid Authentication"}, ErrorMessege="AccessPolicyType must equal 'Hybrid Authentication")]
+        [ValidateScript(
+            {$_.IsPresent -and $AccessPolicyType -eq "Hybrid Authentication"
+        }, ErrorMessage = "AccessPolicyType must equal 'Hybrid Authentication")]
         [switch]$IncreaseAccessSpeed,
         [Parameter(ParameterSetName = 'Radius Accounting')]
         [switch]$RadiusAccountingEnabled,        
@@ -3462,7 +3469,7 @@ function Set-MerakiSwitchRoutingOspf() {
         [securestring]$Md5AuthenticationPassphrase,
         [ValidateScript({$_ -is [int]})]
         [int]$V3DeadTimerInSeconds,
-        [ValidateRange(1.255)]
+        [ValidateRange(1,255)]
         [ValidateScript({$_ -is [int]})]
         [int]$V3HelloTimerInSeconds,
         [switch]$V3Enabled,

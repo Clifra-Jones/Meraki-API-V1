@@ -110,8 +110,9 @@ function Update-MerakiApplianceContentFiltering() {
         [string[]]$blockedURLPatterns,
         [string[]]$blockedUrlCategories,
         [string]$urlCategoryListSize,
-        [ValidateScript({$_ -and -not ($allowedURLPatterns -or $blockedUrlCategories -or $urlCategoryListSize)}, 
-            ErrorMessage="The parameter ContentFilteringRules cannot be used with the allowedURLPatterns, blockedURLPatterns, blockedURLCategories -or urlCategoriesList parameters")]
+        [ValidateScript({
+            $_ -and -not ($allowedURLPatterns -or $blockedUrlCategories -or $urlCategoryListSize)
+        },ErrorMessage="The parameter ContentFilteringRules cannot be used with the allowedURLPatterns, blockedURLPatterns, blockedURLCategories -or urlCategoriesList parameters")]
         [psObject]$ContentFilteringRules
     )
 
@@ -932,7 +933,9 @@ function Set-MerakiApplianceVLAN() {
         [string]$DnsNameServers,
         [ValidateSet("Run a DHCP Server","Relay DHCP to another Server","Do not respond to DHCP requests")]
         [string]$DhcpHandling,
-        [ValidateScript({$_ -and ($DhcpHandling -eq 'Relay DHCP to another Server"')}, ErrorMessage = "Parameter DhcpRelayServers is not valid when parameter DhcpHandling is 'Relay DHCP to another Server'")]
+        [ValidateScript({
+            $_ -and ($DhcpHandling -eq 'Relay DHCP to another Server"')
+        }, ErrorMessage = "Parameter DhcpRelayServers is not valid when parameter DhcpHandling is 'Relay DHCP to another Server'")]
         [string[]]$DhcpRelayServerIPs,
         [ValidateSet(
             '30 minutes', '1 hour', '4 hours', '12 hours', '1 day', '1 week'
@@ -3345,7 +3348,7 @@ function Add-MerakiApplianceFirewallNatRule() {
         [string]$PublicPort,
         [ValidateScript({
             $_ -and $Type -eq 'PortForwarding'
-        },ErrorMessage = 'Parameter LocalPort is only valid for a PortForwarding rule.')]
+        }, ErrorMessage = 'Parameter LocalPort is only valid for a PortForwarding rule.')]
         [string]$LocalPort,
         [ValidateScript({
             $_ -and $Type -eq 'PortForwarding'
