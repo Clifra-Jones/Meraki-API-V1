@@ -2880,16 +2880,14 @@ function Get-MerakiApplianceL7FirewallRules() {
     }
 
     Process {
-        $Uri = "{0}/networks/{networkId}/appliance/firewall/l7FirewallRules" -f $BaseURI, $Id
+        $Uri = "{0}/networks/{1}/appliance/firewall/l7FirewallRules" -f $BaseURI, $Id
 
-        $Network = Get-MerakiNetwork -Id $Id
         try {
             $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             $Rules = $response.rules
             $Number = 1
             $Rules | ForEach-Object {
                 $_ | Add-Member -MemberType NoteProperty -Name 'NetworkId' -Value $Id
-                $_ | Add-Member -MemberType NoteProperty -Name "NetworkName" -Value $Network.Name
                 $_ | Add-Member -MemberType NoteProperty -Name "RuleNumber" -Value $Number
                 $Number += 1
             }
@@ -2988,11 +2986,11 @@ function Add-MerakiApplianceL7FirewallRule() {
     }
 
     Process {
-        $Rules = Get-MerakiNetworkApplianceL7FirewallRules -id $Id
+        [array]$Rules = Get-MerakiApplianceL7FirewallRules -id $Id
         $Rules += $Rule
 
         try {
-            $Rules = Set-MerakiNetworkApplianceL7FirewallRules -Id $Id -Rules $Rules
+            $Rules = Set-MerakiApplianceL7FirewallRules -Id $Id -Rules $Rules
             return $Rules
         } catch {
             throw $_
@@ -3023,16 +3021,21 @@ function Set-MerakiApplianceL7FirewallRule () {
         )]
         [Alias('NetworkId')]
         [string]$Id,
-        [Parameter(Mandatory)]
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
         [int]$RuleNumber,        
+        [Parameter(ValueFromPipelineByPropertyName)]
         [ValidateSet('application', 'applicationCategory', 'host', 'port', 'ipRange')]
         [string]$Type,
+        [Parameter(ValueFromPipelineByPropertyName)]
         [string]$Value
     )
 
     Process {
         $Rules_ = @{}
-        Get-MerakiNetworkApplianceL7FirewallRules -id $Id| ForEach-Object {
+        Get-MerakiApplianceL7FirewallRules -id $Id| ForEach-Object {
             $Rules_.Add($_.RuleNumber, $_)            
         }
 
@@ -3046,7 +3049,7 @@ function Set-MerakiApplianceL7FirewallRule () {
         $Rules = $Rules_.Values
 
         try {
-            $Rules = Set-MerakiNetworkApplianceL7FirewallRules -Id $Id -Rules $Rules
+            $Rules = Set-MerakiApplianceL7FirewallRules -Id $Id -Rules $Rules
             return $Rules
         } catch {
             throw $_
@@ -3071,7 +3074,10 @@ function Set-MerakiApplianceL7FirewallRule () {
 }
 
 function Remove-MerakiApplianceL7FirewallRule() {
-    [CmdletBinding(SupportsShouldProcess)]
+    [CmdletBinding(
+        SupportsShouldProcess,
+        ConfirmImpact = 'high'
+    )]
     Param (
         [Parameter(Mandatory)]
         [string]$NetworkId,
@@ -3079,11 +3085,11 @@ function Remove-MerakiApplianceL7FirewallRule() {
         [string]$RuleNumber
     )
 
-    $Rules = Get-MerakiNetworkApplianceL7FirewallRules -id $Id | Where-Object {$_.RuleNumber -ne $RuleNumber}
+    $Rules = Get-MerakiApplianceL7FirewallRules -Id $NetworkId | Where-Object {$_.RuleNumber -ne $RuleNumber}
 
     if ($PSCmdlet.ShouldProcess("Level7 firewall rule number $RuleNumber", "Delete")) {
         try {
-            $Rules = Set-MerakiNetworkApplianceL7FirewallRules -Id $Id -Rules $Rules
+            $Rules = Set-MerakiApplianceL7FirewallRules -Id $NetworkId -Rules $Rules
         } catch {
             throw $_
         }
@@ -3134,7 +3140,9 @@ Function Get-MerakiApplianceL7ApplicationCategories() {
     An array of application category objects.
     #>
 }
+#endregion
 
+#region Firewall NAR Rules
 function Get-MerakiApplianceFirewallNatRules() {
     [CmdletBinding()]
     Param (
@@ -3167,11 +3175,11 @@ function Get-MerakiApplianceFirewallNatRules() {
     Process {
         $Uri = $Uri -f $BaseURI, $Id
 
-        $Network = Get-MerakiNetworks -Id $Id
+        $Network = Get-MerakiNetwork -NetworkId $Id
 
         try {
             $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
-            $Rules = $response.rules
+            [array]$Rules = $response.rules
             $number = 1
             $Rules | ForEach-Object {
                 $_ | Add-Member -MemberType NoteProperty -Name 'NetworkId' -Value $Id
@@ -3213,6 +3221,8 @@ function Set-MerakiApplianceFirewallNatRules() {
     )
 
     Begin {
+        $Headers = Get-headers
+        
         switch ($type) {
             'OneToMany' {
                 $Uri = "{0}/networks/{1}/appliance/firewall/oneToManyNatRules"
@@ -3230,17 +3240,17 @@ function Set-MerakiApplianceFirewallNatRules() {
         $Uri = $Uri -f $BaseURI, $Id
 
         # Remove the RuleNumber, NetworkId, and NetworkName properties.
-        $Rules = $Rules | Select-Object -ExcludeProperty RuleNumber, NetworkName, NetworkId
+        [array]$Rules = $Rules | Select-Object -ExcludeProperty RuleNumber, NetworkName, NetworkId
         $Rules_ = @{
             rules = $Rules
         }
 
-        $Body = $Rules_ | ConvertTo-Json -Depth 4 -Compress
+        $Body = $Rules_ | ConvertTo-Json -Depth 10 #-Compress
 
-        $Network = Get-MerakiNetwork -Id $Id
+        $Network = Get-MerakiNetwork -networkID $Id
 
         try {
-            $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers -Body $Body
+            $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $Body
             $Rules = $response.rules
             $Number = 1
             $Rules | ForEach-Object {
@@ -3322,8 +3332,7 @@ function Add-MerakiApplianceFirewallNatRule() {
         [string]$Uplink,
         [ValidateScript({
             $_ -and $Type -eq 'OneToMany'
-        }, ErrorMessage = 'Parameter PortRules is only valid for a OneToMany Rule')]
-        [Parameter(Mandatory)]
+        }, ErrorMessage = 'Parameter PortRules is only valid for a OneToMany Rule')]        
         [PsObject[]]$PortRules,
         [ValidateScript({
             ($_ -and $Type -eq 'OneToOne') -or ($_ -and $type -eq 'PortForwarding')
@@ -3334,7 +3343,7 @@ function Add-MerakiApplianceFirewallNatRule() {
         }, ErrorMessage = 'Parameter Name is invalid for a OneToMany rule.')]
         [string]$Name,
         [ValidateScript({
-            $_ -and $Type -eq 'OneToMany'
+            $_ -and $Type -eq 'OneToOne'
         }, ErrorMessage = 'Parameter AllowedInbound is only valid for a OneToMany rule')]
         [PsObject]$AllowedInbound,
         [ValidateScript({
@@ -3357,6 +3366,7 @@ function Add-MerakiApplianceFirewallNatRule() {
     )
 
     Begin {
+
         switch ($Type) {
             'OneToMany' {
                 $Properties = @{
@@ -3401,7 +3411,11 @@ function Add-MerakiApplianceFirewallNatRule() {
 
     Process {
         $Rules = Get-MerakiApplianceFirewallNatRules -Id $Id -Type $Type
-        $Rules += $Rule
+        if ($Rules) {
+            $Rules += $Rule
+        } else {
+            $Rules = @($Rule)
+        }
         try{
             $Rules = Set-MerakiApplianceFirewallNatRules -Id $Id -Type $Type -Rules $Rules
             return $Rules

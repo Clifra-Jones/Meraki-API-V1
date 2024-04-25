@@ -4,7 +4,7 @@ This module allows you to interact and manage your Meraki organization using Pow
 This module uses the Version 1 REST API.
 
 >[!WARNING]
-I have enabled the writable functions (New-, Add-, Set- Remove-). Please make sure you are 100%, absolutely, without a doubt, sure you know what you are doing! I hold no responsibility if you damage your Meraki Organization/Networks. You are warned!
+I have enabled the some of the writable functions that have been tested (New-, Add-, Set- Remove-). Please make sure you are 100%, absolutely, without a doubt, sure you know what you are doing! I hold no responsibility if you damage your Meraki Organization/Networks. You are warned!
 
 [Module Reference](https://clifra-jones.github.io/Meraki-API-V1/docs/reference.html)
 
@@ -12,13 +12,17 @@ I have enabled the writable functions (New-, Add-, Set- Remove-). Please make su
 
 This module aims to follow Powershell best practices.
 
-While Powershell best practices discourage the use od pluralized function names, we are using them here because there are specific API end points for retrieving a list of items and a single item. This allows setting the Id fields for the singular functions to required.
+Powershell best practices discourage the use of pluralized function names, I have made the effort to remove most of the pluralized functions that were in this module. I have created aliases to the previous pluralized functions. This should prevent any scripts you already have from breaking. You should make the effort to modify your scripts to use the new non-pluralized functions.
+There are still some pluralized function, primarily in the Organization functions. The organization functions use different endpoint URIs.
+Example:
+  Get-MerakiNetworks which is an Organization endpoint.
+  Get-MerakiNetwork which is a Network endpoint.
 
 There are certain API endpoints that allow filtering by providing arrays of values, i.e. network ids, serial numbers, client ids etc. I have chosen not to utilize these filters and allow the user to filter the results using the Where-Object cmdlet. This is the PowerShell way of doing things. This should not be a performance issue unless you have an organization with 1000's of networks containing 1000's of devices. If that is the case you may want to call these endpoints manually.
 
 Many of the objects returned by the functions in this module provide additional properties that facilitate piping the results to other commands. Properties such as NetworkID, Serial, InterfaceId, etc are added to the results from the API methods that do not contain them.
 
-Piping is not supported for certain function. These include all Remove- functions and Set- functions that the module creates unique identifiers for each item returned. This is done for safety reasons on the Remove- functions. For module provided unique identifiers I cannot guarantee that the item referred to by the identifier is the same item configuration across different networks, devices, etc. Again this is for safety and data integrity reasons.
+Piping is not supported for certain function. These include all Remove- functions and some Set- functions that the module creates unique identifiers for each item returned. This is done for safety reasons on the Remove- functions. For module provided unique identifiers I cannot guarantee that the item referred to by the identifier is the same item configuration across different networks, devices, etc. Again this is for safety and data integrity reasons.
 
 As stated above, writable function are YOUR responsibility! There is no UNDO, there is no recovery! If you delete a network, it is gone, you will have to rebuild it manually! The same applies to any configuration in your organization! While this module provides a convenient method of doing something like cleaning up old networks that are no longer is use much faster than doing it manually through the dashboard, you MUST use care to make sure all the network IDs you are providing are in fact meant to be removed! You can seriously damage your Meraki organization and possibly find yourself unemployed! Neither myself, or Cisco can be held responsible for your actions!
 
@@ -44,7 +48,7 @@ New-MerakiSecretVault -Authentication Password -Interaction Prompt
 
 This will prompt you to set a password on your vault. You should do this for interactive system. You can set -Authentication and -Interaction to 'none' to not set a password on the vault. This  should only be done on system that need to operate in non-interactive mode, such as scheduled tasks. This should only be done on a secure computer under a secure user profile.
 
-If the vault is secured by a password, you will be prompted for it when you run the first function in your PowerShell session. You will not be prompted of the password again for subsequent functions while the current powershell session remains active.
+If the vault is secured by a password, you will be prompted for it when you run the first function in your PowerShell session. You will not be prompted for the password again for subsequent functions while the current powershell session remains active.
 
 ### Create a Secure Configuration
 
@@ -70,7 +74,7 @@ The example DocumentMerakiNetwork.ps1 requires the module Import-Excel to functi
 
 ## INSTALLATION
 
-The module is not available from the Powershell Gallery. This will always be the latest stable version of this module.
+The module is now available from the Powershell Gallery. This will always be the latest stable version of this module.
 
 ```powershell
 Install-Module Meraki-API-V1

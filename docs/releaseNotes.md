@@ -2,6 +2,13 @@
 
 ## Release Notes
 
+### 03/22/2024
+
+Added secure API Key storage.
+You can now store your API Keys in secure storage on your computer.
+
+See the README.md for more details.
+
 ### 02/02/2024
 
 Enabled all writable function in this module.
