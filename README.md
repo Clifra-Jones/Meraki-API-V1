@@ -14,9 +14,11 @@ This module aims to follow Powershell best practices.
 
 Powershell best practices discourage the use of pluralized function names, I have made the effort to remove most of the pluralized functions that were in this module. I have created aliases to the previous pluralized functions. This should prevent any scripts you already have from breaking. You should make the effort to modify your scripts to use the new non-pluralized functions.
 There are still some pluralized function, primarily in the Organization functions. The organization functions use different endpoint URIs.
+
 Example:
-  Get-MerakiNetworks which is an Organization endpoint.
-  Get-MerakiNetwork which is a Network endpoint.
+
+- Get-MerakiNetworks which is an Organization endpoint.
+- Get-MerakiNetwork which is a Network endpoint.
 
 There are certain API endpoints that allow filtering by providing arrays of values, i.e. network ids, serial numbers, client ids etc. I have chosen not to utilize these filters and allow the user to filter the results using the Where-Object cmdlet. This is the PowerShell way of doing things. This should not be a performance issue unless you have an organization with 1000's of networks containing 1000's of devices. If that is the case you may want to call these endpoints manually.
 
@@ -31,8 +33,8 @@ As stated above, writable function are YOUR responsibility! There is no UNDO, th
 The module now supports storing your API keys in Secure Storage.
 This requires the following modules to be installed on your system:
 
-Microsoft.Powershell.SecretsManagement
-Microsoft.Powershell.SecretStore
+- Microsoft.Powershell.SecretsManagement
+- Microsoft.Powershell.SecretStore
 
 These are now required modules for this module. You will need to install them even if you do not use the secure key storage feature.
 
