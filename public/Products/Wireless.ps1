@@ -938,7 +938,7 @@ function Get-MerakiWirelessStatus() {
 
 Set-Alias -Name GMWirelessStat -Value Get-MerakiWirelessStatus
 
-function Get-NetworkClientConnectionStats() {
+function Get-MerakiNetworkClientConnectionStats() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
@@ -1067,7 +1067,7 @@ function Get-NetworkClientConnectionStats() {
     #>
 }
 
-Set-Alias -Name Get-NetworkClientsConnectionStats -Value Get-NetworkClientConnectionStats -Option ReadOnly
+
 
 function Get-MerakiWirelessAirMarshal() {
     [CmdletBinding(DefaultParameterSetName = 'default')]

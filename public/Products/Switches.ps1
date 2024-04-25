@@ -1182,49 +1182,6 @@ Set-Alias -Name SetMSRteIntDHCP -Value Set-MerakiSwitchRoutingInterfaceDhcp
 #endregion
 
 #region Switch Static Routes
-function Get-MerakiSwitchRoutingStaticRoutes() {
-    [CmdLetBinding(DefaultParameterSetName = 'default')]
-    Param(
-        [Parameter(
-            Mandatory=$true,
-            ValueFromPipeline = $true,
-            ValueFromPipelineByPropertyName = $true
-        )]
-        [String]$serial
-    )
-
-    Begin {
-
-        $Headers = Get-Headers
-    }
-
-    Process {
-
-        $Uri = "{0}/devices/{1}/switch/routing/staticRoutes" -f $BaseUri, $serial
-        $device = Get-MerakiDevice -Serial $serial
-
-        try {
-            $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
-            $response | foreach-Object {
-                $_ | Add-Member -MemberType NoteProperty -Name "switch" -Value $device.name
-                $_ | Add-Member -MemberType NoteProperty -Name 'serial' -Value $serial
-            }
-
-            return $response
-        } catch {
-            throw $_
-        }
-    }
-
-    <#
-    .SYNOPSIS
-    Returns the static routes for a Meraki switch.
-    .PARAMETER serial
-    The serial number of the switch.
-    .OUTPUTS
-    AN array of Meraki static routes.
-    #>
-}
 
 Set-Alias -Name GMSWStaticRoutes -value Get-MerakiSwitchRoutingStaticRoute -Option ReadOnly
 Set-Alias -Name Get-MerakiSwitchRoutingStaticRoutes -Value Get-MerakiSwitchRoutingStaticRoute -Option ReadOnly
@@ -2819,63 +2776,6 @@ function Set-MerakiSwitchQosRuleOrder() {
 #endregion
 
 #region Access Policies
-function Get-MerakiSwitchAccessPolicies() {
-    [CmdletBinding(DefaultParameterSetName = 'default')]
-    Param(
-        [Parameter(
-            Mandatory = $true,
-            ValueFromPipeline = $true,
-            ValueFromPipelineByPropertyName = $true
-        )]
-        [Alias('NetworkId')]
-        [string]$Id
-    )
-
-    Begin {
-
-        $Headers = Get-Headers
-
-        $policies = [List]::New()
-    }
-
-    Process {
-        $Uri = "{0}/networks/{1}/switch/accessPolicies"
-
-        $Network = Get-MerakiNetwork -networkID $Id
-
-        try {
-            $policyid = 1
-            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
-            $response | ForEach-Object {
-                $_ | Add-Member -MemberType NoteProperty -Name "policyId" -Value $pid
-                $policyid += 1
-            }
-
-            $policy = [PSCustomObject]@{
-                NetworkId = $Network.Id
-                NetworkName = $Network.Name
-                policies = $response
-            }
-            $policies.Add($policy)            
-        } catch {
-            throw $_
-        }
-    }
-
-    End {
-        return $policies.ToArray()
-    }
-    <#
-    .SYNOPSIS
-    Return the access policies for a network
-    .DESCRIPTION
-    Return the switch access policies for a Meraki network.
-    .PARAMETER Id
-    The ID of the network.
-    .OUTPUTS
-    an object containing the Access policies
-    #>
-}
 
 function Get-MerakiSwitchAccessPolicy() {
     [CmdletBinding(DefaultParameterSetName = 'default')]

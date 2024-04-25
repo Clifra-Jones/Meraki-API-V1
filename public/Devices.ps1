@@ -362,3 +362,30 @@ function Remove-MerakiNetworkDevice() {
         }
     }
 }
+
+#region Monitoring
+function Get-MerakiDeviceLldpCdp() {
+    [CmdletBinding()]
+    Param (
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [string]$Serial
+    )
+
+    Begin {
+        $Headers = Get-Headers
+    }
+
+    Process {
+        $Uri = "{0}/devices/{1}/lldpCdp" -f $BaseURI, $Serial
+        
+        try {
+            $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            return $response
+        } catch {
+            throw $_
+        }
+    }
+}
