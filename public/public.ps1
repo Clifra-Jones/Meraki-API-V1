@@ -24,7 +24,7 @@ if (Test-Path "$home/.meraki/config.json") {
                 default = $oldConfig.OrgId
             }
         }
-        Move-Item "$home/.meraki/config.json" "$home/.meraki/oldconfig.json"
+        Move-Item -Path "$home/.meraki/config.json" -Destination "$home/.meraki/oldconfig.json"
         $newConfig | ConvertTo-Json | Set-Content -Path "$home/.meraki/config.json"
     }
 }
