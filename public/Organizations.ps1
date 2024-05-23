@@ -85,6 +85,17 @@ function Set-MerakiAPI() {
                         $config = @{
                             APIKey = "Secure"
                         }
+
+                        $VaultName = (Get-SecretVault | Select-Object -First 1).Name
+                        If ($VaultName) {
+                            Write-Host "Checking $VaultName for exiting Meraki Secret"
+                            $Secret = Get-SecretInfo -Vault $VaultName | Where-Object {$_.Name -eq 'MerakiAPI'}
+                            $response = Read-Host "MerakiAPI secret already exists, Do you want to overwrite? [y/N]"
+                            if ($response -ne 'y') {
+                                Write-Host "Aborting!"
+                                exit
+                            }
+                        }
                         
                         Set-MerakiSecret -APIKey $APIKey
 

@@ -89,30 +89,14 @@ function Update-MerakiApplianceContentFiltering() {
             ValueFromPipelineByPropertyName = $true
         )]
         [string]$id,
-        [ValidateScript(
-            {
-                if ($ContentFilteringRules) {
-                    throw "The allowedURLPatterns parameter cannot be used with the ContentFilteringRules parameter."
-                } elseif (-not $_) {
-                        throw "The allowedURLPatterns parameter is require if the ContentFilteringRules parameter is omitted."
-                } elseif ((-not $blockedURLPatterns) -or (-not $blockedUrlCategories) -or (-not $urlCategoryListSize)) {
-                    throw "The allowedUrlPatterns parameter requires the blockedURLPatterns and blockedUrlCategories parameters "
-                } else {
-                    $true
-                }
-            }
-        )]
+        [Parameter(ParameterSetName = "values")]
         [string[]]$allowedURLPatterns,
-        [Parameter(
-            Mandatory=$true,
-            ParameterSetName = "values"            
-        )]
+        [Parameter(ParameterSetName = "values")]
         [string[]]$blockedURLPatterns,
+        [Parameter(ParameterSetName = "values")]
         [string[]]$blockedUrlCategories,
         [string]$urlCategoryListSize,
-        [ValidateScript({
-            $_ -and -not ($allowedURLPatterns -or $blockedUrlCategories -or $urlCategoryListSize)
-        },ErrorMessage="The parameter ContentFilteringRules cannot be used with the allowedURLPatterns, blockedURLPatterns, blockedURLCategories -or urlCategoriesList parameters")]
+        [Parameter(ParameterSetName = "rules")]
         [psObject]$ContentFilteringRules
     )
 
