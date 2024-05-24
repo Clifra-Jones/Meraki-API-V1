@@ -8,6 +8,7 @@ function Get-MerakiNetwork() {
         [Parameter(
             Mandatory = $true
         )]
+        [Alias('Id')]
         [String]$networkID
     )
 

@@ -246,6 +246,7 @@ function Remove-MerakiApplianceContentFilteringRules () {
             ValueFromPipeline = $true,
             ValueFromPipelineByPropertyName = $true
         )]
+        [Alias('NetworkId')]
         [string]$id,
         [string[]]$allowedURLPatterns,
         [string[]]$blockedURLPatterns
@@ -272,8 +273,10 @@ function Remove-MerakiApplianceContentFilteringRules () {
             }
             $cfr.blockedUrlPatterns = $BUPList.ToArray()
         }
-        $NetworkName = (Get-MerakiNetwork -Id $Id).Name
-        if ($PSCmdlet.ShouldProcess("Network: $($NetworkName)", "Remove content filtering rules")) {
+        #
+        # Try and get the network name. If this fails, see if the ID is for a template.
+
+        if ($PSCmdlet.ShouldProcess("Network with ID: $Id", "Remove content filtering rules")) {
             Update-MerakiNetworkApplianceContentFiltering -id $id -ContentFilteringRules $cfr
         }
     }
