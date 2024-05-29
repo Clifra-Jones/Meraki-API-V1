@@ -77,23 +77,31 @@ function Set-MerakiAPI() {
         $config = $oConfig | ConvertTo-HashTable
 
         if ($APIKey) {
-            If ($config.APIKey -ne $APIKey) {
-                Write-Host "The APIKey you entered does not match the APIKey in the config file. This will overwrite the existing config file!" -ForegroundColor Yellow
-                $response = ($R = read-host "Continue? [Y/n]:") ? $R : 'Y'
-                if ($response-eq "Y") {
+            If ($config.APIKey -eq 'Secure') {
+                $ConfigKey = (Get-Secret -Name 'MerakiAPI' -AsPlainText | ConvertFrom-JSON).APIKey
+            } Else {
+                $ConfigKey = $Config.APIKey
+            }
+            If ($ConfigKey -ne $APIKey) {
+                Write-Host "The APIKey you entered does not match the APIKey in the config file. This will overwrite the existing config file! Continue? [y/N]: " -NoNewline -ForegroundColor Yellow                
+                $response = Read-Host 
+                if ($response -eq "y") {
                     if ($SecureKey) {
                         $config = @{
-                            APIKey = "Secure"
+                            $APIKey = "Secure"
                         }
 
                         $VaultName = (Get-SecretVault | Select-Object -First 1).Name
                         If ($VaultName) {
-                            Write-Host "Checking $VaultName for exiting Meraki Secret"
+                            Write-Host "Checking $VaultName for existing Meraki Secret" -ForegroundColor Yellow
                             $Secret = Get-SecretInfo -Vault $VaultName | Where-Object {$_.Name -eq 'MerakiAPI'}
-                            $response = Read-Host "MerakiAPI secret already exists, Do you want to overwrite? [y/N]"
-                            if ($response -ne 'y') {
-                                Write-Host "Aborting!"
-                                exit
+                            If ($Secret) {
+                                Write-Host "MerakiAPI secret already exists, Do you want to overwrite? [y/N]: " -NoNewline -ForegroundColor Yellow
+                                $response = Read-Host
+                                if ($response -ne 'y') {
+                                    Write-Host "Aborting!"
+                                    exit
+                                }
                             }
                         }
                         
