@@ -2196,9 +2196,9 @@ function Get-MerakiOrganizationApplianceVpnStats() {
 
         $Uri = "{0}/organizations/{1}/appliance/vpn/stats" -f $BaseURI, $OrgID
 
-        $TimeSpan_Seconds = (New-TimeSpan -Days $timespan).TotalSeconds
+        $TimeSpan_Seconds = (New-TimeSpan -Days $TimeSpan).TotalSeconds
 
-        $Uri = "{0}?perPage={1}&networkIds%5B%5D={2}&timespan={3}" -f $Uri, $timespan, $id, $TimeSpan_Seconds
+        $Uri = "{0}?perPage={1}&networkIds%5B%5D={2}&timespan={3}" -f $Uri, $TimeSpan, $id, $TimeSpan_Seconds
 
         try {
             $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
@@ -2240,7 +2240,7 @@ function Get-MerakiOrganizationApplianceVpnStats() {
     The Network Id.
     .PARAMETER perPage
     The number of entries per page returned. Acceptable range is 3 - 300. Default is 300.
-    .PARAMETER timespan
+    .PARAMETER TimeSpan
     Number of seconds to return data for. default = 5.
     .PARAMETER Summarize
     Summarize the statistics,
@@ -2257,7 +2257,11 @@ Set-Alias -Name GMOAVpnStats -Value Get-MerakiOrganizationApplianceVpnStats -Opt
 set-Alias -Name Get-MerakiNetworkApplianceVpnStats -Value Get-MerakiOrganizationApplianceVpnStats
 
 function Merge-MerakiOrganizationNetworks() {
-    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'default')]
+    [CmdletBinding(
+        SupportsShouldProcess, 
+        DefaultParameterSetName = 'default',
+        ConfirmImpact = 'High'
+    )]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$Name,

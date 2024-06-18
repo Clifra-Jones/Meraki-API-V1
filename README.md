@@ -124,4 +124,13 @@ Set-MerakiAPI -APIKey '{key string}' -OrgId 'XXXXXX' -SecureKey
 
 This will create the file .meraki/config.json file in your user profile.
 
+Create additional profiles.
+Profiles are used to identify the Organization you wish to operate on. Profiles and the parameter -OrgId are only required on functions that operate at the organization level. For appliances, devices, etc. you do not need to provide a profile or use the -OrgId parameter.
+
+When creating an additional profile DO NOT include the -APIKey parameter. You only need the -OrgId and the -ProfileName parameters.
+
+```powershell
+Set-MerakiAPI -OrgId '987456' -ProfileName "MyOtherOrg"
+```
+
 See the module reference for additional information on functions, syntax, and examples.
