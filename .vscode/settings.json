@@ -4,6 +4,7 @@
         "Firewalled",
         "Lldp",
         "Ospf",
+        "psake",
         "psobject",
         "SNMP",
         "SSIDS"
