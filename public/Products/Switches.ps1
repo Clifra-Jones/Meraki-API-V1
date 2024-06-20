@@ -181,7 +181,11 @@ function Add-MerakiSwitchStackRoutingInterface() {
 Set-Alias -Name AddMSSRteInt -Value Add-MerakiSwitchStackRoutingInterface
 
 Function Remove-MerakiSwitchStackRoutingInterface() {
-    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'defailt')]
+    [CmdletBinding(
+        SupportsShouldProcess, 
+        DefaultParameterSetName = 'default',
+        ConfirmImpact = 'High'
+    )]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
@@ -447,7 +451,11 @@ Set-Alias -Name SetMNSSRteStRoute -Value Set-MerakiSwitchStackRoutingStaticRoute
 set-Alias -Name Set-MerakiNetworkSwitchStackRoutingStaticRoute -Value Set-MerakiSwitchStackRoutingStaticRoute -Option ReadOnly
 
 function Remove-MerakiSwitchStackRoutingStaticRoute() {
-    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'default')]
+    [CmdletBinding(
+        SupportsShouldProcess, 
+        DefaultParameterSetName = 'default',
+        ConfirmImpact = 'High'
+    )]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
@@ -965,7 +973,11 @@ function Set-MerakiSwitchRoutingInterface() {
 Set-Alias -Name SetMSRteInt -Value Set-MerakiSwitchRoutingInterface
 
 function Remove-MerakiSwitchRoutingInterface() {
-    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'default')]
+    [CmdletBinding(
+        SupportsShouldProcess, 
+        DefaultParameterSetName = 'default',
+        ConfirmImpact = 'High'
+    )]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$Serial,
@@ -1343,7 +1355,11 @@ function Set-MerakiSwitchRoutingStaticRoute() {
 }
 
 function Remove-MerakiSwitchStaticRoute() {
-    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'default')]
+    [CmdletBinding(
+        SupportsShouldProcess, 
+        DefaultParameterSetName = 'default',
+        ConfirmImpact = 'High'
+    )]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$Serial,
@@ -1540,7 +1556,11 @@ function Set-MerakiSwitchLAG() {
 Set-Alias -Name Set-MerakiNetworkSwitchLAG -Value Set-MerakiSwitchLAG -Option ReadOnly
 
 function Remove-MerakiSwitchLAG() {
-    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'default')]
+    [CmdletBinding(
+        SupportsShouldProcess, 
+        DefaultParameterSetName = 'default',
+        ConfirmImpact = 'High'
+    )]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
@@ -2652,7 +2672,10 @@ function Set-MerakiSwitchQosRule() {
 }
 
 function Remove-MerakiSwitchQosRule() {
-    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'default')]
+    [CmdletBinding(
+        SupportsShouldProcess, 
+        DefaultParameterSetName = 'default',
+        ConfirmImpact = 'High')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,

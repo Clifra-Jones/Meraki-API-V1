@@ -85,7 +85,11 @@ function Start-MerakiDeviceBlink() {
 Set-Alias -Name StartMDevBlink -Value Start-MerakiDeviceBlink -Option ReadOnly
 
 function Restart-MerakiDevice() {
-    [CmdLetBinding(DefaultParameterSetName = 'default')]
+    [CmdLetBinding(
+        DefaultParameterSetName = 'default',
+        SupportsShouldProcess,
+        ConfirmImpact = 'High'
+    )]
     Param(
         [Parameter(
             Mandatory = $true,
@@ -99,9 +103,12 @@ function Restart-MerakiDevice() {
     $headers = Get-Headers
 
     try {
-        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+        $DeviceName = (Get-MerakiDevice -Serial $serial).Name
+        if ($PSCmdlet.ShouldProcess($DeviceName, "Restart")) {
+            $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
-        return $response
+            return $response
+        }
     } catch {
         throw $_
     }
@@ -322,7 +329,10 @@ function Set-MerakiDevice {
 }
 
 function Remove-MerakiNetworkDevice() {
-    [CmdletBinding(SupportsShouldProcess)]
+    [CmdletBinding(
+        SupportsShouldProcess,
+        ConfirmImpact = 'High'
+    )]
     Param (
         [Parameter(
             Mandatory,

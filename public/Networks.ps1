@@ -90,7 +90,11 @@ function Set-MerakiNetwork() {
 }
 
 function Remove-MerakiNetwork() {
-    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'default')]
+    [CmdletBinding(
+        SupportsShouldProcess, 
+        DefaultParameterSetName = 'default',
+        ConfirmIMpact = 'High'
+    )]
     Param(
         [Parameter(
             Mandatory,
@@ -175,7 +179,10 @@ function Connect-MerakiNetworkToTemplate() {
 }
 
 function Disconnect-MerakiNetworkFromTemplate() {
-    [CmdletBinding(DefaultParameterSetName = 'default')]
+    [CmdletBinding(
+        SupportsShouldProcess,
+        DefaultParameterSetName = 'default',
+        ConfirmImpact = 'High')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
@@ -185,13 +192,17 @@ function Disconnect-MerakiNetworkFromTemplate() {
     $Header = Get-Headers
 
     $Uri = "{0}/networks/{1}/unbind" -f $BaseURI, $NetworkId
+
     if ($RetainConfigs.IsPresent) {
         $body = @{"retainConfigs" = "true"} | ConvertTo-Json -Compress
     }
 
     try {
-        $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Header -Body $body -PreserveAuthorizationOnRedirect
-        return $response
+        $NetworkName = (Get-MerakiNetwork -networkID $NetworkId).Name
+        If ($PSCmdlet.ShouldProcess($NetworkName, 'UnBind')) {
+            $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Header -Body $body -PreserveAuthorizationOnRedirect
+            return $response
+        }
     } catch {
         throw $_
     }
@@ -212,7 +223,10 @@ function Disconnect-MerakiNetworkFromTemplate() {
 
 
 function Split-MerakiNetwork() {
-    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'default')]
+    [CmdletBinding(
+        SupportsShouldProcess, 
+        DefaultParameterSetName = 'default',
+        ConfirmImpact = 'High')]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId
@@ -224,7 +238,7 @@ function Split-MerakiNetwork() {
 
     $Network = Get-MerakiNetwork -networkID $NetworkId
 
-    if ($PSCmdlet.ShouldProcess('Split',"Network $($Network.NAme)")) {
+    if ($PSCmdlet.ShouldProcess("Network $($Network.Name)", "Split")) {
         try {
             $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Header -PreserveAuthorizationOnRedirect
             return $response

@@ -14,7 +14,7 @@
 RootModule = '.\Meraki-API-V1.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.1.2'
+ModuleVersion = '1.1.3'
 
 
 # Supported PSEditions
@@ -35,8 +35,7 @@ Copyright = '(c) Balfour Beatty US All rights reserved.'
 # Description of the functionality provided by this module
 Description = 'Powershell module to use with the Meraki API to manage your Meraki Organization. 
 This module now supports storing API keys in a secure Secret store. 
-This is a large update. Please see the project site for more details.
-'
+This is a large update. Please see the project site for more details.'
 
 # Minimum version of the PowerShell engine required by this module
 PowerShellVersion = '6.0'

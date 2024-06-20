@@ -1748,7 +1748,10 @@ function Add-MerakiApplianceCellularFirewallRule() {
 }
 
 function Remove-MerakiApplianceCellularFirewallRule() {
-    [CmdletBinding(SupportsShouldProcess)]
+    [CmdletBinding(
+        SupportsShouldProcess,
+        ConfirmImpact = 'High'
+    )]
     Param(
         [Parameter(Mandatory = $true)]
         [string]$NetworkId,
@@ -2074,7 +2077,10 @@ function Set-MerakiApplianceInboundCellularFirewallRule() {
 }
 
 function Remove-MerakiApplianceInboundCellularFirewallRule() {
-    [CmdletBinding(SupportsShouldProcess)]
+    [CmdletBinding(
+        SupportsShouldProcess,
+        ConfirmImpact = 'High'
+    )]
     Param (
         [Parameter(Mandatory)]
         [string]$NetworkId,
@@ -2380,7 +2386,10 @@ function Set-MerakiApplianceInboundFirewallRules() {
  }
 
  function Remove-MerakiApplianceInboundFirewallRule() {
-    [CmdletBinding(SupportsShouldProcess)]
+    [CmdletBinding(
+        SupportsShouldProcess,
+        ConfirmImpact = 'High'
+    )]
     Param (
         [Parameter(Mandatory)]
         [string]$NetworkId,
@@ -2795,7 +2804,11 @@ function Set-MerakiApplianceL3FirewallRule() {
 }
 
 function Remove-MerakiApplianceL3FirewallRule() {
-    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'default')]
+    [CmdletBinding(
+        SupportsShouldProcess, 
+        DefaultParameterSetName = 'default',
+        ConfirmImpact = 'High'
+    )]
     Param(
         [Parameter(
             Mandatory
@@ -3612,7 +3625,10 @@ Function Set-MerakiApplianceFirewallNatRule() {
 }
 
 function Remove-MerakiApplianceFirewallNatRule {
-    [CmdletBinding(SupportsShouldProcess)]
+    [CmdletBinding(
+        SupportsShouldProcess,
+        ConfirmImpact = 'High'
+    )]
     Param (
         [Parameter(Mandatory)]
         [string]$NetworkId,
@@ -3866,7 +3882,10 @@ function Set-MerakiApplianceDelegatedStaticPrefix() {
 }
 
 function Remove-MerakiApplianceDelegatedStaticPrefix() {
-    [CmdletBinding(SupportsShouldProcess)]
+    [CmdletBinding(
+        SupportsShouldProcess,
+        ConfirmImpact = 'High'
+    )]
     Param (
         [Parameter(Mandatory)]
         [string]$NetworkId,
@@ -4444,7 +4463,7 @@ function Get-MerakiApplianceWarmSpare() {
     #>
 }
 
-function Set0MerakiApplianceWarmSpare() {
+function Set-MerakiApplianceWarmSpare() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
         [Parameter(
