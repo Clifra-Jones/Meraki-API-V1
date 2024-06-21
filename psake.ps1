@@ -4,26 +4,34 @@ Properties {
     $Exclude = @(
         'psake.ps1',
         '.git',
-        '.publish',
+        '.gitignore'
+        'publish',
         '.vscode'
     )
-    $TempDir = "$home/tmp"
-    $PublishDir = "$TempDir\publish\$ModuleName"
+    $TempDir = "$home/tmp" 
+    $PublishDir = "$PSScriptRoot/publish/$ModuleName"
 }
+
 
 Task default -depends Build
 
 Task Publish -depends Build {
+    # Write-Host "test publish = $testpublish"
+    if ($testpublish -eq "yes") {
+        $whatIf = $true
+    } else {
+        $whatIf = $false
+    }
+    # Write-Host "whatif = $whatIf"
     $NugetKey = (Get-Secret -Name NuGetKey -AsPlainText | ConvertFrom-Json).NuGetKey
-
-    Publish-Module -Path $PublishDir -NuGetApiKey $NugetKey -WhatIf
+    Publish-Module -Path $PublishDir -NuGetApiKey $NugetKey -WhatIf:$WhatIf
 }
 
 Task Build -depends Clean {
-    Copy-Item "$PSScriptRoot\*" -Destination $PublishDir -Exclude $Exclude -Recurse -Container
+    Copy-Item "$PSScriptRoot\*" -Destination $PublishDir -Exclude $Exclude -Recurse 
 }
 
-Task Clean -depends Init {
+Task Clean -depends Init {    
     Remove-Item "$PublishDir\*" -Recurse -Force
 }
 
@@ -33,6 +41,6 @@ Task Init {
     }
     if (-not (Test-Path $PublishDir)) {
         New-Item -ItemType Directory $PublishDir
-    }
+    }    
 }
 

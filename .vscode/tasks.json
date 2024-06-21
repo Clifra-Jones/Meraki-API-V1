@@ -40,9 +40,20 @@
                 "showReuseMessage": true,
                 "clear": false
             },
-            "command": "Invoke-PSake psake.ps1 -TaskList Publish",
+            "command": "Invoke-PSake psake.ps1 -TaskList Publish -parameters @{testpublish = '${input:testpublish}'}",
             "problemMatcher":[]
         },
 
+    ],
+    "inputs": [
+        {
+            "id": "testpublish",
+            "description": "Test Publish?",
+            "type": "pickString",
+            "options": [
+                "yes",
+                "no"
+            ]
+        }
     ]
 }
