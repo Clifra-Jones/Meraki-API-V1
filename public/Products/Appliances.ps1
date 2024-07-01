@@ -1078,11 +1078,11 @@ function Set-MerakiApplianceVLAN() {
     .PARAMETER DhcpBootFilename
     DHCP boot option for boot filename
     .PARAMETER DhcpOptions
-    An array of hashtables with the following name/value pairs.
+    An array of HashTables with the following name/value pairs.
     .PARAMETER Ipv6Enabled
     Enable IPv6 on VLAN.
     .PARAMETER IPv6PrefixAssignments
-    An array of hashtables containing IPv6 prefix assignments. 
+    An array of HashTables containing IPv6 prefix assignments. 
     The hashtable must have the following name/value pairs.
     prefixAssignments: array[] Prefix assignments on the VLAN
     staticApplianceIp6: string Manual configuration of the IPv6 Appliance IP
@@ -1212,6 +1212,9 @@ function Get-MerakiApplianceClientSecurityEvents() {
 
     Process {
         $Uri = "{0}/networks/{1}/appliance/clients/{2}/security/events" -f $BaseURI, $Id, $ClientId
+        if($query) {
+            $Uri = "{0}{1}" -f $Uri, $query
+        }
 
         try {
 
@@ -1254,7 +1257,7 @@ function Get-MerakiApplianceClientSecurityEvents() {
     .PARAMETER ClientId
     The ID of the client.
     .PARAMETER StartDate
-    The beginning of the timespan for the data. Data is gathered after the specified StartDate value. The maximum lookback period is 791 days from today.
+    The beginning of the timespan for the data. Data is gathered after the specified StartDate value. The maximum look back period is 791 days from today.
     .PARAMETER EndDate
     The end of the timespan for the data. t1 can be a maximum of 791 days after StartDate.
     .PARAMETER Days
@@ -1266,6 +1269,136 @@ function Get-MerakiApplianceClientSecurityEvents() {
     #>
 }
 
+Function Get-MerakiApplianceSecurityEvents() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
+    Param(
+        [Parameter(
+            Mandatory,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+        [Parameter(
+            Mandatory,
+            ParameterSetName = 'dates'
+        )]
+        [ValidateScript({
+            $_ -gt (Get-Date).AddDays(-791)
+        }, ErrorMessage = "StartDate cannot be more that 791 days prior to today")]
+        [datetime]$StartDate,
+        [Parameter(
+            Mandatory,
+            ParameterSetName = 'dates'
+        )]
+        [ValidateScript({
+            $_ -lt $StartDate.AddDays(791)
+        }, ErrorMessage = "End date cannot be more than 791 days after StartDate")]
+        [datetime]$EndDate,
+        [Parameter(
+            Mandatory,
+            ParameterSetName = 'days'
+        )]
+        [ValidateScript({
+            $_ -lt 791
+        })]
+        [int]$Days,
+        [int]$PerPage       
+        
+    )
+
+    Begin {
+
+        $Headers = Get-Headers
+
+        $Results = [List[PsObject]]::New()
+
+        if ($StartDate) {
+            $Query = "?t0={0}" -f ($StartDate.ToString("0"))
+        }
+        if ($EndDate) {
+            if ($Query) {
+                $Query = "{0}&" -f $Query
+            } else {
+                $Query = "?"
+            }
+            $Query = "{0}t1={1}" -f $Query, ($EndDate.ToString("0"))
+        }
+        if ($Days) {
+            $seconds = [TimeSpan]::FromDays($Days).TotalSeconds
+            if ($Query) {
+                $Query = "{0}&" -f $Query
+            } else {
+                $Query = "?"
+            }
+            $Query = "{0}timespan={1}" -f $Query, $seconds
+        }
+        if ($PerPage) {
+            if ($query) {
+                $query = "{0}&" -f $query
+            } else {
+                $query = "?"
+            }
+            $query = "{0}perPage={1}" -f $query, $PerPage
+        }
+    }
+
+    Process {
+        $Uri = "{0}/networks/{networkId}/appliance/security/events" -f $BaseURI, $Id
+        if ($Query) {
+            $Uri = "{0}{1}" -f $Uri, $Query
+        }
+
+        try {
+            $response = Invoke-WebRequest -Method Get -Uri $Uri -Headers -PreserveAuthorizationOnRedirect
+
+            [List[PsObject]]$result = $response.Content | ConvertFrom-Json
+            if ($result) {
+                $Results.AddRange($result)
+            }
+            $page = 1
+            if ($Pages -ne 1) {
+                $done = $false
+                do {
+                    if ($response.RelationLink['next']) {
+                        $Uri = $response.RelationLink['next']
+                        $response = Invoke-WebRequest -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+                        [List[PsObject]]$result = $response.Content | ConvertFrom-Json
+                        if ($result) {
+                            $Results.AddRange($result)
+                        }
+                        $page += 1
+                        if ($page -gt $Pages) {
+                            $done = $true
+                        }
+                    } else {
+                        $done = $true
+                    }
+                } until ($done)
+            }
+            return $Results
+
+        } catch {
+            throw $_
+        }
+    }
+    <#
+    .DESCRIPTION
+    List the security events for a network
+    .PARAMETER Id
+    The ID of the network
+    .PARAMETER StartDate
+    The beginning of the timespan for the data. Data is gathered after the specified StartDate value. The maximum look back period is 791 days from today.
+    .PARAMETER EndDate
+    The end of the timespan for the data. t1 can be a maximum of 791 days after StartDate.
+    .PARAMETER Days
+    The timespan for which the information will be fetched. If specifying timespan, do not specify parameters StartDate and EndDate. The value must be less than or equal to 791 days. The default is 31 days.
+    .PARAMETER PerPage
+    The number of entries per page returned. Acceptable range is 3 - 1000. Default is 100.
+    .OUTPUTS
+    An array of security event objects.
+    #>
+
+}
 
 #endregion
 
@@ -1294,7 +1427,7 @@ function Get-MerakiApplianceSiteToSiteVPN() {
     try {
         $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
         if ($hr) {
-            $heading = [pscustomobject][ordered]@{
+            $heading = [PsCustomObject][ordered]@{
                 network = (Get-MerakiNetwork -networkID $id).name
                 mode = $response.mode
             }
@@ -1375,7 +1508,7 @@ function Set-MerakiApplianceSiteToSiteVpn() {
 
         if ($Hubs) {
             foreach ($Hub in $hubs) {
-                if (-not $Hub.hubid) {
+                if (-not $Hub.HubId) {
                     throw "Property hubId is required for all Hubs"
                 }
             }
@@ -1385,7 +1518,7 @@ function Set-MerakiApplianceSiteToSiteVpn() {
         if ($Subnets) {
             foreach($Subnet in $Subnets) {
                 if (-not $Subnet.localSubnet) {
-                    throw "Property localSubnet is requored for all Subnets"
+                    throw "Property localSubnet is required for all Subnets"
                 }
             }
             $_Body.Add("subnets", $Subnets)
@@ -1438,7 +1571,7 @@ function Set-MerakiApplianceSiteToSiteVpn() {
     $VpnSettings.Subnets[0].localSubnet = 10.5.5.5/24
     $VpnSettings.Subnets[0].useVpn = $true
     # Update the VPN Settings
-    Set-MeraqkiNetworkApplianceSiteToSiteVpn -NetworkId N_1246598574 -VpnSettings $VpnSettings
+    Set-MerakiNetworkApplianceSiteToSiteVpn -NetworkId N_1246598574 -VpnSettings $VpnSettings
     .EXAMPLE
     In this example we are going to convert a Hub (mess) network to a Spoke network
     In this instance the subnet is already set as we want it so we will only change the mode and add in the remote hub networks.
@@ -1451,7 +1584,7 @@ function Set-MerakiApplianceSiteToSiteVpn() {
         },
         @{
             hubId = "N_75485962345"
-            useDefaultroute = $false
+            useDefaultRoute = $false
         }
     )
     Set-MerakiNetworkApplianceSiteToSiteVpn -NetworkId N_845926352 -Mode Spoke -Hubs $Hubs
@@ -4011,7 +4144,7 @@ function Set-MerakiApplianceSecurityIntrusion() {
     .PARAMETER Id
     The ID of the Network.
     .PARAMETER IdsRuleSets
-    Set the detection ruleset 'connectivity','balanced','security' (optional - omitting will leave current config unchanged). 
+    Set the detection rule set 'connectivity','balanced','security' (optional - omitting will leave current config unchanged). 
     Default value is 'balanced' if none currently saved
     .PARAMETER Mode
     Set mode to 'disabled','detection','prevention' (optional - omitting will leave current config unchanged)
@@ -4097,7 +4230,7 @@ function Set-MerakiApplianceSecurityMalwareSettings() {
             }
 
             if ($AllowedUrls) {
-                $_Body.Add("allowedUrls", $AlloweeUrls)
+                $_Body.Add("allowedUrls", $AllowedUrls)
             }
         } else {
             $_Body = @{
@@ -4567,3 +4700,4 @@ function Invoke-SwapMerakiApplianceWarmSpare() {
 }
 
 #endregion
+

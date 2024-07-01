@@ -740,6 +740,8 @@ Set-Alias -Name Get-MerakiOrganizationConfigTemplates -Value Get-MerakiOrganizat
 function Get-MerakiOrganizationDevices() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
+        [string]$Filter,
+        [int]$Pages,
         [Parameter(ParameterSetName = 'org')]
         [string]$OrgID,
         [Parameter(ParameterSetName = 'profile')]
@@ -764,12 +766,44 @@ function Get-MerakiOrganizationDevices() {
     }
 
     $Uri = "{0}/organizations/{1}/devices" -f $BaseURI, $OrgID
+
+    if ($Filter) {
+        $Uri = "{0}?{1}" -f $Uri, $Filter
+    }
+
     $Headers = Get-Headers
 
-    try {
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+    $Results = [List[PsObject]]::New()
 
-        return $response
+    try {
+        $response = Invoke-WebRequest -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+
+        [List[PsObject]]$result = $response.Content | ConvertFrom-Json
+        if ($result) {
+            $Results.AddRange($result)
+        }
+        $page = 1
+        if ($Pages -ne 1) {
+            $done = $false
+            do {
+                if ($response.RelationLink['next']) {
+                    $Uri = $response.RelationLink['next']
+                    $response = Invoke-WebRequest -Method GET -Uri $Uri -Headers $Headers
+                    [List[PsObject]]$result = $response.Content | ConvertFrom-Json
+                    if ($result) {
+                        $Results.AddRange($result)
+                    }
+                    $page += 1
+                    if ($page -gt $Pages) {
+                        $done = $true
+                    }
+                } else {
+                    $done = $true
+                }
+            } until ($done)
+        }
+
+        return $Result.ToArray()
     } catch {
         throw $_
     }
@@ -778,12 +812,27 @@ function Get-MerakiOrganizationDevices() {
     Get organization Devices.
     .DESCRIPTION
     Get all devices in an organization.
+    .PARAMETER Filter
+    A string representing a filter to be applied to the returned objects.
+    Valid filter properties are 'networkIds', 'productTypes', 'tags', 'tagFilterType', 'name', 'mac', 'serial', 'model', 'macs', 'serials', 
+    'sensorMetrics', 'sensorAlertProfilesIds', 'models'.
+    productTypes, tags, macs, serials, sensorMetrics, sensorAlertProfileIds, and models are arrays.
+    See examples for constructing a filter string.
+    .PARAMETER Pages
+    The number of pages to return. Default is all pages.
     .PARAMETER OrgID
     Optional Organization Id..
     .PARAMETER profileName
     Optional Profile name.
     .OUTPUTS
     AN array of Meraki Device objects.
+    .EXAMPLE
+    To construct a valid filter specify the properties and valued separated by an '='. Each property/value set must be separated by an '&'.
+    Array property names must be appended with '[]'.
+    Values for array properties must be separated by a comma.
+
+    $Filter = "productTypes=appliance,switch&networkIds=N_987654159756,N_159456159753"
+    Get-MerakiOrganizationDevices -Filter $Filter
     #>
 }
 
@@ -1273,6 +1322,8 @@ function New-MerakiOrganizationThirdPartyVpnPeer() {
 function Get-MerakiOrganizationInventoryDevices() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
+        [string]$Filter,
+        [int]$Pages,
         [Parameter(ParameterSetName = 'org')]
         [string]$OrgID,
         [Parameter(ParameterSetName = 'profile')]
@@ -1297,28 +1348,109 @@ function Get-MerakiOrganizationInventoryDevices() {
     }
 
     $Uri = "{0}/organizations/{1}/inventoryDevices" -f $BaseURI, $OrgID
+
     $Headers = Get-Headers
 
-    try {
-        $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+    if ($Filter) {
+        $Uri = "{0}?{1}" -f $Uri, $Filter
+    }
 
-        return $response
+    $Results = [List[PsObject]]::New()
+
+    try {
+        $response = Invoke-WebRequest -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+            [List[PsObject]]$result = $response.Content | ConvertFrom-Json
+            if ($result) {
+                $Results.AddRange($result)
+            }
+            $page = 1
+            if ($Pages -ne 1) {
+                $done = $false
+                do {
+                    if ($response.RelationLink['next']) {
+                        $Uri = $response.RelationLink['next']
+                        $response = Invoke-WebRequest -Method Get -Uri $Uri -Headers $Headers
+                        [List[PsObject]]$result = $response.Content | ConvertFrom-Json
+                        if ($result) {
+                            $Results.AddRange($result)
+                        }
+                        $page += 1
+                        if ($page -gt $Pages) {
+                            $done = $true
+                        }
+                    } else {
+                        $done = $true
+                    }
+                } until ($done)
+            }
+        return $Results.ToArray()
     } catch {
         throw $_
     }
     <#
     .SYNOPSIS
     Get the organization device inventory 
+    .PARAMETER Filter
+    A string representing a filter for the returned objects.
+    Valid filter properties are 'usedState', 'search', 'macs', 'networkIds', 'serials', 'models', 'orderNumbers', 'tags', 'tagFilterType', 'productTypes'.
+    All properties are arrays except 'usedState', 'search', and 'tagFilterType'.
+    The search property accepts a single value that will search against serial number, mac address, or model.
+    Valid tagFilterType values are 'withAllTags' or 'withAnyTags'.
+    Valid productTypes values are "appliance","camera","cellularGateway","secureConnect","sensor","switch","systemsManager",or "wireless".
+    Valid usedState values are 'unused', 'used'.
     .PARAMETER OrgID
     Organization ID. If omitted used th default profile.
     .PARAMETER profileName
     Profile name to use. If omitted used th default profile.
     .OUTPUTS
     An array of inventory objects.
+    .EXAMPLE
+    To construct a valid filter specify the properties and valued separated by an '='. Each property/value set must be separated by an '&'.
+    Array property names must be appended with '[]'.
+    Values for array properties must be separated by a comma.
+
+    $Filter = "productTypes[]=appliance,switch&usedState=unused"
+    Get-MerakiOrganizationInventoryDevices -Filter $Filter
     #>
 }
 
 Set-Alias -Name GMOrgInvDevices -value Get-MerakiOrganizationInventoryDevices -Option ReadOnly
+
+function Get-MerakiOrganizationInventoryDevice() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory)]
+        [string]$Serial,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgID,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$profileName        
+    )
+
+     if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    }
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/organizations/{1}/inventory/devices/{2}" -f $BaseURI, $OrgID, $Serial
+
+    try {
+        $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+
+        return $response
+    } catch {
+        throw $_
+    }
+}
 
 function Get-MerakiOrganizationSecurityEvents() {
     [CmdLetBinding(DefaultParameterSetName='Default')]
@@ -1615,12 +1747,7 @@ function Get-MerakiOrganizationFirmwareUpgradesByDevice() {
         [Parameter(ParameterSetName = 'profile')]
         [string]$ProfileName
     )
-<# 
-    If ($OrgId GMOrgDevsand $profileName) {
-        Write-Host "The parameters OrgId and ProfileName cannot be used together!" -ForegroundColor Red
-        return
-    }
- #>
+
     Begin {
         if (-not $OrgID) {
             $config = Read-Config
@@ -1704,26 +1831,12 @@ function Get-MerakiOrganizationFirmwareUpgradesByDevice() {
 function Get-MerakiOrganizationDeviceUplinks() {
     [CmdletBinding(DefaultParameterSetName = 'default')]
     Param(
-        [Parameter(ValueFromPipelineByPropertyName)]
-        [Alias('NetworkId')]
-        [string]$Id,
-        [Parameter(ValueFromPipelineByPropertyName)]
-        [string]$Serial,
+        [string]$Filter,
         [ValidateScript({$_ -is [int]})]
         [ValidateRange(3,1000)]
         [int]$PerPage,
         [ValidateScript({$_ -is [int]})]
         [int]$Pages,
-        [switch]$IncludeAppliances,
-        [switch]$IncludeCameras,
-        [switch]$IncludeCellularGateways,
-        [switch]$IncludeSensors,
-        [switch]$IncludeSwitches,
-        [switch]$IncludeSystemsManagers,
-        [switch]$IncludeWireless,
-        [string[]]$Tags,
-        [ValidateSet("withAllTags","withAnyTags")]
-        [string]$TagFilterType,
         [Parameter(ParameterSetName = 'org')]
         [string]$OrgId,
         [Parameter(ParameterSetName = 'profile')]
@@ -1744,56 +1857,26 @@ function Get-MerakiOrganizationDeviceUplinks() {
         }        
         
         $Headers = Get-Headers
-        $NetworkIds = [List[string]]::New()
-        $Serials = [List[string]]::New()
 
+        $Uri = "{0}/organizations/{1}/devices/uplinks/addresses/byDevice" -f $BaseURI, $OrgId
 
         if ($PerPage) {
             $Query = "?perPage={0}" -f $PerPage
         }
 
-        $ProductTypes = [List[string]]::New()
-        if ($IncludeAppliances) {$ProductTypes.Add("appliance")}
-        if ($IncludeCameras) {$ProductTypes.Add("camera")}
-        if ($IncludeCellularGateways) {$ProductTypes.Add("cellularGateway")}
-        if ($IncludeSensors) {$ProductTypes.Add("sensors")}
-        if ($IncludeSwitches) {$ProductTypes.Add("switch")}
-        if ($IncludeSystemsManagers) {$ProductTypes.Add("systemsManager")}
-        if ($IncludeWireless) {$ProductTypes.Add("wireless")}
-
-        if ($ProductTypes.Count -gt 0) {
-            if ($Query) {$Query += "&"} else {$Query += "?"}
-            $Query = "{0}productTypes[]={1}" -f $Query, ($ProductTypes.ToArray() -join ',')
-        }
-
-        if ($Tags) {
-            if ($Query) {$Query += "&"} else {$Query += "?"}
-            $Query = "{0}tags[]={1}" -f $Query, ($Tags -join ',')
-            if ($TagFilterType) {
-                $Query = "{0}&tagFilterType={1}" -f $Query, $TagFilterType
+        If ($Filter) {
+            if ($Query) {
+                $Query = "{0}&" -f $Query
+            } else {
+                $Query = "?"
             }
+            $Query = "{0}{1}" -f $Query, $Filter
         }
 
-        $Uri = "{0}/organizations/{1}/devices/uplinks/addresses/byDevice" -f $BaseURI, $OrgId
+        $Uri = "{0}{1}" -f $Uri, $Query
     }
 
     Process {
-        if ($id) {
-            $NetworkIds.Add($Id)
-        }
-
-        if ($Serial) {
-            $Serials.Add($Serial)
-            }
-
-        if ($Serials.Count -gt 0) {
-            if ($Query) {$Query += "&"} else {$Query += "?"}
-            $Query = "{0}serials[]={1}" -f $Query, ($NetworkIds.ToArray() -join ',')
-        }
-
-        if ($Query) {
-            $Uri = "{0}{1}" -f $Uri, $Query
-        }
         $Results = [List[PsObject]]::New()
 
         try {
@@ -1842,32 +1925,17 @@ function Get-MerakiOrganizationDeviceUplinks() {
     .DESCRIPTION
     List the current uplink addresses for devices in an organization. This can be filtered by
     Networks, Product Types, Serials, and Tags.
-    .PARAMETER Id
-    Optional parameter to filter device uplinks by network ID. 
-    .PARAMETER Serial
-    Optional parameter to filter device uplinks by device product types.
+    .PARAMETER Filter
+    A string representing a filter for the returned objects.
+    Valid properties are 'networkIds', 'productTypes', 'serials', 'tags', and 'tagFilterTypes'.
+    All properties except 'tagFilterTypes are arrays. Arrays must be specified in the filter string with '[]'
+    Valid productTypes are "appliance","camera","cellularGateway","secureConnect","sensor","switch","systemsManager", and "wireless".
+    Valid tagFilterTypes as "withAllTags" and "withAnyTag".
+    See Examples for building a filter string.
     .PARAMETER PerPage
     The number of entries per page returned. Acceptable range is 3 - 1000. Default is 1000
     .PARAMETER Pages
     Number of pages to return. Default is 1, 0 = all pages.
-    .PARAMETER IncludeAppliances
-    Include Appliances
-    .PARAMETER IncludeCameras
-    Include Cameras
-    .PARAMETER IncludeCellularGateways
-    Include Cellular Gateways
-    .PARAMETER IncludeSensors
-    Include Sensors
-    .PARAMETER IncludeSwitches
-    Include Switches
-    .PARAMETER IncludeSystemsManagers
-    Include Systems Managers
-    .PARAMETER IncludeWireless
-    Include Wireless
-    .PARAMETER Tags
-    An optional parameter to filter devices by tags. The filtering is case-sensitive.
-    .PARAMETER TagFilterType
-    An optional parameter of value 'withAnyTags' or 'withAllTags' to indicate whether to return devices which contain ANY or ALL of the included tags. If no type is included, 'withAnyTags' will be selected.
     .PARAMETER OrgId
     Organization Id to use.
     .PARAMETER ProfileName
@@ -1881,15 +1949,20 @@ function Get-MerakiOrganizationDeviceUplinks() {
     .NOTES
     If no include parameters are given then all product typed are returned.
     If one or more include parameters are given then the results are restricted to those product types.
+    .EXAMPLE
+    To use the Filter property you must construct a valid filter string. A filter string is like a HTTP query string.
+    To specify a filter string construct it with the property name and values. Array values must be separated by a comma.
+    Property Names and values are case sensitive.
+
+    $Filter = "productTypes[]=appliance,switch&networkIds[]=N_987548754,N_87589514"
+    Get-MerakiOrganizationDeviceUplink -Filter $Filter
     #>
 }
 
 function Get-MerakiOrganizationDeviceStatus() {
     [CmdletBinding(DefaultParameterSetName='default')]
     Param(
-        [Alias('NetworkId')]
-        [string]$Id,
-        [string]$Serial,
+        [string]$Filter,
         [Parameter(ParameterSetName = 'org')]
         [string]$OrgId,
         [Parameter(ParameterSetName = 'Profile')]
@@ -1914,6 +1987,9 @@ function Get-MerakiOrganizationDeviceStatus() {
         }
         
         $Uri = "{0}/organizations/{1}/devices/statuses" -f $BaseUri, $OrgId
+        if ($Filter) {
+            $Uri = "{0}?{1}" -f $Uri, $Filter
+        }
 
     }
 
@@ -1932,7 +2008,7 @@ function Get-MerakiOrganizationDeviceStatus() {
             $Results = $response.Content | ConvertFrom-Json
             
             $Networks = @{}
-            Get-MerakiNetworks | ForEach-Object {
+            Get-MerakiNetworks -OrgID $OrgId | ForEach-Object {
                 $Networks.Add($_.Id, $_)                
             }
             $Results | ForEach-Object {
@@ -1949,16 +2025,26 @@ function Get-MerakiOrganizationDeviceStatus() {
     List the status of every Meraki device in the organization.
     .DESCRIPTION
     List the status of every Meraki device in the organization. Can be filtered by Network or Serial number.
-    .PARAMETER Id
-    The ID of the Network to retrieve device status from.
-    .PARAMETER Serial
-    Then serial number of the device to retrieve status from.
+    .PARAMETER Filter
+    A string representing a filter for the returned objects.
+    Valid filter properties are 'usedState', 'search', 'macs', 'networkIds', 'serials', 'models', 'orderNumbers', 'tags', 'tagFilterType', 'productTypes'.
+    All properties are arrays except 'usedState', 'search', and 'tagFilterType'.
+    The search property accepts a single value that will search against serial number, mac address, or model.
+    Valid tagFilterType values are 'withAllTags' or 'withAnyTags'.
+    Valid productTypes values are "appliance","camera","cellularGateway","secureConnect","sensor","switch","systemsManager",or "wireless".
     .PARAMETER OrgId
     The organization Id to use.
     .PARAMETER ProfileName
     The named profile to use.
     .OUTPUTS
     An array of device status objects
+    .EXAMPLE
+    To use the Filter property you must construct a valid filter string. A filter string is like a HTTP query string.
+    To specify a filter string construct it with the property name and values. Array values must be separated by a comma.
+    Property Names and values are case sensitive.
+
+    $Filter = "productTypes[]=appliance,switch&networkIds[]=N_987548754,N_87589514"
+    Get-MerakiOrganizationDeviceStatus -Filter $Filter
     #>
 }
 
@@ -2169,7 +2255,12 @@ function Get-MerakiOrganizationApplianceVpnStats() {
             $OrgID = $config.profiles.$profileName
             if (-not $OrgId) {
                 throw "Invalid profile name!"
-            }
+            }A string representing a filter for the returned objects.
+            Valid filter properties are 'usedState', 'search', 'macs', 'networkIds', 'serials', 'models', 'orderNumbers', 'tags', 'tagFilterType', 'productTypes'.
+            All properties are arrays except 'usedState', 'search', and 'tagFilterType'.
+            The search property accepts a single value that will search against serial number, mac address, or model.
+            Valid tagFilterType values are 'withAllTags' or 'withAnyTags'.
+            Valid productTypes values are "appliance","camera","cellularGateway","secureConnect","sensor","switch","systemsManager",or "wireless".
         } else {
             $OrgID = $config.profiles.default
         }
@@ -2408,4 +2499,162 @@ Function New-MerakiSecretsVault() {
     This module does not support vaults registered with a different module.
     Secrets will ALWAYS be stored in the default vault!
     #>
+}
+
+function Get-MerakiOrganizationDeviceAvailability() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
+    Param(
+        [string]$Filter,
+        [int]$Pages,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
+    )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    } else {
+        $config = Read-Config
+    } 
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/organizations/{1}/devices/availabilities" -f $BaseURI, $OrgId
+
+    if ($Filter) {
+        $Uri = "{0}?{1}" -f $Uri, $Filter            
+    }
+
+    $Result = [List[PsObject]]::New()
+
+    try {
+        $response = Invoke-WebRequest -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+        [List[PsObject]]$result = $response.Content | ConvertFrom-Json
+        if ($result) {
+            $Results.AddRange($result)
+        }
+        $page = 1
+        if ($Pages -ne 1) {
+            $done = $false
+            do {
+                if ($response.RelationLink['next']) {
+                    $Uri = $response.RelationLink['next']
+                    $response = Invoke-WebRequest -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+                    [List[PsObject]]$result = $response.Content | ConvertFrom-Json
+                    if ($result) {
+                        $Results.AddRange($result)
+                    }
+                    $page += 1
+                    if ($page =gt $Pages) {
+                        $done = $true
+                    }
+                } else {
+                    $done = $true
+                }
+                } until ($done)
+        }
+        return $Results.ToArray()
+    } catch {
+        throw $_
+    }
+    <#
+    .DESCRIPTION 
+    List the availability information for devices in an organization. The data returned by this endpoint is updated every 5 minutes.
+    .PARAMETER Filter
+    A string representing a filter for the returned objects.
+    Valid filter properties are 'usedState', 'search', 'macs', 'networkIds', 'serials', 'models', 'orderNumbers', 'tags', 'tagFilterType', 'productTypes'.
+    All properties are arrays except 'usedState', 'search', and 'tagFilterType'.
+    The search property accepts a single value that will search against serial number, mac address, or model.
+    Valid tagFilterType values are 'withAllTags' or 'withAnyTags'.
+    Valid productTypes values are "appliance","camera","cellularGateway","secureConnect","sensor","switch","systemsManager",or "wireless".
+    .PARAMETER Pages
+    NUmber of pages top return. Default is all pages.
+    .PARAMETER OrgId
+    Organization ID to return devices for.
+    .PARAMETER ProfileName
+    Saved profile name.
+    .EXAMPLE
+    To use the Filter property you must construct a valid filter string. A filter string is like a HTTP query string.
+    To specify a filter string construct it with the property name and values. Array values must be separated by a comma.
+    Property Names and values are case sensitive.
+
+    $Filter = "productTypes[]=appliance,switch&networkIds[]=N_987548754,N_87589514"
+    Get-MerakiOrganizationDeviceAvailability -Filter $Filter
+    #>
+}
+
+function Get-MerakiOrganizationDeviceAvailabilityChangeHistory() {
+    [CmdletBinding(DefaultParameterSetName = 'default')]
+    Param(
+        [string]$Filter,
+        [int]$Pages,
+        [Parameter(ParameterSetName = 'org')]
+        [string]$OrgId,
+        [Parameter(ParameterSetName = 'profile')]
+        [string]$ProfileName
+    )
+
+    if (-not $OrgID) {
+        $config = Read-Config
+        if ($profileName) {
+            $OrgID = $config.profiles.$profileName
+            if (-not $OrgID) {
+                throw "Invalid profile name!"
+            }
+        } else {
+            $OrgID = $config.profiles.default
+        }        
+    } else {
+        $config = Read-Config
+    } 
+
+    $Headers = Get-Headers
+
+    $Uri = "{0}/organizations/{1}/devices/availabilities/changeHistory" -f $BaseURI, $OrgId
+
+    if ($Filter) {
+        $Uri = "{0}?{1}" -f $Uri, $Filter
+    }
+
+    $Results = [List[PsObject]]::New()
+
+    try {
+        $response = Invoke-WebRequest -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+        [List[PsObject]]$result = $response.Content | ConvertFrom-Json
+        if ($result) {
+            $Results.AddRange($result)
+        }
+        $page = 1
+        if ($Pages -ne 1) {
+            $done = $false
+            do {
+                if ($response.RelationLink['next']) {
+                    $Uri = $response.RelationLink['next']
+                    $response = Invoke-WebRequest -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
+                    [List[PsObject]]$result = $response.Content | ConvertFrom-Json
+                    if ($result) {
+                        $Results.AddRange($result)
+                    }
+                    $page += 1
+                    if ($page =gt $Pages) {
+                        $done = $true
+                    }
+                } else {
+                    $done = $true
+                }
+                } until ($done)
+        }
+        return $Results.ToArray()
+    } catch {
+        throw $_
+    }
 }
