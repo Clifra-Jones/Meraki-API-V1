@@ -828,10 +828,10 @@ function Get-MerakiOrganizationDevices() {
     AN array of Meraki Device objects.
     .EXAMPLE
     To construct a valid filter specify the properties and valued separated by an '='. Each property/value set must be separated by an '&'.
-    Array property names must be appended with '[]'.
-    Values for array properties must be separated by a comma.
+    Array property names must be appended with '[]'. each member of the array must specify the propertyName[]=value for each member of the array.
+    i.e. "networkIds=N_987654159756&networkId[]=N_159456159753"
 
-    $Filter = "productTypes=appliance,switch&networkIds=N_987654159756,N_159456159753"
+    $Filter = "productTypes=appliance,switch&networkIds=N_987654159756&networkId[]=N_159456159753"
     Get-MerakiOrganizationDevices -Filter $Filter
     #>
 }
@@ -1406,10 +1406,11 @@ function Get-MerakiOrganizationInventoryDevices() {
     An array of inventory objects.
     .EXAMPLE
     To construct a valid filter specify the properties and valued separated by an '='. Each property/value set must be separated by an '&'.
-    Array property names must be appended with '[]'.
-    Values for array properties must be separated by a comma.
+    Array property names must be appended with '[]'. 
+    Each member of the array must specify the propertyName[]=value for each member of the array.
+    i.e. "networkIds=N_987654159756&networkId[]=N_159456159753"
 
-    $Filter = "productTypes[]=appliance,switch&usedState=unused"
+    $Filter = "productTypes=appliance,switch&networkIds=N_987654159756&networkId[]=N_159456159753"
     Get-MerakiOrganizationInventoryDevices -Filter $Filter
     #>
 }
@@ -1951,10 +1952,11 @@ function Get-MerakiOrganizationDeviceUplinks() {
     If one or more include parameters are given then the results are restricted to those product types.
     .EXAMPLE
     To use the Filter property you must construct a valid filter string. A filter string is like a HTTP query string.
-    To specify a filter string construct it with the property name and values. Array values must be separated by a comma.
-    Property Names and values are case sensitive.
+    To specify a filter string construct it with the property name and values. 
+    Array property names must be appended with '[]'. Each member of the array must specify the propertyName[]=value for each member of the array.
+    i.e. "networkIds=N_987654159756&networkId[]=N_159456159753"
 
-    $Filter = "productTypes[]=appliance,switch&networkIds[]=N_987548754,N_87589514"
+    $Filter = "productTypes=appliance,switch&networkIds=N_987654159756&networkId[]=N_159456159753"
     Get-MerakiOrganizationDeviceUplink -Filter $Filter
     #>
 }
@@ -2040,10 +2042,12 @@ function Get-MerakiOrganizationDeviceStatus() {
     An array of device status objects
     .EXAMPLE
     To use the Filter property you must construct a valid filter string. A filter string is like a HTTP query string.
-    To specify a filter string construct it with the property name and values. Array values must be separated by a comma.
+    To specify a filter string construct it with the property name and values. 
+    Array values must constructed ny specifying the propertyName[]=value for each member of the array. 
+    i.e. "networkIds[]=N_987548754&networkIds[]=N_87589514"
     Property Names and values are case sensitive.
 
-    $Filter = "productTypes[]=appliance,switch&networkIds[]=N_987548754,N_87589514"
+    $Filter = "productTypes[]=appliance,switch&networkIds[]=N_987548754&networkIds[]=N_87589514"
     Get-MerakiOrganizationDeviceStatus -Filter $Filter
     #>
 }
@@ -2584,10 +2588,11 @@ function Get-MerakiOrganizationDeviceAvailability() {
     Saved profile name.
     .EXAMPLE
     To use the Filter property you must construct a valid filter string. A filter string is like a HTTP query string.
-    To specify a filter string construct it with the property name and values. Array values must be separated by a comma.
-    Property Names and values are case sensitive.
+    To specify a filter string construct it with the property name and values. 
+    Array property names must be appended with '[]'. Each member of the array must specify the propertyName[]=value for each member of the array.
+    i.e. "networkIds=N_987654159756&networkId[]=N_159456159753"
 
-    $Filter = "productTypes[]=appliance,switch&networkIds[]=N_987548754,N_87589514"
+    $Filter = "productTypes=appliance,switch&networkIds=N_987654159756&networkId[]=N_159456159753"
     Get-MerakiOrganizationDeviceAvailability -Filter $Filter
     #>
 }
