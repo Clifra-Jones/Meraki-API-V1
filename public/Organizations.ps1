@@ -2475,7 +2475,7 @@ Function New-MerakiSecretsVault() {
         if ($vaults.ModuleName -contains 'Microsoft.PowerShell.SecretStore') {
             Write-Host "There is currently an existing Vault register for module $($Vault.ModuleName)." -ForegroundColor Yellow
             Write-Host "The secretStore vault currently always operates in the logged user scope." -ForegroundColor Yellow
-            Write-Host "Registering SecretStore multiple times with different names just results in duplication of teh same store," -ForegroundColor Yellow
+            Write-Host "Registering SecretStore multiple times with different names just results in duplication of the same store," -ForegroundColor Yellow
             Write-Host "This vault will be used to store the secrets." -ForegroundColor Yellow            
          }
     } else {
