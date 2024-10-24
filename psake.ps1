@@ -24,7 +24,7 @@ Task Publish -depends Build {
     }
     # Write-Host "whatif = $whatIf"
     $NugetKey = (Get-Secret -Name NuGetKey -AsPlainText | ConvertFrom-Json).NuGetKey
-    Publish-Module -Path $PublishDir -NuGetApiKey $NugetKey -WhatIf:$WhatIf
+    Publish-PSResource -Path $PublishDir -ApiKey $NugetKey -Repository:PSGallery -WhatIf:$WhatIf
 }
 
 Task Build -depends Clean {
