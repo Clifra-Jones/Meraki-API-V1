@@ -20,7 +20,7 @@ function Get-MerakiNetwork() {
 
         return $Response
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .SYNOPSIS
@@ -64,7 +64,7 @@ function Set-MerakiNetwork() {
         return $response        
     }
     catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .SYNOPSIS
@@ -115,7 +115,7 @@ function Remove-MerakiNetwork() {
             $response = Invoke-RestMethod -Method Delete -Uri $Uri -Headers $Headers
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
 
@@ -158,7 +158,7 @@ function Connect-MerakiNetworkToTemplate() {
         return $response
     }
     catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .SYNOPSIS
@@ -204,7 +204,7 @@ function Disconnect-MerakiNetworkFromTemplate() {
             return $response
         }
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .SYNOPSIS
@@ -243,7 +243,7 @@ function Split-MerakiNetwork() {
             $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Header -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -283,7 +283,7 @@ function Get-MerakiNetworkDevices () {
             $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -407,7 +407,7 @@ function Get-MerakiNetworkEvents() {
 
             return $Results.ToArray() | Sort-Object occurredAt
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -499,7 +499,7 @@ function Get-MerakiNetworkEventTypes() {
 
         return $response
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .SYNOPSIS
@@ -643,7 +643,7 @@ function Get-MerakiNetworkClients () {
 
         } catch {
             Write-Host $id
-            throw $_
+            $_ | Write-ApiError
         }
     }
 
@@ -812,7 +812,7 @@ function Get-MerakiNetworkClientApplicationUsage() {
             }
             return $Results.ToArray()
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
 
@@ -948,7 +948,7 @@ function Get-MerakiNetworkClientBandwidthUsage() {
             }
             return $Results.ToArray()
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -1027,7 +1027,7 @@ function Get-MerakiNetworkTraffic() {
             $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#

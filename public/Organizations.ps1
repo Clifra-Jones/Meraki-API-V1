@@ -53,7 +53,7 @@ function Set-MerakiAPI() {
                 }
             }
          } else {
-            Throw "APIKey required if config file does not exist!"
+            Write-ApiError -Message "APIKey required if config file does not exist!"
         } 
         if ((-not $OrgId) -and (-not $profileName)) {
             $orgs = Get-MerakiOrganizations -APIKey $APIKey
@@ -113,7 +113,7 @@ function Set-MerakiAPI() {
                         }
                     }
                 } else {
-                    Throw "Aborting!"
+                    Write-ApiError -Message "Aborting!"
                 }
             } else {
                 if ($SecureKey) {
@@ -215,7 +215,7 @@ function Set-MerakiProfile () {
 
     $orgID = $Config.profiles.$profileName
     if (-not $OrgId) {
-        throw "Invalid profile name!"
+        Write-ApiError -Message "Invalid profile name!"
     }
     Set-MerakiAPI -OrgID $orgID -profileName 'default'
     <#
@@ -251,7 +251,7 @@ function Get-MerakiOrganizations() {
         
         return $response
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .SYNOPSIS 
@@ -284,12 +284,12 @@ function Get-MerakiOrganization() {
         if ($profileName) {
             $OrgId = $config.profiles.$profileName
             if (-not $OrgId) {
-                throw "Invalid profile name!"
+                Write-ApiError -Message "Invalid profile name!"
             }
         } else {
             $OrgId = $config.profiles.default
             if (-not $OrgId) {
-                throw "There is no default profile. You must use the -OrgId parameter and supply the Organization Id."
+                Write-ApiError -Message "There is no default profile. You must use the -OrgId parameter and supply the Organization Id."
             }
         }
     }
@@ -301,7 +301,7 @@ function Get-MerakiOrganization() {
 
         return $response
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .SYNOPSIS 
@@ -351,7 +351,7 @@ function New-MerakiOrganization() {
         return $response
     }
     catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .SYNOPSIS
@@ -391,7 +391,7 @@ function Set-MerakiOrganization() {
         if ($profileName) {
             $orgID = $config.profiles.$profileName
             if (-not $orgID) {
-                throw "Invalid profile name!"
+                Write-ApiError -Message "Invalid profile name!"
             }
         } else {
             $orgID = $config.profiles.default
@@ -427,7 +427,7 @@ function Set-MerakiOrganization() {
         return $response
     }
     catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .SYNOPSIS
@@ -475,7 +475,7 @@ function Get-MerakiNetworks() {
         if ($profileName) {
             $orgID = $config.profiles.$profileName
             if (-not $orgID) {
-                throw "Invalid profile name!"
+                Write-ApiError -Message "Invalid profile name!"
             }
         } else {
             $orgID = $config.profiles.default
@@ -511,7 +511,7 @@ function Get-MerakiNetworks() {
         } 
         return $response
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .SYNOPSIS
@@ -562,7 +562,7 @@ function Add-MerakiNetwork() {
         if ($profileName) {
             $orgID = $config.profiles.$profileName
             if (-not $orgID) {
-                throw "Invalid profile name!"
+                Write-ApiError -Message "Invalid profile name!"
             }
         } else {
             $orgID = $config.profiles.default
@@ -587,7 +587,7 @@ function Add-MerakiNetwork() {
         $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response        
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .SYNOPSIS 
@@ -636,7 +636,7 @@ function Get-MerakiOrganizationConfigTemplates() {
         if ($profileName) {
             $OrgID = $config.profiles.$profileName
             if (-not $OrgID) {
-                throw "Invalid profile name!"
+                Write-ApiError -Message "Invalid profile name!"
             }
         } else {
             $OrgID = $config.profiles.default
@@ -651,7 +651,7 @@ function Get-MerakiOrganizationConfigTemplates() {
 
         return $response
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <# 
     .SYNOPSIS
@@ -694,7 +694,7 @@ function Get-MerakiOrganizationConfigTemplate () {
             if ($profileName) {
                 $OrgID = $config.profiles.$profileName
                 if (-not $OrgID) {
-                    throw "Invalid profile name!"
+                    Write-ApiError -Message "Invalid profile name!"
                 }
             } else {
                 $OrgID = $config.profiles.default
@@ -715,7 +715,7 @@ function Get-MerakiOrganizationConfigTemplate () {
             return $response
         }
         catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -758,7 +758,7 @@ function Get-MerakiOrganizationDevices() {
         if ($profileName) {
             $OrgID = $config.profiles.$profileName
             if (-not $OrgID) {
-                throw "Invalid profile name!"
+                Write-ApiError -Message "Invalid profile name!"
             }
         } else {
             $OrgID = $config.profiles.default
@@ -805,7 +805,7 @@ function Get-MerakiOrganizationDevices() {
 
         return $Result.ToArray()
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .SYNOPSIS
@@ -857,7 +857,7 @@ function Get-MerakiOrganizationAdmins() {
         if ($profileName) {
             $OrgID = $config.profiles.$profileName
             if (-noy $OrgID) { 
-                throw "Invalid profile name!"
+                Write-ApiError -Message "Invalid profile name!"
             }
         } else {
             $OrgID = $config.profiles.default
@@ -872,7 +872,7 @@ function Get-MerakiOrganizationAdmins() {
 
         return $response
     }catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .SYNOPSIS
@@ -942,7 +942,7 @@ function Get-MerakiOrganizationConfigurationChanges() {
         if ($profileName) {
             $OrgId = $config.profiles.$profileName
             if (-not $OrgID) {
-                throw "Invalid profile name!"
+                Write-ApiError -Message "Invalid profile name!"
             }
         } else {
             $OrgID = $config.profiles.default
@@ -1008,7 +1008,7 @@ function Get-MerakiOrganizationConfigurationChanges() {
 
         return $Result.ToArray()
      } catch {
-        throw $_
+        $_ | Write-ApiError
      }
     <#
     .SYNOPSIS 
@@ -1067,7 +1067,7 @@ function Get-MerakiOrganizationThirdPartyVpnPeers() {
         if ($profileName) {
             $OrgId = $config.profiles.$profileName
             if (-not $OrgID) {
-                throw "Invalid profile name!"
+                Write-ApiError -Message "Invalid profile name!"
             }
         } else {
             $OrgId = $config.profiles.default
@@ -1082,7 +1082,7 @@ function Get-MerakiOrganizationThirdPartyVpnPeers() {
     
         return $response.peers 
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .SYNOPSIS
@@ -1127,7 +1127,7 @@ function Set-MerakiOrganizationThirdPartyVpnPeer() {
         if ($profileName) {
             $OrgId = $config.profiles.$profileName
             if (-not $OrgID) {
-                throw "Invalid profile name!"
+                Write-ApiError -Message "Invalid profile name!"
             }
         } else {
             $OrgId = $config.profiles.default
@@ -1144,7 +1144,7 @@ function Set-MerakiOrganizationThirdPartyVpnPeer() {
     }
 
     if (-not $Peers[$Name]) {
-        throw "Peer $Name is not found!"
+        Write-ApiError -Message "Peer $Name is not found!"
     }
 
     if ($IkeVersion) { $Peers[$Name].ikeVersion = $IkeVersion }
@@ -1169,7 +1169,7 @@ function Set-MerakiOrganizationThirdPartyVpnPeer() {
 
         return $response
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .DESCRIPTION
@@ -1240,7 +1240,7 @@ function New-MerakiOrganizationThirdPartyVpnPeer() {
         if ($profileName) {
             $OrgId = $config.profiles.$profileName
             if (-not $OrgID) {
-                throw "Invalid profile name!"
+                Write-ApiError -Message "Invalid profile name!"
             }
         } else {
             $OrgId = $config.profiles.default
@@ -1277,7 +1277,7 @@ function New-MerakiOrganizationThirdPartyVpnPeer() {
 
         return $response
     } catch {
-        Throw $_
+        $_ | Write-ApiError
     }
     <#
     .DESCRIPTION
@@ -1340,7 +1340,7 @@ function Get-MerakiOrganizationInventoryDevices() {
         if ($profileName) {
             $OrgID = $config.profiles.$profileName
             if (-not $OrgID) {
-                throw "Invalid profile name!"
+                Write-ApiError -Message "Invalid profile name!"
             }
         } else {
             $OrgID = $config.profiles.default
@@ -1385,7 +1385,7 @@ function Get-MerakiOrganizationInventoryDevices() {
             }
         return $Results.ToArray()
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .SYNOPSIS
@@ -1433,7 +1433,7 @@ function Get-MerakiOrganizationInventoryDevice() {
         if ($profileName) {
             $OrgID = $config.profiles.$profileName
             if (-not $OrgID) {
-                throw "Invalid profile name!"
+                Write-ApiError -Message "Invalid profile name!"
             }
         } else {
             $OrgID = $config.profiles.default
@@ -1449,7 +1449,7 @@ function Get-MerakiOrganizationInventoryDevice() {
 
         return $response
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
 }
 
@@ -1502,7 +1502,7 @@ function Get-MerakiOrganizationSecurityEvents() {
         if ($profileName) {
             $OrgID = $config.profiles.$profileName
             if (-not $OrgID) {
-                throw "Invalid profile name!"
+                Write-ApiError -Message "Invalid profile name!"
             }
         } else {
             $OrgID = $config.profiles.default
@@ -1568,7 +1568,7 @@ function Get-MerakiOrganizationSecurityEvents() {
         }
         return $Results
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .SYNOPSIS
@@ -1628,7 +1628,7 @@ function Get-MerakiOrganizationFirmwareUpgrades() {
             if ($profileName) {
                 $OrgID = $config.profiles.$profileName
                 if (-not $OrgID) {
-                    throw "Invalid profile name!"
+                    Write-ApiError -Message "Invalid profile name!"
                 }
             } else {
                 $OrgID = $config.profiles.default
@@ -1708,7 +1708,7 @@ function Get-MerakiOrganizationFirmwareUpgrades() {
             }
             return $Results.ToArray()
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
         <#
@@ -1755,7 +1755,7 @@ function Get-MerakiOrganizationFirmwareUpgradesByDevice() {
             if ($profileName) {
                 $OrgID = $config.profiles.$profileName
                 if (-not $OrgID) {
-                    throw "Invalid profile name!"
+                    Write-ApiError -Message "Invalid profile name!"
                 }
             } else {
                 $OrgID = $config.profiles.default
@@ -1804,7 +1804,7 @@ function Get-MerakiOrganizationFirmwareUpgradesByDevice() {
 
             return $Results.ToArray()
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -1850,7 +1850,7 @@ function Get-MerakiOrganizationDeviceUplinks() {
             if ($profileName) {
                 $OrgID = $config.profiles.$profileName
                 if (-not $OrgID) {
-                    throw "Invalid profile name!"
+                    Write-ApiError -Message "Invalid profile name!"
                 }
             } else {
                 $OrgID = $config.profiles.default
@@ -1917,7 +1917,7 @@ function Get-MerakiOrganizationDeviceUplinks() {
             }
             return $Results.ToArray()
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -1981,7 +1981,7 @@ function Get-MerakiOrganizationDeviceStatus() {
             if ($profileName) {
                 $OrgID = $config.profiles.$profileName
                 if (-not $OrgID) {
-                    throw "Invalid profile name!"
+                    Write-ApiError -Message "Invalid profile name!"
                 }
             } else {
                 $OrgID = $config.profiles.default
@@ -2019,7 +2019,7 @@ function Get-MerakiOrganizationDeviceStatus() {
             }
             return $Results
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -2077,7 +2077,7 @@ function Get-MerakiOrganizationApplianceVpnStatuses() {
             if ($profileName) {
                 $OrgID = $config.profiles.$profileName
                 if (-not $OrgID) {
-                    throw "Invalid profile name!"
+                    Write-ApiError -Message "Invalid profile name!"
                 }
             } else {
                 $OrgID = $config.profiles.default
@@ -2135,7 +2135,7 @@ function Get-MerakiOrganizationApplianceVpnStatuses() {
             }
             return $Results.ToArray()
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -2182,7 +2182,7 @@ function Get-MerakiOrganizationApplianceUplinkStatuses() {
         if ($profileName) {
             $OrgID = $config.profiles.$profileName
             if (-not $OrgID) {
-                throw "Invalid profile name!"
+                Write-ApiError -Message "Invalid profile name!"
             }
         } else {
             $OrgID = $config.profiles.default
@@ -2199,7 +2199,7 @@ function Get-MerakiOrganizationApplianceUplinkStatuses() {
 
         return $response | Where-Object {$_.networkID -like $networkID -and $_.serial -like $serial}
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .SYNOPSIS
@@ -2243,7 +2243,7 @@ function Get-MerakiOrganizationApplianceVpnStats() {
             if ($profileName) {
                 $OrgID = $config.profiles.$profileName
                 if (-not $OrgID) {
-                    throw "Invalid profile name!"
+                    Write-ApiError -Message "Invalid profile name!"
                 }
             } else {
                 $OrgID = $config.profiles.default
@@ -2258,7 +2258,7 @@ function Get-MerakiOrganizationApplianceVpnStats() {
         if ($profileName) {
             $OrgID = $config.profiles.$profileName
             if (-not $OrgId) {
-                throw "Invalid profile name!"
+                Write-ApiError -Message "Invalid profile name!"
             }A string representing a filter for the returned objects.
             Valid filter properties are 'usedState', 'search', 'macs', 'networkIds', 'serials', 'models', 'orderNumbers', 'tags', 'tagFilterType', 'productTypes'.
             All properties are arrays except 'usedState', 'search', and 'tagFilterType'.
@@ -2325,7 +2325,7 @@ function Get-MerakiOrganizationApplianceVpnStats() {
                 $vpnPeers
             }
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -2380,7 +2380,7 @@ function Merge-MerakiOrganizationNetworks() {
             if ($profileName) {
                 $OrgID = $config.profiles.$profileName
                 if (-not $OrgID) {
-                    throw "Invalid profile name!"
+                    Write-ApiError -Message "Invalid profile name!"
                 }
             } else {
                 $OrgID = $config.profiles.default
@@ -2414,7 +2414,7 @@ function Merge-MerakiOrganizationNetworks() {
                 $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Header -Body $Body -PreserveAuthorizationOnRedirect
                 return $response
             } catch {
-                throw $_
+                $_ | Write-ApiError
             }
         }
     }
@@ -2521,7 +2521,7 @@ function Get-MerakiOrganizationDeviceAvailability() {
         if ($profileName) {
             $OrgID = $config.profiles.$profileName
             if (-not $OrgID) {
-                throw "Invalid profile name!"
+                Write-ApiError -Message "Invalid profile name!"
             }
         } else {
             $OrgID = $config.profiles.default
@@ -2568,7 +2568,7 @@ function Get-MerakiOrganizationDeviceAvailability() {
         }
         return $Results.ToArray()
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .DESCRIPTION 
@@ -2613,7 +2613,7 @@ function Get-MerakiOrganizationDeviceAvailabilityChangeHistory() {
         if ($profileName) {
             $OrgID = $config.profiles.$profileName
             if (-not $OrgID) {
-                throw "Invalid profile name!"
+                Write-ApiError -Message "Invalid profile name!"
             }
         } else {
             $OrgID = $config.profiles.default
@@ -2660,6 +2660,6 @@ function Get-MerakiOrganizationDeviceAvailabilityChangeHistory() {
         }
         return $Results.ToArray()
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
 }

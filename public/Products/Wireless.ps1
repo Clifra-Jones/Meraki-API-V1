@@ -33,7 +33,7 @@ function Get-MerakiSSID() {
 
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -446,7 +446,7 @@ function Set-MerakiSSID() {
             $response = Invoke-RestMethod -Method Put -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -683,7 +683,7 @@ function Get-MerakiSSIDIdentityPsk() {
             }
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -754,7 +754,7 @@ function Add-MerakiSsidIdentityPsk() {
             }
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -834,7 +834,7 @@ function Set-MerakiSsidIdentityPsk() {
             }
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -888,7 +888,7 @@ function Remove-MerakiSsidIdentityPsk() {
                 $response = Invoke-RestMethod -Method Delete -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
                 return $response
             } catch {
-                throw $_
+                $_ | Write-ApiError
             }
         }
     }
@@ -924,7 +924,7 @@ function Get-MerakiWirelessStatus() {
 
         return $response
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .SYNOPSIS
@@ -1038,7 +1038,7 @@ function Get-MerakiNetworkClientConnectionStats() {
             return $response
         }
         catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -1093,7 +1093,7 @@ function Get-MerakiWirelessAirMarshal() {
         return $response
     }
     catch {
-        throw $_
+        $_ | Write-ApiError
     }
 
     <#
@@ -1233,7 +1233,7 @@ function Get-MerakiWirelessUsageHistory() {
             return $response
         }
         catch {
-            throw $_
+            $_ | Write-ApiError
         }               
     }
     <#
@@ -1389,7 +1389,7 @@ function Get-MerakiWirelessDataRateHistory() {
             }
             return $result
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#

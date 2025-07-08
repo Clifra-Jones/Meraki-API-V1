@@ -12,7 +12,6 @@ Properties {
     $PublishDir = "$PSScriptRoot/publish/$ModuleName"
 }
 
-
 Task default -depends Build
 
 Task Publish -depends Build {

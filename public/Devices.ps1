@@ -19,7 +19,7 @@ function Get-MerakiDevice() {
 
         return $response
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .SYNOPSIS
@@ -67,7 +67,7 @@ function Start-MerakiDeviceBlink() {
 
         return $response
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .SYNOPSIS 
@@ -110,7 +110,7 @@ function Restart-MerakiDevice() {
             return $response
         }
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .SYNOPSIS
@@ -172,7 +172,7 @@ function Get-MerakiDeviceClients() {
             }
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -209,7 +209,7 @@ function Get-MerakiDeviceApplianceUplinks() {
         $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
         return $response
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .DESCRIPTION
@@ -246,7 +246,7 @@ function Submit-MerakiDeviceClaim() {
         Invoke-RestMethod -Method Post -Uri $Uri -Headers $Headers -Body $Body
         return $response
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .SYNOPSIS
@@ -300,7 +300,7 @@ function Set-MerakiDevice {
         $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .DESCRIPTION
@@ -367,7 +367,7 @@ function Remove-MerakiNetworkDevice() {
                 $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
                 return $response
             } catch {
-                throw $_
+                $_ | Write-ApiError
             }
         }
     }
@@ -395,7 +395,7 @@ function Get-MerakiDeviceLldpCdp() {
             $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
 }

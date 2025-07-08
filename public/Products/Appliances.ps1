@@ -22,7 +22,7 @@ function Get-MerakiApplianceContentFilteringCategories() {
 
         return $response
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .SYNOPSIS
@@ -64,7 +64,7 @@ function Get-MerakiApplianceContentFiltering() {
 
         return $response    
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .SYNOPSIS
@@ -134,7 +134,7 @@ function Update-MerakiApplianceContentFiltering() {
         $response = Invoke-RestMethod -Method PUT -Uri $Uri -Body $body -Headers $Headers -PreserveAuthorizationOnRedirect
         return  $response
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .SYNOPSIS
@@ -331,7 +331,7 @@ function Get-MerakiAppliancePorts() {
             }
             return $response
         }catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -373,7 +373,7 @@ function Get-MerakiAppliancePort() {
             $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -447,7 +447,7 @@ function Set-MerakiAppliancePort() {
             $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $Body
             return $response
         } catch {
-            throw $_
+            $_ | Write-APiError
         }
     }
     <#
@@ -495,7 +495,7 @@ function Get-MerakiApplianceStaticRoutes() {
         $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect        
         return $response
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .SYNOPSIS 
@@ -553,7 +553,7 @@ function Add-MerakiApplianceStaticRoute() {
             $response = Invoke-RestMethod -Method Post -Uri $Uri -Headers $Headers -Body $body            
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -625,7 +625,7 @@ function Set-MerakiApplianceStaticRoute() {
         $response = Invoke-RestMethod -Method Put -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .DESCRIPTION
@@ -707,7 +707,7 @@ function Get-MerakiApplianceVLANS() {
             $response =  Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect            
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -747,7 +747,7 @@ function Get-MerakiApplianceVLAN() {
 
         return $response
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .SYNOPSIS
@@ -820,7 +820,7 @@ function Add-MerakiApplianceVlan() {
         $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .DESCRIPTION
@@ -875,7 +875,7 @@ Function Remove-MerakiApplianceVlan() {
             $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }           
     }
     <#
@@ -1023,7 +1023,7 @@ function Set-MerakiApplianceVLAN() {
             $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            Throw $_
+            $_ | Write-APiError
         }
     }
     <#
@@ -1118,7 +1118,7 @@ function Get-MerakiApplianceDhcpSubnets() {
             $response = Invoke-RestMethod -Method GET -Uri $Url -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -1180,8 +1180,8 @@ function Get-MerakiApplianceClientSecurityEvents() {
 
         $Results = [List[PsObject]]::New()
         
-        if (StartDate) {
-            $query = "?t0={0}" -f ($StartDate.ToString("0"))
+        if ($StartDate) {
+            $query = "?t0={0}" -f ($StartDate.ToString("O"))
         }
         if ($EndDate) {
             if ($query) {
@@ -1189,7 +1189,7 @@ function Get-MerakiApplianceClientSecurityEvents() {
             } else {
                 $Query = "?"
             }
-            $query = "{0}t1={1}" -f $query, ($EndDate.ToString("0"))
+            $query = "{0}t1={1}" -f $query, ($EndDate.ToString("O"))
         }
         if ($Days) {
             $seconds = [TimeSpan]::FromDays($Days).TotalSeconds
@@ -1246,7 +1246,7 @@ function Get-MerakiApplianceClientSecurityEvents() {
             }
             return $Results
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -1313,7 +1313,7 @@ Function Get-MerakiApplianceSecurityEvents() {
         $Results = [List[PsObject]]::New()
 
         if ($StartDate) {
-            $Query = "?t0={0}" -f ($StartDate.ToString("0"))
+            $Query = "?t0={0}" -f ($StartDate.ToString("O"))
         }
         if ($EndDate) {
             if ($Query) {
@@ -1321,7 +1321,7 @@ Function Get-MerakiApplianceSecurityEvents() {
             } else {
                 $Query = "?"
             }
-            $Query = "{0}t1={1}" -f $Query, ($EndDate.ToString("0"))
+            $Query = "{0}t1={1}" -f $Query, ($EndDate.ToString("O"))
         }
         if ($Days) {
             $seconds = [TimeSpan]::FromDays($Days).TotalSeconds
@@ -1343,13 +1343,13 @@ Function Get-MerakiApplianceSecurityEvents() {
     }
 
     Process {
-        $Uri = "{0}/networks/{networkId}/appliance/security/events" -f $BaseURI, $Id
+        $Uri = "{0}/networks/{1}/appliance/security/events" -f $BaseURI, $Id
         if ($Query) {
             $Uri = "{0}{1}" -f $Uri, $Query
         }
 
         try {
-            $response = Invoke-WebRequest -Method Get -Uri $Uri -Headers -PreserveAuthorizationOnRedirect
+            $response = Invoke-WebRequest -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
 
             [List[PsObject]]$result = $response.Content | ConvertFrom-Json
             if ($result) {
@@ -1378,7 +1378,7 @@ Function Get-MerakiApplianceSecurityEvents() {
             return $Results
 
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -1458,7 +1458,7 @@ function Get-MerakiApplianceSiteToSiteVPN() {
             return $response
         }
     } catch {
-        throw $_
+        $_ | Write-APiError
     }
     <#
     .SYNOPSIS
@@ -1532,7 +1532,7 @@ function Set-MerakiApplianceSiteToSiteVpn() {
         return $response
     }
     catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .SYNOPSIS
@@ -1630,7 +1630,7 @@ function Get-MerakiApplianceCellularFirewallRules () {
             return $rules
         }
         catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -1679,7 +1679,7 @@ function Set-MerakiApplianceCellularFirewallRules() {
         }
         return $response
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .DESCRIPTION
@@ -1766,7 +1766,7 @@ function Set-MerakiApplianceCellularFirewallRule() {
         return $Rules
     }
     catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .DESCRIPTION
@@ -1854,7 +1854,7 @@ function Add-MerakiApplianceCellularFirewallRule() {
             return $response
         }
         catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -1902,7 +1902,7 @@ function Remove-MerakiApplianceCellularFirewallRule() {
             return $response
         }
         catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -1946,7 +1946,7 @@ function Get-MerakiApplianceInboundCellularFirewallRules() {
             }
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -2004,7 +2004,7 @@ function Set-MerakiApplianceInboundCellularFirewallRules () {
             }
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
 
     }
@@ -2085,7 +2085,7 @@ function Add-MerakiApplianceInboundCellularFirewallRule() {
             $response = Set-MerakiNetworkApplianceInboundCellularFirewallRules -Id $id -Rules $Rules
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -2179,7 +2179,7 @@ function Set-MerakiApplianceInboundCellularFirewallRule() {
             $Rules = Set-MerakiApplianceInboundCellularFirewallRules -id -Rules $Rules
             return $Rules
         } catch {
-            throw $_
+            $_ | Write-APiError
         }
     }
     <#
@@ -2229,7 +2229,7 @@ function Remove-MerakiApplianceInboundCellularFirewallRule() {
             $response = Set-MerakiApplianceInboundCellularFirewallRules -Id $NetworkId -Rules $Rules
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -2276,7 +2276,7 @@ function Get-MerakiApplianceInboundFirewallRules() {
             }
             return $Rules
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -2326,7 +2326,7 @@ function Set-MerakiApplianceInboundFirewallRules() {
             $rules = $response.range
             return $response.rules
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -2397,7 +2397,7 @@ function Set-MerakiApplianceInboundFirewallRules() {
             $response = Set-MerakiApplianceInboundCellularFirewallRules -id $id -Rules $Rules
             return $response.rules
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -2489,7 +2489,7 @@ function Set-MerakiApplianceInboundFirewallRules() {
             $response = Set-MerakiApplianceInboundFirewallRules -id $Id -Rules $Rules
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -2537,7 +2537,7 @@ function Set-MerakiApplianceInboundFirewallRules() {
             $response = Set-MerakiApplianceInboundFirewallRules -id $NetworkId -Rules $Rules
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -2582,7 +2582,7 @@ function Get-MerakiApplianceFirewalledService() {
             return $response
         }
         catch {
-            Throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -2637,7 +2637,7 @@ function Set-MerakiApplianceFirewalledService() {
             $response = Invoke-RestMethod -Method Put -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
 }
@@ -2669,7 +2669,7 @@ Function Get-MerakiApplianceL3FirewallRules() {
         }
         return $rules
     } catch {
-        Throw $_
+        $_ | Write-ApiError
     }
     <#
     .DESCRIPTION
@@ -2729,7 +2729,7 @@ function Set-MerakiApplianceL3FirewallRules() {
             }
             return $response.rules
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -2801,7 +2801,7 @@ function Add-MerakiApplianceL3FirewallRule() {
             $Rules = Set-MerakiApplianceL3FirewallRules -Id $Id -Rules $Rules
             return $Rules
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -2870,7 +2870,7 @@ function Set-MerakiApplianceL3FirewallRule() {
     }
 
     if (-not $Rule_[$RuleNumber]) {
-        throw "Invalid Rule Id"
+        write-ApiError -Message "Invalid Rule Id"
     }
 
     If ($Policy) {
@@ -2904,7 +2904,7 @@ function Set-MerakiApplianceL3FirewallRule() {
         $Rules = Set-MerakiApplianceL3FirewallRules -Id $Id -Rules $Rules
         return $Rules  
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
 
     <#
@@ -2963,7 +2963,7 @@ function Remove-MerakiApplianceL3FirewallRule() {
 
     $Rule = $Rules | Where-Object {$_.RuleId -eq $RuleId}
     if (-not $Rule) {
-        throw "Invalid Rule Id"
+        write-ApiError -Message "Invalid Rule Id"
     }
 
     # Remove the Rule to be deleted
@@ -2980,7 +2980,7 @@ function Remove-MerakiApplianceL3FirewallRule() {
             $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
             return $response.rules
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -3026,7 +3026,7 @@ function Get-MerakiApplianceL7FirewallRules() {
             }
             return $Rules
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -3074,7 +3074,7 @@ function Set-MerakiApplianceL7FirewallRules() {
             $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $Body -PreserveAuthorizationOnRedirect
             return $response.rule
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -3126,7 +3126,7 @@ function Add-MerakiApplianceL7FirewallRule() {
             $Rules = Set-MerakiApplianceL7FirewallRules -Id $Id -Rules $Rules
             return $Rules
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -3185,7 +3185,7 @@ function Set-MerakiApplianceL7FirewallRule () {
             $Rules = Set-MerakiApplianceL7FirewallRules -Id $Id -Rules $Rules
             return $Rules
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -3224,7 +3224,7 @@ function Remove-MerakiApplianceL7FirewallRule() {
         try {
             $Rules = Set-MerakiApplianceL7FirewallRules -Id $NetworkId -Rules $Rules
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -3261,7 +3261,7 @@ Function Get-MerakiApplianceL7ApplicationCategories() {
             $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response.ApplicationCategories
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -3322,7 +3322,7 @@ function Get-MerakiApplianceFirewallNatRules() {
             }
             return $Rules
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -3395,7 +3395,7 @@ function Set-MerakiApplianceFirewallNatRules() {
 
             Return $Rules
         } catch {
-            throw $_
+            $_ | Write-APiError
         }
     }
     <#
@@ -3553,7 +3553,7 @@ function Add-MerakiApplianceFirewallNatRule() {
             $Rules = Set-MerakiApplianceFirewallNatRules -Id $Id -Type $Type -Rules $Rules
             return $Rules
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }    
     }
     <#
@@ -3704,7 +3704,7 @@ Function Set-MerakiApplianceFirewallNatRule() {
         $Rules = Set-MerakiApplianceFirewallNatRules -Id $Id -Type $Type -Rules $Rules.Values
         return $Rules
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .DESCRIPTION
@@ -3781,7 +3781,7 @@ function Remove-MerakiApplianceFirewallNatRule {
             $Rules = Set-MerakiApplianceFirewallNatRules -Id $Id -Type OneToMany -Rules $Rules
             return $Rules
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -3821,7 +3821,7 @@ function Get-MerakiApplianceDelegatesStaticPrefixes() {
             }
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -3865,7 +3865,7 @@ function Get-MerakiApplianceDelegatesStaticPrefix() {
             }
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -3924,7 +3924,7 @@ function Add-MerakiApplianceDelegatedStaticPrefix() {
             $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
             $response | Add-Member -MemberType NoteProperty -Name 'NetworkId' -Value $Id
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -3993,7 +3993,7 @@ function Set-MerakiApplianceDelegatedStaticPrefix() {
             $response = Invoke-RestMethod -Method Put -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
             $response | Add-Member -MemberType NoteProperty -Name 'NetworkId' -Value $Id
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -4034,7 +4034,7 @@ function Remove-MerakiApplianceDelegatedStaticPrefix() {
         $response = Invoke-RestMethod -Method Delete -Uri $Uri -Headers $Headers
         return $response
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .DESCRIPTION
@@ -4072,7 +4072,7 @@ function Get-MerakiApplianceSecurityIntrusion() {
             $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -4135,7 +4135,7 @@ function Set-MerakiApplianceSecurityIntrusion() {
             $response = Invoke-RestMethod -Method Put -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -4189,7 +4189,7 @@ function Get-MerakiApplianceSecurityMalwareSettings() {
             }
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -4260,7 +4260,7 @@ function Set-MerakiApplianceSecurityMalwareSettings() {
             }         
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -4306,7 +4306,7 @@ function Get-MerakiApplianceSingleLan() {
             $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -4359,7 +4359,7 @@ function Set-MerakiApplianceSingleLan() {
         $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
         return $response
     } catch {
-        throw $_
+        $_ | Write-ApiError
     }
     <#
     .DESCRIPTION
@@ -4407,7 +4407,7 @@ function Get-MerakiApplianceSSID() {
             $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -4520,7 +4520,7 @@ function Set-MerakiApplianceSSID() {
             $response = Invoke-RestMethod -Method Put -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -4583,7 +4583,7 @@ function Get-MerakiApplianceWarmSpare() {
             $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -4643,7 +4643,7 @@ function Set-MerakiApplianceWarmSpare() {
             $response = Invoke-RestMethod -Method Put -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#
@@ -4686,7 +4686,7 @@ function Invoke-SwapMerakiApplianceWarmSpare() {
             $response = Invoke-RestMethod -Method Post -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            throw $_
+            $_ | Write-ApiError
         }
     }
     <#

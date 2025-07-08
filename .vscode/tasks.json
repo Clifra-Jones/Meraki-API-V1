@@ -22,7 +22,7 @@
                 "showReuseMessage": true,
                 "clear": false
             },
-            "command": "Invoke-PSake psake.ps1 -taskList Build",
+            "command": "Invoke-PSake psake.ps1 -tasklist Build",
             "problemMatcher": [],
             "group": {
                 "kind": "build",
