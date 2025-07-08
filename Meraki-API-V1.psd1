@@ -35,7 +35,10 @@ Copyright = '(c) Balfour Beatty US All rights reserved.'
 # Description of the functionality provided by this module
 Description = 'Powershell module to use with the Meraki API to manage your Meraki Organization. 
 This module now supports storing API keys in a secure Secret store. 
-This is a large update. Please see the project site for more details.'
+The majority of the write functions have been enabled! 
+Warning: You can do a lot of damage to your network if you are not careful! There is no undo!
+The authors of this module nor Cisco are responsible for any damage done. YOU HAVE BEEN WARNED
+This module is a work in progress, test everything before committing changes to your network'
 
 # Minimum version of the PowerShell engine required by this module
 PowerShellVersion = '6.0'
