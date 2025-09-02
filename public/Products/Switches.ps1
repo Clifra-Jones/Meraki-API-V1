@@ -1,5 +1,6 @@
 #Meraki Switch Functions
 using namespace System.Collections.Generic
+using namespace system.management.Automation
 
 #region Stack Interfaces
 function Get-MerakiSwitchStackRoutingInterface() {
@@ -42,7 +43,8 @@ function Get-MerakiSwitchStackRoutingInterface() {
             }
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -134,7 +136,9 @@ function Add-MerakiSwitchStackRoutingInterface() {
         $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
+
     }
     <#
     .SYNOPSIS
@@ -203,7 +207,8 @@ Function Remove-MerakiSwitchStackRoutingInterface() {
             $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -284,7 +289,8 @@ function Set-MerakiSwitchStackRoutingInterface() {
         $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
 
     <#
@@ -367,7 +373,8 @@ function Get-MerakiSwitchStackRoutingStaticRoute() {
             $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
 
@@ -421,7 +428,8 @@ function Set-MerakiSwitchStackRoutingStaticRoute() {
         $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Header -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .DESCRIPTION 
@@ -476,7 +484,8 @@ function Remove-MerakiSwitchStackRoutingStaticRoute() {
             $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -555,7 +564,8 @@ function Get-MerakiSwitchStackRoutingInterfaceDHCP() {
             }
             return $Dhcp
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -622,7 +632,8 @@ function Set-MerakiSwitchStackRoutingInterfaceDhcp() {
         $result = Invoke-RestMethod -Method PUT -Headers $Headers -Uri $Uri -Body $body -PreserveAuthorizationOnRedirect
         return $result
     } catch {
-        $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .DESCRIPTION
@@ -700,7 +711,8 @@ function Get-MerakiSwitchRoutingInterface() {
             }
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -796,7 +808,8 @@ function Add-MerakiSwitchRoutingInterface() {
         $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
-        $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -886,7 +899,7 @@ function Set-MerakiSwitchRoutingInterface() {
 
     if ($VlanId) { $_Body.Add("vlanId", $VlanId) }
     if ($Name) { $_Body.Add("name", $Name) }
-    if ($Sbnet) { $_Body.Add("subnet", $Subnet) }
+    if ($Subnet) { $_Body.Add("subnet", $Subnet) }
     if ($InterfaceIp) { $_Body.Add("interfaceIp", $InterfaceIp) }
     if ($DefaultGateway) { $_Body.Add("defaultGateway", $DefaultGateway) }
     if ($InterfaceIp) { $_Body.Add("interfaceIp", $InterfaceIp) }
@@ -920,7 +933,8 @@ function Set-MerakiSwitchRoutingInterface() {
         $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
-        $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -996,7 +1010,8 @@ function Remove-MerakiSwitchRoutingInterface() {
             $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -1061,7 +1076,8 @@ function Get-MerakiSwitchRoutingInterfaceDHCP() {
                 }
             return $dhcp
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -1139,7 +1155,8 @@ function Set-MerakiSwitchRoutingInterfaceDhcp() {
             $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -1224,7 +1241,8 @@ function Get-MerakiSwitchRoutingStaticRoute() {
             $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -1274,7 +1292,8 @@ function Add-MerakiSwitchRoutingStaticRoute() {
         $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -1328,7 +1347,8 @@ function Set-MerakiSwitchRoutingStaticRoute() {
         $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -1378,7 +1398,8 @@ function Remove-MerakiSwitchStaticRoute() {
             $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -1433,7 +1454,8 @@ function Get-MerakiSwitchLAG() {
                 }
             }
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
 
@@ -1482,7 +1504,8 @@ function Add-MerakiSwitchLAG() {
         $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -1534,7 +1557,8 @@ function Set-MerakiSwitchLAG() {
         $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -1577,7 +1601,8 @@ function Remove-MerakiSwitchLAG() {
         try {
             Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -1627,7 +1652,8 @@ function Get-MerakiSwitchStack() {
             }
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -1671,7 +1697,8 @@ function New-MerakiSwitchStack() {
         $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
-        $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -1716,7 +1743,8 @@ function Add-MerakiSwitchStackSwitch() {
         $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS 
@@ -1762,7 +1790,8 @@ function Remove-MerakiSwitchStackSwitch() {
             $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -1804,7 +1833,8 @@ function Remove-MerakiSwitchStack() {
             $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -1863,7 +1893,8 @@ function Get-MerakiSwitchPort() {
             }
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -1999,7 +2030,8 @@ function Set-MerakiSwitchPort() {
             $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
 
@@ -2093,7 +2125,8 @@ function Reset-MerakiSwitchPorts() {
 
         return $response
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -2156,7 +2189,8 @@ function Get-MerakiSwitchPortsStatus() {
             $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -2214,7 +2248,8 @@ function Get-MerakiSwitchPortsPacketCounters() {
             $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -2257,7 +2292,8 @@ function Get-MerakiSwitchPortSchedules() {
             $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -2297,7 +2333,8 @@ function Add-MerakiSwitchPortSchedule(){
         $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -2393,7 +2430,8 @@ function Set-MerakiSwitchPortSchedule() {
         $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
-        return $response
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -2437,7 +2475,8 @@ function Remove-MerakiSwitchPortSchedule() {
             $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -2484,7 +2523,8 @@ function Get-MerakiSwitchQosRule() {
             $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -2566,7 +2606,8 @@ function Add-MerakiSwitchQosRule() {
         $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
-        $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -2641,7 +2682,8 @@ function Set-MerakiSwitchQosRule() {
         $response = Invoke-RestMethod -Method Put -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -2692,7 +2734,8 @@ function Remove-MerakiSwitchQosRule() {
             $response = Invoke-RestMethod -Method DELETE -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -2739,7 +2782,8 @@ function Get-MerakiSwitchQosRulesOrder() {
             $response | Add-Member -MemberType NoteProperty -Name "NetworkName" -Value $Network.Name
             $Rules.Add($response)
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
 
@@ -2781,7 +2825,8 @@ function Set-MerakiSwitchQosRuleOrder() {
         $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -2828,7 +2873,8 @@ function Get-MerakiSwitchAccessPolicy() {
             $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -2940,7 +2986,8 @@ function Add-MerakiSwitchAccessPolicy() {
         return $response
     }
     catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -3139,7 +3186,8 @@ function Set-MerakiSwitchAccessPolicy() {
         return $response
     }
     catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -3209,7 +3257,8 @@ function Remove-MerakiSwitchAccessPolicy() {
             return $response
         }
         catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -3256,7 +3305,8 @@ function Get-MerakiSwitchRoutingMulticast() {
             }
             $Multicasts.Add($Multicast)
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
 
@@ -3306,7 +3356,8 @@ function Set-MerakiSwitchRoutingMulticast() {
         $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response        
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
 
     <#
@@ -3357,7 +3408,8 @@ function Get-MerakiSwitchRoutingOspf() {
             $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -3432,7 +3484,8 @@ function Set-MerakiSwitchRoutingOspf() {
         $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -3512,10 +3565,14 @@ function Get-MerakiSwitchAccessControlList() {
 
                 return $response.rules
             } catch {
-                $_ | Write-ApiError
+                $Ex = $_ | Format-ApiException
+                $PSCmdlet.ThrowTerminatingError($Ex)
             }
         } else {
-            Write-ApiError "This function only works with Networks with switches."
+            $ex = [ErrorRecord]::New(
+                [System.Exception]::New('This function only works with Networks with switches.'),
+                'ApiError','NotSpecified', $Null)
+                $PSCmdlet.ThrowTerminatingError($Ex)            
         }
     }
     <#
@@ -3586,7 +3643,8 @@ function Add-MerakiSwitchAccessControlEntry() {
         }
         return $response
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .DESCRIPTION
@@ -3650,7 +3708,8 @@ function Remove-MerakiSwitchAccessControlEntry() {
             }
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -3723,7 +3782,8 @@ function Set-MerakiSwitchAccessControlEntry() {
         }
         return $response
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .DESCRIPTION

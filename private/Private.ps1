@@ -1,3 +1,4 @@
+using namespace System.Management.Automation
 #Private Variables
 
 $script:BaseURI = "https://api.meraki.com/api/v1"
@@ -125,7 +126,7 @@ function Format-ErrorMessage {
     return $cleanMessage.Trim()
 }
 
-function Write-ApiError () {
+function Format-ApiException () {
     [CmdletBinding()]
     Param (
         [Parameter(
@@ -158,19 +159,15 @@ function Write-ApiError () {
         $detailsMessage = $ErrorDetails.Message
         $formattedDetailsMessage = Format-ApiError -ErrorResponse $detailsMessage
     }
-    $formattedMessage = Format-ApiError -ErrorResponse $errorMessage
-
-    if ($env:MerakiAPI -eq 'dev') {
-        Write-error -Message $formattedMessage 
-        throw $_
+    
+    if ($formattedDetailsMessage) {
+        $Ex = [ErrorRecord]::New(
+            [System.Exception]::New($formattedDetailsMessage),
+            'ApiError', 'NotSpecified', $Null)
     } else {
-        Write-Host "API Error:" -ForegroundColor Red
-        If ($formattedDetailsMessage) {
-            Write-Host $formattedDetailsMessage -ForegroundColor Yellow
-        }
-        $formattedMessage | ForEach-Object {
-            Write-Host $_ -ForegroundColor Yellow
-        }
-        exit
+        $Ex = [ErrorRecord]::New(
+            [System.Exception]::New($errorMessage),
+            'APIError', 'NotSpecified',$null)
     }
+    return $Ex
 }

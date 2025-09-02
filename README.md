@@ -22,6 +22,10 @@ Example:
 
 There are certain API endpoints that allow filtering by providing arrays of values, i.e. network ids, serial numbers, client ids etc. I have chosen not to utilize these filters and allow the user to filter the results using the Where-Object cmdlet. This is the PowerShell way of doing things. This should not be a performance issue unless you have an organization with 1000's of networks containing 1000's of devices. If that is the case you may want to call these endpoints manually.
 
+>[!Note]
+I have enabled a filter parameter on some functions to enable array filtering. As stated above this in not the "powershell" way of doing things but for some function this can reduces the number of round trips to the API endpoint. See the module reference for more details.
+
+
 Many of the objects returned by the functions in this module provide additional properties that facilitate piping the results to other commands. Properties such as NetworkID, Serial, InterfaceId, etc are added to the results from the API methods that do not contain them.
 
 Piping is not supported for certain function. These include all Remove- functions and some Set- functions that the module creates unique identifiers for each item returned. This is done for safety reasons on the Remove- functions. For module provided unique identifiers I cannot guarantee that the item referred to by the identifier is the same item configuration across different networks, devices, etc. Again this is for safety and data integrity reasons.
@@ -43,6 +47,8 @@ See: [SecretStore issue 58](https://github.com/PowerShell/SecretStore/issues/58#
 If you currently have a secret store vault on your system you do not need to create a new one. This vault will be used to store your API key.
 
 ### Create a new vault
+>[!Note]
+This function is for convenience. As a vault can be used for many different secrets this is really out of scope of this module. This function may be depreciated in the future. You should use the commands Set-SecretStoreConfiguration to configure your store and Register-SecretVault to create a new vault.
 
 ```powershell
 New-MerakiSecretVault -Authentication Password -Interaction Prompt

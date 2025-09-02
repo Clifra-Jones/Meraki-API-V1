@@ -19,7 +19,8 @@ function Get-MerakiDevice() {
 
         return $response
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -67,7 +68,8 @@ function Start-MerakiDeviceBlink() {
 
         return $response
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS 
@@ -110,7 +112,8 @@ function Restart-MerakiDevice() {
             return $response
         }
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -172,7 +175,8 @@ function Get-MerakiDeviceClients() {
             }
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -209,7 +213,8 @@ function Get-MerakiDeviceApplianceUplinks() {
         $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
         return $response
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .DESCRIPTION
@@ -246,7 +251,8 @@ function Submit-MerakiDeviceClaim() {
         Invoke-RestMethod -Method Post -Uri $Uri -Headers $Headers -Body $Body
         return $response
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -300,7 +306,8 @@ function Set-MerakiDevice {
         $response = Invoke-RestMethod -Method PUT -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .DESCRIPTION
@@ -367,7 +374,8 @@ function Remove-MerakiNetworkDevice() {
                 $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
                 return $response
             } catch {
-                $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
             }
         }
     }
@@ -395,7 +403,8 @@ function Get-MerakiDeviceLldpCdp() {
             $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
 }

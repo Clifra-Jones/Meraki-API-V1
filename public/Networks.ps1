@@ -20,7 +20,8 @@ function Get-MerakiNetwork() {
 
         return $Response
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -64,7 +65,8 @@ function Set-MerakiNetwork() {
         return $response        
     }
     catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -115,7 +117,8 @@ function Remove-MerakiNetwork() {
             $response = Invoke-RestMethod -Method Delete -Uri $Uri -Headers $Headers
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
 
@@ -158,7 +161,8 @@ function Connect-MerakiNetworkToTemplate() {
         return $response
     }
     catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -204,7 +208,8 @@ function Disconnect-MerakiNetworkFromTemplate() {
             return $response
         }
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -243,7 +248,8 @@ function Split-MerakiNetwork() {
             $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Header -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -283,7 +289,8 @@ function Get-MerakiNetworkDevices () {
             $response = Invoke-RestMethod -Method GET -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -407,7 +414,8 @@ function Get-MerakiNetworkEvents() {
 
             return $Results.ToArray() | Sort-Object occurredAt
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -499,7 +507,8 @@ function Get-MerakiNetworkEventTypes() {
 
         return $response
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -642,8 +651,8 @@ function Get-MerakiNetworkClients () {
             }
 
         } catch {
-            Write-Host $id
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
 
@@ -812,7 +821,8 @@ function Get-MerakiNetworkClientApplicationUsage() {
             }
             return $Results.ToArray()
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
 
@@ -948,7 +958,8 @@ function Get-MerakiNetworkClientBandwidthUsage() {
             }
             return $Results.ToArray()
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -1027,7 +1038,8 @@ function Get-MerakiNetworkTraffic() {
             $response = Invoke-RestMethod -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#

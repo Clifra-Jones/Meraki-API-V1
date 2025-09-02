@@ -33,7 +33,8 @@ function Get-MerakiSSID() {
 
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -446,7 +447,8 @@ function Set-MerakiSSID() {
             $response = Invoke-RestMethod -Method Put -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -683,7 +685,8 @@ function Get-MerakiSSIDIdentityPsk() {
             }
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -754,7 +757,8 @@ function Add-MerakiSsidIdentityPsk() {
             }
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -834,7 +838,8 @@ function Set-MerakiSsidIdentityPsk() {
             }
             return $response
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -888,7 +893,8 @@ function Remove-MerakiSsidIdentityPsk() {
                 $response = Invoke-RestMethod -Method Delete -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
                 return $response
             } catch {
-                $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
             }
         }
     }
@@ -924,7 +930,8 @@ function Get-MerakiWirelessStatus() {
 
         return $response
     } catch {
-        $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -1038,7 +1045,8 @@ function Get-MerakiNetworkClientConnectionStats() {
             return $response
         }
         catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -1093,7 +1101,8 @@ function Get-MerakiWirelessAirMarshal() {
         return $response
     }
     catch {
-        $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
     }
 
     <#
@@ -1233,7 +1242,8 @@ function Get-MerakiWirelessUsageHistory() {
             return $response
         }
         catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }               
     }
     <#
@@ -1389,7 +1399,8 @@ function Get-MerakiWirelessDataRateHistory() {
             }
             return $result
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#

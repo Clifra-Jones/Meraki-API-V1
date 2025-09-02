@@ -251,7 +251,8 @@ function Get-MerakiOrganizations() {
         
         return $response
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS 
@@ -301,7 +302,8 @@ function Get-MerakiOrganization() {
 
         return $response
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS 
@@ -351,7 +353,8 @@ function New-MerakiOrganization() {
         return $response
     }
     catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -427,7 +430,8 @@ function Set-MerakiOrganization() {
         return $response
     }
     catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -511,7 +515,8 @@ function Get-MerakiNetworks() {
         } 
         return $response
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -587,7 +592,8 @@ function Add-MerakiNetwork() {
         $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Headers -Body $body -PreserveAuthorizationOnRedirect
         return $response        
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS 
@@ -651,7 +657,8 @@ function Get-MerakiOrganizationConfigTemplates() {
 
         return $response
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <# 
     .SYNOPSIS
@@ -715,7 +722,8 @@ function Get-MerakiOrganizationConfigTemplate () {
             return $response
         }
         catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -805,7 +813,8 @@ function Get-MerakiOrganizationDevices() {
 
         return $Result.ToArray()
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -872,7 +881,8 @@ function Get-MerakiOrganizationAdmins() {
 
         return $response
     }catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -1008,7 +1018,8 @@ function Get-MerakiOrganizationConfigurationChanges() {
 
         return $Result.ToArray()
      } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
      }
     <#
     .SYNOPSIS 
@@ -1082,7 +1093,8 @@ function Get-MerakiOrganizationThirdPartyVpnPeers() {
     
         return $response.peers 
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -1169,7 +1181,8 @@ function Set-MerakiOrganizationThirdPartyVpnPeer() {
 
         return $response
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .DESCRIPTION
@@ -1277,7 +1290,8 @@ function New-MerakiOrganizationThirdPartyVpnPeer() {
 
         return $response
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .DESCRIPTION
@@ -1385,7 +1399,8 @@ function Get-MerakiOrganizationInventoryDevices() {
             }
         return $Results.ToArray()
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -1449,7 +1464,8 @@ function Get-MerakiOrganizationInventoryDevice() {
 
         return $response
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
 }
 
@@ -1568,7 +1584,8 @@ function Get-MerakiOrganizationSecurityEvents() {
         }
         return $Results
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -1708,7 +1725,8 @@ function Get-MerakiOrganizationFirmwareUpgrades() {
             }
             return $Results.ToArray()
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
         <#
@@ -1804,7 +1822,8 @@ function Get-MerakiOrganizationFirmwareUpgradesByDevice() {
 
             return $Results.ToArray()
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -1917,7 +1936,8 @@ function Get-MerakiOrganizationDeviceUplinks() {
             }
             return $Results.ToArray()
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -2019,7 +2039,8 @@ function Get-MerakiOrganizationDeviceStatus() {
             }
             return $Results
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -2135,7 +2156,8 @@ function Get-MerakiOrganizationApplianceVpnStatuses() {
             }
             return $Results.ToArray()
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -2199,7 +2221,8 @@ function Get-MerakiOrganizationApplianceUplinkStatuses() {
 
         return $response | Where-Object {$_.networkID -like $networkID -and $_.serial -like $serial}
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .SYNOPSIS
@@ -2325,7 +2348,8 @@ function Get-MerakiOrganizationApplianceVpnStats() {
                 $vpnPeers
             }
         } catch {
-            $_ | Write-ApiError
+            $Ex = $_ | Format-ApiException
+            $PSCmdlet.ThrowTerminatingError($Ex)
         }
     }
     <#
@@ -2414,7 +2438,8 @@ function Merge-MerakiOrganizationNetworks() {
                 $response = Invoke-RestMethod -Method POST -Uri $Uri -Headers $Header -Body $Body -PreserveAuthorizationOnRedirect
                 return $response
             } catch {
-                $_ | Write-ApiError
+                $Ex = $_ | Format-ApiException
+                $PSCmdlet.ThrowTerminatingError($Ex)
             }
         }
     }
@@ -2449,6 +2474,13 @@ Function New-MerakiSecretsVault() {
         [ValidateSet('Prompt','none')]
         [string]$Interaction
     )
+
+    Write-Host "This function is depreciated! You should create and configure your vault manually using the Secret Store module functions." -ForegroundColor Red
+    Write-Host "This function will be removed from future releases."
+    $response = Read-Host "Do you wish to continue? [y/N]"
+    if ($response -ne "y") {
+        return
+    }
 
     $CurrentConfig = Get-SecretStoreConfiguration | Where-Object {$_.Scope -eq "CurrentUser"}
 
@@ -2486,7 +2518,7 @@ Function New-MerakiSecretsVault() {
 
     <#
     .DESCRIPTION
-    Created a local Secret vault to store secrets.
+    Created a local Secret vault to store secrets. (This function is depreciated, you should create your vault manually.)
     .PARAMETER Authentication
     Specifies how to authenticate access to the SecretStore. The value must be Password or None. 
     If specified as None, the cmdlet enables access to the SecretStore without a password. The default authentication is Password.
@@ -2568,7 +2600,8 @@ function Get-MerakiOrganizationDeviceAvailability() {
         }
         return $Results.ToArray()
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
     <#
     .DESCRIPTION 
@@ -2660,6 +2693,7 @@ function Get-MerakiOrganizationDeviceAvailabilityChangeHistory() {
         }
         return $Results.ToArray()
     } catch {
-        $_ | Write-ApiError
+        $Ex = $_ | Format-ApiException
+        $PSCmdlet.ThrowTerminatingError($Ex)
     }
 }

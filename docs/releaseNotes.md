@@ -2,6 +2,11 @@
 
 ## Release Notes
 
+### 09/02/2025
+I have made changes to the error reporting when an API error occurs. This will report a more concise and readable error message when the API endpoint responds with an error.
+
+The error are thrown as a powershell terminating error. If you are using these functions in a script and you want terminating errors to stop execution you should wrap your function calls in a try/catch block.
+
 ### 03/22/2024
 
 Added secure API Key storage.
