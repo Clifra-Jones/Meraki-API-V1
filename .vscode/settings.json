@@ -22,6 +22,7 @@
         "RMSW",
         "SNMP",
         "SSIDS",
+        "timeparams",
         "timespan"
     ]
 }

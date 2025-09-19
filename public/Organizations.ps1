@@ -1473,23 +1473,52 @@ function Get-MerakiOrganizationSecurityEvents() {
     [CmdLetBinding(DefaultParameterSetName='Default')]
     Param(
         [ValidateScript({$_ -is [datetime]})]
-        [Parameter(ParameterSetName = 'dates', Mandatory)]
-        [Parameter(ParameterSetName = 'datesWithOrg', Mandatory)]
-        [Parameter(ParameterSetName ='datesWithProfiles', Mandatory)]                
+        [Parameter(ParameterSetName = 'dates', Mandatory)]            
         [datetime]$StartDate,
 
         [ValidateScript({$_ -is [datetime]})]
         [Parameter(ParameterSetName = 'dates', Mandatory)]
-        [Parameter(ParameterSetName = 'datesWithOrg', Mandatory)]
-        [Parameter(ParameterSetName ='datesWithProfile', Mandatory)]
         [datetime]$EndDate,
 
-        [Parameter(ParameterSetName = 'days', Mandatory)]
-        [Parameter(ParameterSetName = 'daysWithOrg', Mandatory)]
-        [Parameter(ParameterSetName = 'daysWithProfile', Mandatory)]
+        [Parameter(
+            ParameterSetName = 'timeparams', 
+            Mandatory = $false
+        )]
         [ValidateScript({$_ -is [int]})]
-        [ValidateRange(1,31)]
+        [ValidateRange(1,365)]
         [int]$Days,
+
+        [ValidateScript({$_ -is [int]})]
+        [ValidateRange(1,24)]
+        [Parameter(
+            Mandatory = $false,
+            ParameterSetName = 'timeparams'
+        )]
+        [int]$Hours,
+
+        [ValidateScript({$_ -is [int]})]
+        [ValidateRange(1,60)]
+        [Parameter(
+            Mandatory = $false,
+            ParameterSetName = 'timeparams'
+        )]
+        [int]$Minutes,
+
+        [ValidateScript({$_ -is [int]})]
+        [ValidateRange(1.60)]
+        [Parameter(
+            Mandatory = $false,
+            ParameterSetName = 'timeparams'
+        )]
+        [int]$Seconds,
+
+        [ValidateScript(
+            {
+                $value = New-Object System.TimeSpan
+                [timespan]::TryParse($_, [ref]$value)
+            }, ErrorMessage = 'Invalid Timespan string'
+        )]
+        [string]$Timespan,
 
         [ValidateScript({$_ -is [int]})]
         [ValidateRange(3, 1000)]
@@ -1537,11 +1566,33 @@ function Get-MerakiOrganizationSecurityEvents() {
         if ($Query) {$Query += "&"}
         $Query = "{0}t1={0}" -f $Query, ($EndDate.ToString("O"))
     }
+
+    $tsSeconds = 0
+
     if ($Days) {
-        $Seconds = [TimeSpan]::FromDays($Days).TotalSeconds
-        if ($Query) {$Query += "&"}
-        $Query = "{0}timestamp={1}" -f $Seconds
+        $tsSeconds = [TimeSpan]::FromDays($Days).TotalSeconds
+        # if ($Query) {$Query += "&"}
+        # $Query = "{0}timestamp={1}" -f $Seconds
     }
+
+    if ($Hours) {
+        $tsSeconds += [timespan]::FromHours($Hours).TotalSeconds
+    }
+
+    if ($Minutes) {
+        $tsSeconds += [timespan]::FromMinutes($Minutes).TotalSeconds
+    }
+
+    if ($Seconds) {
+        $tsSeconds = $Seconds
+    }
+
+    if ($tsSeconds -gt 0) {
+        if ($Query) {$Query += "&"}
+        $Query = "{0}timestamp={1}" -f $tsSeconds
+    }
+
+
     if ($PerPage) {
         if ($Query) {$Query += "&"}
         $Query = "{0}perPage={1}" -f $Query, $PerPage

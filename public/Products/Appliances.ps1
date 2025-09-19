@@ -1294,33 +1294,76 @@ Function Get-MerakiApplianceSecurityEvents() {
             Mandatory,
             ValueFromPipelineByPropertyName
         )]
-        [Alias('NetworkId')]
+        [Alias('NetworkId')]        
         [string]$Id,
+        
         [Parameter(
             Mandatory,
             ParameterSetName = 'dates'
         )]
         [ValidateScript({
-            $_ -gt (Get-Date).AddDays(-791)
+            $_ -gt (Get-Date).AddDays(-366)
         }, ErrorMessage = "StartDate cannot be more that 791 days prior to today")]
         [datetime]$StartDate,
+        
         [Parameter(
             Mandatory,
             ParameterSetName = 'dates'
         )]
         [ValidateScript({
-            $_ -lt $StartDate.AddDays(791)
+            $_ -lt $StartDate.AddDays(366)
         }, ErrorMessage = "End date cannot be more than 791 days after StartDate")]
         [datetime]$EndDate,
-        [Parameter(
-            Mandatory,
-            ParameterSetName = 'days'
-        )]
+
         [ValidateScript({
-            $_ -lt 791
+            $_ -is [int] -and
+            $_ -lt 366
         })]
+        [Parameter(
+            Mandatory = $false,
+            ParameterSetName = 'timeparams'
+        )]
         [int]$Days,
-        [int]$PerPage       
+
+        [ValidateScript({$_ -is [int]})]
+        [ValidateRange(1,24)]
+        [Parameter(
+            Mandatory = $false,
+            ParameterSetName = 'timeparams'
+        )]
+        [INT]$Hours,
+
+        [ValidateScript({$_ -is [int]})]
+        [ValidateRange(1,60)]
+        [Parameter(
+            Mandatory = $false,
+            ParameterSetName = 'timeparams'
+        )]
+        [int]$Minutes,
+
+        [ValidateScript({$_ -is [int]})]
+        [ValidateRange(1,60)]
+        [Parameter(
+            Mandatory = $false,
+            ParameterSetName = 'timeparams'
+        )]
+        [int]$Seconds,
+
+        [ValidateScript(
+            {
+                $value = New-Object System.TimeSpan
+                [timespan]::TryParse($_, [ref]$value)
+            }
+        )]
+        [Parameter(
+            Mandatory = $true,
+            ParameterSetName = 'timespan'
+        )]
+        [string]$TimeSpan,
+
+        [int]$PerPage,
+        
+        [switch]$ToLocalTime
         
     )
 
@@ -1341,15 +1384,40 @@ Function Get-MerakiApplianceSecurityEvents() {
             }
             $Query = "{0}t1={1}" -f $Query, ($EndDate.ToString("O"))
         }
+
+        $tsSeconds = 0
+
         if ($Days) {
-            $seconds = [TimeSpan]::FromDays($Days).TotalSeconds
+            $tsSeconds = [TimeSpan]::FromDays($Days).TotalSeconds
+            # if ($Query) {
+            #     $Query = "{0}&" -f $Query
+            # } else {
+            #     $Query = "?"
+            # }
+            # $Query = "{0}timespan={1}" -f $Query, $seconds
+        }
+
+        if ($Hours) {
+            $tsSeconds += [timespan]::FromHours($Hours).TotalSeconds
+        }
+
+        if ($Minutes) {
+            $tsSeconds += [timespan]::FromMinutes($Minutes).TotalSeconds
+        }
+
+        if($Seconds) {
+            $tsSeconds += $Seconds
+        }
+
+        if ($tsSeconds -gt 0) {
             if ($Query) {
                 $Query = "{0}&" -f $Query
             } else {
                 $Query = "?"
             }
-            $Query = "{0}timespan={1}" -f $Query, $seconds
+            $Query = "{0}timespan={1}" -f $Query, $tsSeconds    
         }
+
         if ($PerPage) {
             if ($query) {
                 $query = "{0}&" -f $query
@@ -1419,11 +1487,14 @@ Function Get-MerakiApplianceSecurityEvents() {
 
 }
 
+Set-Alias -Name Get-MerakiNetworkSecurityEvents -Value Get-MerakiApplianceSecurityEvents
+Set-Alias -Name Get-MerakiNetworkApplianceSecurityEvents -Value Get-MerakiApplianceSecurityEvents
+
 #endregion
 
-Set-Alias -Name GMNetAppDhcpSubnet -Value Get-MerakiApplianceDhcpSubnets -Option ReadOnly
-Set-ALias -Name Get-MerakiNetworkApplianceDhcpSubnets -Value Get-MerakiNetworkApplianceDhcpSubnets -Option ReadOnly
-Set-Alias -Name GMAppDhcpSubnet -Value Get-MerakiApplianceDhcpSubnets -Option ReadOnly
+# Set-Alias -Name GMNetAppDhcpSubnet -Value Get-MerakiApplianceDhcpSubnets -Option ReadOnly
+# Set-ALias -Name Get-MerakiNetworkApplianceDhcpSubnets -Value Get-MerakiNetworkApplianceDhcpSubnets -Option ReadOnly
+# Set-Alias -Name GMAppDhcpSubnet -Value Get-MerakiApplianceDhcpSubnets -Option ReadOnly
 
 
 #region VPN
