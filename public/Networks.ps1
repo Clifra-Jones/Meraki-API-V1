@@ -331,7 +331,7 @@ function Get-MerakiNetworkEvents() {
         [string]$smDeviceName,
         [string]$smDeviceMac,
         [ValidateScript({$_ -is [int]})]
-        [ValidateSet(3,1000)]
+        [ValidateRange(3,1000)]
         [int]$PerPage,
         [int]$Pages = 1
     )
@@ -340,8 +340,12 @@ function Get-MerakiNetworkEvents() {
 
         $Headers = Get-Headers
 
+        # Product Type is a required query.
+        $Query = "?productType={0}" -f $ProductType
+
         if ($PerPage) {
-            $Query = "perPage={0}" -f $PerPage
+            if ($Query) {$Query += '&'}
+            $Query = "{0}perPage={1}" -f $Query, $PerPage
         }
 
         if ($IncludedEventTypes) {
@@ -383,13 +387,13 @@ function Get-MerakiNetworkEvents() {
     }
 
     Process {
-        $Uri = "{0}/networks/{1}/events" -f $BaseURI, $id
+        $Uri = "{0}/networks/{1}/events{2}" -f $BaseURI, $id, $Query
 
         try {
             $response = Invoke-WebRequest -Method GET -Uri $Uri -Body $body -Headers $Headers -PreserveAuthorizationOnRedirect
-            [List[PsObject]]$result = $response.Content | ConvertFrom-Json
+            [List[PsObject]]$result = ($response.Content | ConvertFrom-Json).Events
             if ($result) {
-                $Result.AddRange($result)
+                $Results.AddRange($result)
             }
             $page = 1
             if ($Pages -ne 1) {
@@ -398,7 +402,7 @@ function Get-MerakiNetworkEvents() {
                     if ($response.RelationLink['next']) {
                         $Uri = $response.RelationLink['next']
                         $response = Invoke-WebRequest -Method Get -Uri $Uri -Headers $Headers -PreserveAuthorizationOnRedirect
-                        [List[PsObject]]$result = $response.Content | ConvertFrom-Json
+                        [List[PsObject]]$result = ($response.Content | ConvertFrom-Json).Events
                         if ($result) {
                             $Results.AddRange($result)
                         }
@@ -535,7 +539,47 @@ function Get-MerakiNetworkClients () {
 
         [ValidateScript({$_ -is [int]})]
         [ValidateRange(1,31)]
-        [int]$Days,
+        [Parameter(
+            Mandatory = $false,
+            ParameterSetName = 'timeparts'
+        )]
+        [decimal]$Days,
+
+        [ValidateScript({$_ -is [int]})]
+        [ValidateRange(1,24)]
+        [Parameter(
+            Mandatory = $false,
+            ParameterSetName = 'timeparts'
+        )]
+        [int]$Hours,
+
+        [ValidateScript({$_ -is [int]})]
+        [ValidateRange(1,60)]
+        [Parameter(
+            Mandatory = $false,
+            ParameterSetName = 'timeparts'
+        )]
+        [int]$Minutes,
+
+        [ValidateScript({$_ -is [int]})]
+        [ValidateRange(1,60)]
+        [Parameter(
+            Mandatory = $false,
+            ParameterSetName = 'timeparts'
+        )]
+        [int]$Seconds,
+
+        [ValidateScript(
+            {
+                $value = New-Object System.TimeSpan
+                [timespan]::TryParse($_, [ref]$value)
+            }, ErrorMessage = 'String is not a valid time span'
+        )]
+        [Parameter(
+            Mandatory = $true,
+            ParameterSetName = 'timespan'
+        )]
+        [string]$TimeSpan,
 
         [ValidateScript({$_ -is [int]})]
         [int]$PerPage,
@@ -561,8 +605,9 @@ function Get-MerakiNetworkClients () {
         [ValidateRange(1,4096)]
         [string]$VLAN,
 
-        [string[]]$recentDeviceConnections
+        [string[]]$recentDeviceConnections,
 
+        [switch]$ToLocalTime
     )
     Begin {          
 
@@ -576,11 +621,36 @@ function Get-MerakiNetworkClients () {
             if ($Query) {$Query += "&"}
             $Query = "{0}t1={1}" -f $Query, ($EndDate.ToString("O"))
         }
+
+        $tsSeconds = 0
+
         if ($Days) {
-            $Seconds = [TimeSpan]::FromDays($Days).TotalSeconds
-            if ($Query) {$Query += "&"}
-            $Query = "{0}timespan={1}" -f $Query, $Seconds
+            $tsSeconds = [TimeSpan]::FromDays($Days).TotalSeconds
+            # if ($Query) {$Query += "&"}
+            # $Query = "{0}timespan={1}" -f $Query, $Seconds
         }
+
+        if ($Hours) {
+            $tsSeconds +=  [timespan]::FromHours($hours).TotalSeconds
+        }
+
+        if ($Minutes) {
+            $tsSeconds += [timespan]::FromMinutes($Minutes).TotalSeconds
+        }
+
+        if ($Seconds) {
+            $tsSeconds += $seconds
+        }
+
+        if ($TimeSpan) {
+            $tsSeconds = [timespan]::Parse($timespan).TotalSeconds
+        }
+
+        if ($tsSeconds -gt 0) {
+            if ($query) { $Query += "&"}
+            $Query = "{0}timespan={1}" -f $Query, $tsSeconds
+        }
+
         if ($Statuses) {
             if ($Query) {$Query += "&"}
             $Query = "{0}statuses={1}" -f $Query, $Statuses
@@ -663,6 +733,12 @@ function Get-MerakiNetworkClients () {
             }
             $_ | Add-Member -MemberType NoteProperty -Name NetworkId -Value $id
             $_ | Add-Member -MemberType NoteProperty -Name ClientId -Value $_.id
+        }
+        if ($ToLocalTime) {
+            $Results | ForEach-Object {
+                $_.firstSeen = $_.firstSeen.ToLocalTime()
+                $_.lastSeen = $_.lastSeen.ToLocalTime()
+            }
         }
         return $Results.ToArray()
     }
