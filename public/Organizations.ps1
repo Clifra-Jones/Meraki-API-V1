@@ -1505,7 +1505,7 @@ function Get-MerakiOrganizationSecurityEvents() {
         [int]$Minutes,
 
         [ValidateScript({$_ -is [int]})]
-        [ValidateRange(1.60)]
+        [ValidateRange(1,60)]
         [Parameter(
             Mandatory = $false,
             ParameterSetName = 'timeparams'
@@ -1528,6 +1528,8 @@ function Get-MerakiOrganizationSecurityEvents() {
         [int]$Pages,
 
         [switch]$Descending,
+
+        [switch]$ToLocalTime,
 
         [Parameter(ParameterSetName = 'org', Mandatory)]
         [Parameter(ParameterSetName = 'datesWithOrg', Mandatory)]
@@ -1589,7 +1591,7 @@ function Get-MerakiOrganizationSecurityEvents() {
 
     if ($tsSeconds -gt 0) {
         if ($Query) {$Query += "&"}
-        $Query = "{0}timestamp={1}" -f $tsSeconds
+        $Query = "{0}timestamp={1}" -f $Query, $tsSeconds
     }
 
 
@@ -1632,6 +1634,11 @@ function Get-MerakiOrganizationSecurityEvents() {
                     $done = $true
                 }
             } until ($done)
+        }
+        if ($ToLocalTime) {
+            $Results | ForEach-Object {
+                $_.ts = $_.ts.ToLocalTime()
+            }
         }
         return $Results
     } catch {

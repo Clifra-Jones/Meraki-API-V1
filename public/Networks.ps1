@@ -582,7 +582,7 @@ function Get-MerakiNetworkClients () {
         [string]$TimeSpan,
 
         [ValidateScript({$_ -is [int]})]
-        [int]$PerPage,
+        [int]$PerPage = 5000,
 
         [ValidateScript({$_ -is [int]})]
         [ValidateRange(0,1000)]
@@ -1130,4 +1130,162 @@ function Get-MerakiNetworkTraffic() {
     .PARAMETER DeviceType
     The device type to retrieve the data for. Defaults to 'combined'. When using 'combined', for each rule the data will come from the device type with the most usage.
     #>
+}
+
+Function Get-MerakiNetworkSyslogServers() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id
+    )
+
+    begin {
+
+        $Headers = Get-Headers
+    }
+
+    process {
+
+        $Uri = "{0}/networks/{1}/syslogServers" -f $BaseURI, $Id
+
+        try {
+            $response = Invoke-RestMethod -Method Get -URI $Uri -Headers $Headers
+            $response.Servers | Add-Member -MemberType NoteProperty -Name NetworkId -Value $Id
+            $response.Servers | Add-Member -MemberType NoteProperty -Name NetworkName -Value $PSItem.Name
+            return $response.servers
+        } catch {
+            throw $_
+        }
+    }
+}
+
+function Set-MerakiNetworkSyslogServers() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory = $true,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+
+        [Parameter(
+            Mandatory = $true
+        )]
+        [array]$Servers,
+
+        [Parameter(
+            Mandatory = $false
+        )]
+        [ValidateSet('Wireless event log', 'Appliance event log', 'Switch event log', 'Air Marshal events', 'Flows', 'URLs', 'IDS alerts', 'Security events')]
+        [string[]]$Roles
+    )
+
+    begin {
+
+        $Headers = Get-Headers
+
+        $SyslogServers = @()
+        foreach ($Server in $Servers) {
+            if ($Server -contains ':') {
+                $Parts = $Server -split ':'
+                $Servers = $Parts[0]
+                $Port = $Parts[1]
+            } 
+            else {
+                $Servers = $Server
+                $Port = 514
+            }
+            $syslogServer = [PSCustomObject]@{
+                host = $Server
+                port = $Port
+                roles = $Roles
+            }
+            $SyslogServers += $syslogServer
+        }
+        $Body = @{
+            servers = $SyslogServers
+        } | ConvertTo-Json -Depth 3            
+    }
+
+    process {
+
+        $Uri = "{0}/networks/{1}/syslogServers" -f $BaseURI, $Id
+
+        if ($PSItem.NetworkName) {
+            $NetworkName = $PSItem.NetworkName
+        }
+        else {
+            $NetworkName = $PSItem.Name
+        }
+
+        try {
+            $response = Invoke-RestMethod -Method Put -Uri $Uri -Headers $Headers -Body $Body
+            $response.Servers | Add-Member -MemberType NoteProperty -Name NetworkId -Value $Id
+            $response.Servers | Add-Member -MemberType NoteProperty -Name NetworkName -Value $NetworkName
+            return $response.Servers
+        } catch {
+            throw $_
+        }
+    }
+}
+
+function Add-MerakiNetworkSyslogServer() {
+    [CmdletBinding()]
+    Param(
+        [Parameter(
+            Mandatory= $true,
+            ValueFromPipelineByPropertyName
+        )]
+        [Alias('NetworkId')]
+        [string]$Id,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Server,
+
+        [Parameter(Mandatory = $false)]
+        [int]$port=514,
+
+         [Parameter(
+            Mandatory = $false
+        )]
+        [ValidateSet('Wireless event log', 'Appliance event log', 'Switch event log', 'Air Marshal events', 'Flows', 'URLs', 'IDS alerts', 'Security events')]
+        [string[]]$Roles
+    )
+
+    begin {
+        $Headers = Get-Headers
+
+        $syslogServer = [psCustomObject]@{
+            host = $Server
+            port = $Port
+            roles = $Roles
+        }
+      
+    }
+
+    process {
+        [array]$Servers = Get-MerakiNetworkSyslogServers -Id $Id
+        $Servers += $syslogServer
+
+        $Body = @{
+            servers = $syslogServer
+        } | ConvertTo-Json -Depth 3
+
+        $Uri = "{0}/networks/{1}/syslogServers" -f $BaseURI, $Id
+
+        try {
+            $response = Invoke-RestMethod -Method Put -Uri $Uri -Headers $Headers -Body $Body
+            $response.Servers | Add-Member -MemberType NoteProperty -Name NetworkId -Value $Id
+            $response.Servers | Add-Member -MemberType NoteProperty -Name NetworkName -Value $PSItem.Name            
+            return $response.servers
+        }
+        catch {
+            throw $_
+        }
+    }
 }

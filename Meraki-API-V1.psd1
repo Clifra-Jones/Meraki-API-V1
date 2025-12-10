@@ -14,7 +14,7 @@
 RootModule = '.\Meraki-API-V1.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.1.8'
+ModuleVersion = '1.1.10'
 
 
 # Supported PSEditions
@@ -27,10 +27,9 @@ GUID = '794ac708-5ac6-4ce3-8bcf-f1d79978e66a'
 Author = 'Cliff Williams'
 
 # Company or vendor of this module
-CompanyName = 'Balfour Beatty US'
 
 # Copyright statement for this module
-Copyright = '(c) Balfour Beatty US All rights reserved.'
+Copyright = '(c) Cliff Williams, All rights reserved.'
 
 # Description of the functionality provided by this module
 Description = 'Powershell module to use with the Meraki API to manage your Meraki Organization. 
@@ -266,7 +265,9 @@ FunctionsToExport = @(
     'Get-MerakiOrganizationInventoryDevice',
     'Get-MerakiOrganizationDeviceAvailabilityChangeHistory',
     'Get-MerakiOrganizationDeviceAvailability',
-    'Get-MerakiApplianceSecurityEvents'
+    'Get-MerakiApplianceSecurityEvents',
+    'Get-MerakiNetworkSyslogServers',
+    'Set-MerakiNetworkSyslogServers'
 
 )
 
