@@ -2,7 +2,12 @@
 
 ## Release Notes
 
+### 12/11/2025
+
+Added function to manage the syslog settings for the network.
+
 ### 09/02/2025
+
 I have made changes to the error reporting when an API error occurs. This will report a more concise and readable error message when the API endpoint responds with an error.
 
 The error are thrown as a powershell terminating error. If you are using these functions in a script and you want terminating errors to stop execution you should wrap your function calls in a try/catch block.
@@ -48,11 +53,11 @@ Set-MerakiNetworkApplianceSiteToSiteVpn
 Added the following parameters to function Get-MerakiNetworks:
 
 - PARAMETER IncludeTemplates
-    Includes a configTemplate property containing the configuration template.
+  Includes a configTemplate property containing the configuration template.
 - PARAMETER ConfigTemplateId
-    Get all networks bound to this template Id.
+  Get all networks bound to this template Id.
 - PARAMETER IsBoundToConfigTemplate
-    Get only networks bound to config templates.
+  Get only networks bound to config templates.
 
 ### 11/10/2022
 
