@@ -318,7 +318,7 @@ function Get-MerakiNetworkEvents() {
         [Parameter(
             Mandatory = $true
         )]
-        [ValidateSet('wireless','appliance','switches','systemManager','camera','cellularGateway')]
+        [ValidateSet('wireless', 'appliance', 'switch', 'systemsManager', 'camera', 'cellularGateway', 'wirelessController', 'campusGateway', 'secureConnect')]
         [string]$ProductType,
         [string[]]$IncludedEventTypes,
         [string[]]$ExcludedEventTypes,
@@ -1161,6 +1161,16 @@ Function Get-MerakiNetworkSyslogServers() {
             throw $_
         }
     }
+    <#
+    .SYNOPSIS
+    Returns the syslog servers for the network.
+    .DESCRIPTION
+    Returns the syslog servers for the network.
+    .PARAMETER Id
+    The network Id.
+    .OUTPUTS
+    An array of syslog server objects.
+    #>
 }
 
 function Set-MerakiNetworkSyslogServers() {
@@ -1232,6 +1242,30 @@ function Set-MerakiNetworkSyslogServers() {
             throw $_
         }
     }
+    <#
+    .SYNOPSIS
+    Sets the syslog servers for the network.
+    .DESCRIPTION
+    Sets the syslog servers for the network.
+    .PARAMETER Id
+    The network Id.
+    .PARAMETER Servers
+    An array of syslog server hostnames or IP addresses. Optionally, you can specify
+    a port by appending it to the hostname or IP address separated by a colon.
+    If no port is specified, the default of 514 will be used.
+    .PARAMETER Roles
+    An array of roles for the syslog servers.
+    .OUTPUTS
+    An array of syslog server objects.
+    .NOTES
+    When specifying servers, you can either provide just the hostname or IP address,
+    or you can provide the hostname or IP address along with the port number separated by a colon.
+    For example:
+    - "syslog1.example.com:514"
+    - "syslog2.example.com" (will use default port 514)
+
+    This function will replace all existing syslog servers with the new list provided.
+    #>
 }
 
 function Add-MerakiNetworkSyslogServer() {
@@ -1248,7 +1282,7 @@ function Add-MerakiNetworkSyslogServer() {
         [string]$Server,
 
         [Parameter(Mandatory = $false)]
-        [int]$port=514,
+        [int]$Port=514,
 
          [Parameter(
             Mandatory = $false
@@ -1288,4 +1322,26 @@ function Add-MerakiNetworkSyslogServer() {
             throw $_
         }
     }
+    <#
+    .SYNOPSIS
+    Adds a syslog server to the network.
+    .DESCRIPTION
+    Adds a syslog server to the network.
+    .PARAMETER Id
+    The network Id.
+    .PARAMETER Server
+    The syslog server hostname or IP address.
+    .PARAMETER Port
+    The syslog server port. Default is 514.
+    .PARAMETER Roles
+    An array of roles for the syslog server.
+    .OUTPUTS
+    An array of syslog server objects.
+    .NOTES
+    This function retrieves the existing syslog servers, adds the new server to the list,
+    and then updates the network with the new list of syslog servers.
+    .EXAMPLE
+    Add-MerakiNetworkSyslogServer -Id "N_123456789" -Server "syslog.example.com" -Port 514 -Roles @("Wireless event log", "Appliance event log")
+    Adds a syslog server with the specified roles to the network with Id "N_123456789".
+    #>
 }

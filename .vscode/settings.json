@@ -12,6 +12,7 @@
         "GMSSIDs",
         "GMSW",
         "GMSWACL",
+        "hostnames",
         "Ints",
         "Lldp",
         "Meraki",
